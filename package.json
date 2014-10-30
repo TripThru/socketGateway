@@ -1,0 +1,30 @@
+{
+  "name": "tripthru_gateway",
+  "version": "0.0.0",
+  "private": true,
+  "description": "",
+  "author": "",
+  "engines": {
+    "node": "~0.10.0"
+  },
+  "dependencies": {
+    "bluebird": "*",
+    "express": "*",
+    "express-session": "*",
+    "moment": "*",
+    "mongoose": "*",
+    "socket.io": "*",
+    "socket.io-client": "*",
+    "tv4": "*",
+    "tv4-formats": "*"
+  },
+  "devDependencies": {
+    "blanket": "*",
+    "grunt": "*",
+    "grunt-mocha-test": "*",
+    "mocha": "*",
+    "should": "*",
+    "sinon": "*"
+  },
+  "comment": {}
+}
