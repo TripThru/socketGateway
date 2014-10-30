@@ -17,9 +17,11 @@ Setup on Linux
     git clone https://github.com/TripThru/socketGateway.git
     cd socketGateway
     npm install
+    npm install -g grunt
 
 To run tests
+
     service mongod start
     cd socketGateway
-    npm install -g grunt
-    grunt
+    grunt 
+    
