@@ -33,7 +33,7 @@ var self = module.exports = {
     var validation = validate.dispatchTripRequest(request);
     if( validation.valid ) {
       var trip = request; //makeTripFromDispatchRequest(request);
-      trips.add(trip).then(function(res) {
+      trips.add(trip).then(function(res){
         cb(successResponse());
       }).error(function(err){
         cb(errorResponse());
@@ -43,7 +43,7 @@ var self = module.exports = {
     }
   },
   getTrip: function(request, cb) {
-    return trips.getById(request).then(function(res) {
+    return trips.getById(request).then(function(res){
       cb(getTripResponse(res));
     }).error(function(err){
       cb(errorResponse());

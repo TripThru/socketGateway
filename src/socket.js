@@ -20,7 +20,7 @@ io.use(function(socket, next){
     next();
 });
 
-io.sockets.on('connection', function (socket) {
+io.sockets.on('connection', function (socket){
 
   //TODO: log connect
   

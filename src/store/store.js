@@ -64,19 +64,19 @@ var self = module.exports = {
 }
 
 function create(model, data) {
-  return model.createAsync(data).then(function(res) {
+  return model.createAsync(data).then(function(res){
     return res;
   });
 }
 
 function update(model, data) {
-  return model.updateAsync(query, {id: data.id}, data).then(function(res) {
+  return model.updateAsync(query, {id: data.id}, data).then(function(res){
     return res;
   });
 }
 
 function get(model, query) {
-  return model.findAsync(query).then(function(res) {
+  return model.findAsync(query).then(function(res){
     return res;
   });
 }

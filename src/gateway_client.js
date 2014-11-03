@@ -9,13 +9,13 @@ function GatewayClient(url, token) {
     transports: ['websocket']
   });
   
-  this.socket.on('connect', function () {
+  this.socket.on('connect', function (){
     console.log('connected to ' + url);
   }); 
-  this.socket.on('error', function (data) {
+  this.socket.on('error', function (data){
     console.log('error on ' + url, data);
   });
-  this.socket.on('disconnect', function () {
+  this.socket.on('disconnect', function (){
     console.log('disconnect from ' + url);
   });
   
