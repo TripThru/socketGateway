@@ -23,6 +23,9 @@ describe("Model and store tests", function() {
       return trips.getById(testTrip.id);
     }).then(function(trip){
       trip.id.should.be.equal(testTrip.id);
+    }).error(function(err){
+      console.log('should never reach here so fail test');
+      err.should.be.type('undefined');
     })
     .finally(done);
   });
@@ -33,6 +36,9 @@ describe("Model and store tests", function() {
       return quotes.getById(testQuote.id);
     }).then(function(quote){
       quote.id.should.be.equal(testQuote.id);
+    }).error(function(err){
+      console.log('should never reach here so fail test');
+      err.should.be.type('undefined');
     })
     .finally(done);
   });
@@ -43,6 +49,9 @@ describe("Model and store tests", function() {
       return users.getById(testUser.id);
     }).then(function(user){
       user.id.should.be.equal(testUser.id);
+    }).error(function(err){
+      console.log('should never reach here so fail test');
+      err.should.be.type('undefined');
     })
     .finally(done);
   });
