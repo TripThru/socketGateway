@@ -9,6 +9,7 @@ var self = module.exports = {
       return res;
     }).error(function(err){
       console.log('Error ocurred adding user ' + err);
+      throw new Error();
     });
   },
   update: function(user) {
@@ -16,6 +17,7 @@ var self = module.exports = {
       return res;
     }).error(function(err){
       console.log('Error ocurred updating user ' + err);
+      throw new Error();
     });
   },
   getById: function(userId) {
@@ -25,6 +27,7 @@ var self = module.exports = {
       return res;
     }).error(function(err){
       console.log('Error ocurred getting user ' + err);
+      throw new Error();
     });
   }
 }

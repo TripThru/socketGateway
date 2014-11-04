@@ -8,6 +8,7 @@ var self = module.exports = {
       return res;
     }).error(function(err){
       console.log('Error ocurred adding trip ' + err);
+      throw new Error();
     });
   },
   update: function(trip) {
@@ -15,6 +16,7 @@ var self = module.exports = {
       return res;
     }).error(function(err) {
       console.log('Error ocurred updating trip ' + err);
+      throw new Error();
     });
   },
   getById: function(tripId) {
@@ -24,6 +26,7 @@ var self = module.exports = {
       return res;
     }).error(function(err){
       console.log('Error ocurred getting trip ' + err);
+      throw new Error();
     });
   }
 }

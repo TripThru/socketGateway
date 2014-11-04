@@ -8,6 +8,7 @@ var self = module.exports = {
       return res;
     }).error(function(err){
       console.log('Error ocurred adding quote ' + err);
+      throw new Error();
     });
   },
   update: function(quote) {
@@ -15,6 +16,7 @@ var self = module.exports = {
       return res;
     }).error(function(err){
       console.log('Error ocurred updating quote ' + err);
+      throw new Error();
     });
   },
   getById: function(quoteId) {
@@ -24,6 +26,7 @@ var self = module.exports = {
       return res;
     }).error(function(err){
       console.log('Error ocurred getting quote ' + err);
+      throw new Error();
     });
   }
 }
