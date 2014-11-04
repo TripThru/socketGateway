@@ -24,8 +24,7 @@ describe("Model and store tests", function() {
     }).then(function(trip){
       trip.id.should.be.equal(testTrip.id);
     }).error(function(err){
-      console.log('should never reach here so fail test');
-      err.should.be.type('undefined');
+      throw new Error('should never reach here so fail test');
     })
     .finally(done);
   });
@@ -37,8 +36,7 @@ describe("Model and store tests", function() {
     }).then(function(quote){
       quote.id.should.be.equal(testQuote.id);
     }).error(function(err){
-      console.log('should never reach here so fail test');
-      err.should.be.type('undefined');
+      throw new Error('should never reach here so fail test');
     })
     .finally(done);
   });
@@ -50,8 +48,7 @@ describe("Model and store tests", function() {
     }).then(function(user){
       user.id.should.be.equal(testUser.id);
     }).error(function(err){
-      console.log('should never reach here so fail test');
-      err.should.be.type('undefined');
+      throw new Error('should never reach here so fail test');
     })
     .finally(done);
   });
