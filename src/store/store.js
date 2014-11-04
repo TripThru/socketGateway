@@ -59,7 +59,9 @@ var self = module.exports = {
   },
   
   clear: function() {
-    mongoose.connection.db.dropCollection('trip');
+    mongoose.connection.db.dropCollection('trips');
+    mongoose.connection.db.dropCollection('quotes');
+    mongoose.connection.db.dropCollection('users');
   }
 }
 

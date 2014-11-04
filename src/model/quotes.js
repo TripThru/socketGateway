@@ -19,6 +19,8 @@ var self = module.exports = {
   },
   getById: function(quoteId) {
     return store.getQuoteBy({id: quoteId}).then(function(res){
+      if(res.length > 0)
+        res = res[0];
       return res;
     }).error(function(err){
       console.log('Error ocurred getting quote ' + err);

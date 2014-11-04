@@ -3,3 +3,4 @@ coverage.html
 *.log
 .DS_Store
 .project
+dump.rdb
