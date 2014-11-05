@@ -16,8 +16,7 @@
     "mongoose": "*",
     "socket.io": "*",
     "socket.io-client": "*",
-    "tv4": "*",
-    "tv4-formats": "*"
+    "tv4": "*"
   },
   "devDependencies": {
     "blanket": "*",

@@ -2,6 +2,7 @@ Promise = require('bluebird');
 var trips = Promise.promisifyAll(require('../model/trips'));
 var codes = require('../codes');
 var validate = require('./validate');
+var workers = require('../workers/trips');
 
 function successResponse() {
   return {
@@ -34,6 +35,7 @@ var self = module.exports = {
     if( validation.valid ) {
       var trip = request; //makeTripFromDispatchRequest(request);
       trips.add(trip).then(function(res){
+        workers.newDispatchJob(request);
         cb(successResponse());
       }).error(function(err){
         cb(errorResponse());
@@ -43,16 +45,16 @@ var self = module.exports = {
     }
   },
   getTrip: function(request, cb) {
-    return trips.getById(request).then(function(res){
+    trips.getById(request).then(function(res){
       cb(getTripResponse(res));
     }).error(function(err){
       cb(errorResponse());
     });
   },
-  getTripStatus: function(trip, cb) {
+  getTripStatus: function(trip) {
     
   },
-  updateTripStatus: function(trip, cb) {
+  updateTripStatus: function(trip) {
     
   }
 }

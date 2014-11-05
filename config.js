@@ -9,7 +9,7 @@ module.exports = {
     prefix: 'q',
     redis: {
       port: 6379,
-      host: '10.0.50.20',
+      host: '127.0.0.1',
       auth: ''
     }
   }
