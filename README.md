@@ -26,6 +26,7 @@ Setup on Linux
 To run tests
 
     service mongod start
+    service redis start
     cd socketGateway
     grunt 
     
