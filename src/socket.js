@@ -36,15 +36,29 @@ io.sockets.on('connection', function (socket){
   console.log('Client connected', token);
   
   // Trips
-  socket.on('dispatch-trip', trips.dispatchTrip);
-  socket.on('get-trip', trips.getTrip);
-  socket.on('get-trip-status', trips.getTripStatus);
-  socket.on('update-trip-status', trips.updateTripStatus);
+  socket.on('dispatch-trip', function(req, cb){
+    trips.dispatchTrip(appendClientId(socket, req), cb);
+  });
+  socket.on('get-trip', function(req, cb){
+    trips.getTrip(appendClientId(socket, req), cb);
+  });
+  socket.on('get-trip-status', function(req, cb){
+    trips.getTripStatus(appendClientId(socket, req), cb);
+  });
+  socket.on('update-trip-status', function(req, cb){
+    trips.updateTripStatus(appendClientId(socket, req), cb);
+  });
   
   //Quotes
-  socket.on('create-quote', quotes.createQuote);
-  socket.on('get-quote', quotes.getQuote);
-  socket.on('update-quote', quotes.updateQuote);
+  socket.on('create-quote', function(req, cb){
+    quotes.createQuote(appendClientId(socket, req), cb);
+  });
+  socket.on('get-quote', function(req, cb){
+    quotes.getQuote(appendClientId(socket, req), cb);
+  });
+  socket.on('update-quote', function(req, cb){
+    quotes.updateQuote(appendClientId(socket, req), cb);
+  });
   
   socket.on('disconnect', function(){
     var id = activeClientIdsBySocket[socket];
@@ -54,6 +68,11 @@ io.sockets.on('connection', function (socket){
     console.log('Client disconnected', id);
   });
 });
+
+function appendClientId(socket, request) {
+  request.clientId = activeClientIdsBySocket[socket];
+  return request;
+}
 
 function emit(action, clientId, data, cb) {
   var socket = activeSocketsByClientId[clientId];

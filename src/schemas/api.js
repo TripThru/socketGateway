@@ -7,6 +7,30 @@ module.exports = {
       "description": "schema for a trip dispatch request",
       "type": "object",
       "properties": {
+        "partner": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          },
+          "required": [ "id" ]
+        },
+        "fleet" : {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          },
+          "required": [ "id" ]
+        },
+        "driver" : {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          },
+          "required": [ "id" ]
+        },
         "passenger" : {
           "type": "object",
           "properties": {
@@ -40,9 +64,7 @@ module.exports = {
         "maxPrice": { "type": "number", "minimum": 0 },
         "minRating": { "type": "number", "minimum": 0 },
         "id": { "type": "string" },
-        "partnerId": { "type": "string" },
-        "fleetId": { "type": "string" },
-        "driverId": { "type": "string" }
+        "clientId": { "type": "string" }
       },
       "required": [ "passenger", "pickupLocation", "pickupTime", 
                     "dropoffLocation", "id" ]
@@ -109,7 +131,8 @@ module.exports = {
         "vehicleType": { "enum": common.vehicleTypes },
         "maxPrice": { "type": "number", "minimum": 0 },
         "eta": { "type": "string", "format": "date-time" },
-        "id": { "type": "string" }
+        "id": { "type": "string" },
+        "clientId": { "type": "string" }
       },
       "required": [ "pickupLocation", "pickupTime", "dropoffLocation", "id" ]
     }

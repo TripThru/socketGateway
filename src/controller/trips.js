@@ -3,7 +3,7 @@ var trips = Promise.promisifyAll(require('../model/trips'));
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var validate = require('./validate');
-var covert = require('./convert');
+var convert = require('./convert');
 var workers = require('../workers/trips');
 
 function successResponse() {
@@ -35,7 +35,7 @@ var self = module.exports = {
     if( !validation.valid ) {
       cb(failResponse(resultCodes.invalidParameters, validation.error.message));
     } else {
-      var trip = request;//convert.toTrip(request);
+      var trip = convert.toTrip(request);
       trips
         .getById(trip.id)
         .then(function(res){
@@ -57,8 +57,9 @@ var self = module.exports = {
     }
   },
   getTrip: function(request, cb) {
+    console.log(request);
     trips
-      .getById(request).then(function(trip){
+      .getById(request.id).then(function(trip){
         if( trip ) {
           var response = successResponse();
           response.trip = trip;
