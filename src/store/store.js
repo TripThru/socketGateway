@@ -70,7 +70,7 @@ function create(model, data) {
 }
 
 function update(model, data) {
-  return model.updateAsync(query, {id: data.id}, data);
+  return model.updateAsync({id: data.id}, data);
 }
 
 function get(model, query) {

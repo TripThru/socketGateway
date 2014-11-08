@@ -8,6 +8,7 @@ var quoteFixtures = require('./fixtures/quotes');
 var store = require('../src/store/store');
 var trips = require('../src/controller/trips');
 var quotes = require('../src/controller/quotes');
+var socket = require('../src/socket');
 
 var sandbox = sinon.sandbox.create();
 var tripsWorker = require('../src/workers/trips');
@@ -17,12 +18,14 @@ var testTrip;
 var tripsWorkerSpy;
 var tripsModelSpy;
 var quotesModelSpy;
+var socketSpy;
 
 describe("Controller tests", function(){
   
   beforeEach(function(){
     tripsWorkerSpy = {
-        newDispatchJob: sandbox.spy(tripsWorker, 'newDispatchJob')
+        newDispatchJob: sandbox.spy(tripsWorker, 'newDispatchJob'),
+        newUpdateTripStatusJob: sandbox.spy(tripsWorker, 'newUpdateTripStatusJob')
     }
     tripsModelSpy = {
         add: sandbox.spy(tripsModel, 'add'),
@@ -33,6 +36,9 @@ describe("Controller tests", function(){
         add: sandbox.spy(quotesModel, 'add'),
         update: sandbox.spy(quotesModel, 'update'),
         getById: sandbox.spy(quotesModel, 'getById')
+    }
+    socketSpy = {
+        getTripStatus: sandbox.spy(socket, 'getTripStatus')
     }
   });
   
@@ -59,14 +65,49 @@ describe("Controller tests", function(){
   it("should fail for dispatching same trip twice", function (done){
     var testTrip = tripFixtures.completeTrip;
     trips.dispatchTrip(testTrip, function(res){
-      res.result.should.be.equal(codes.resultCodes.ok);
-      tripsWorkerSpy.newDispatchJob.calledOnce.should.be.equal(true);
-      tripsModelSpy.add.calledOnce.should.be.equal(true);      
+      res.result.should.be.equal(codes.resultCodes.ok);     
       trips.dispatchTrip(testTrip, function(res){
         res.result.should.be.equal(codes.resultCodes.rejected);
         tripsWorkerSpy.newDispatchJob.calledOnce.should.be.equal(true);
         tripsModelSpy.add.calledOnce.should.be.equal(true);      
         done();
+      });
+    });
+  });
+  
+  it("should dispatch, update status and get new status", function (done){
+    var testTrip = tripFixtures.completeTrip;
+    var updateStatusRequest = {
+        id: testTrip.id,
+        status: 'dispatched',
+        eta: '2014-11-10T00:00:00+00:00',
+        driver: { 
+          id: 'driver',
+          name: 'driver',
+          location: { lat: 23412.3312, lng: -12212.334 }
+        }
+    };
+    var getStatusRequest = {
+        id: testTrip.id
+    };
+    trips.dispatchTrip(testTrip, function(res){
+      res.result.should.be.equal(codes.resultCodes.ok);
+      trips.updateTripStatus(updateStatusRequest, function(res){
+        res.result.should.be.equal(codes.resultCodes.ok);
+        trips.getTripStatus(getStatusRequest, function(res){
+          res.result.should.be.equal(codes.resultCodes.ok);
+          res.id.should.be.equal(updateStatusRequest.id);
+          res.status.should.be.equal(updateStatusRequest.status);
+          res.eta.should.be.equal(updateStatusRequest.eta);
+          res.driver.location.lat.should.be
+            .equal(updateStatusRequest.driver.location.lat);
+          res.driver.location.lng.should.be
+            .equal(updateStatusRequest.driver.location.lng);
+          tripsWorkerSpy.newUpdateTripStatusJob.calledOnce.should.be.equal(true);
+          tripsModelSpy.update.calledOnce.should.be.equal(true); 
+          socketSpy.getTripStatus.called.should.be.equal(true);
+          done();
+        });
       });
     });
   });

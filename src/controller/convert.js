@@ -10,10 +10,10 @@ function clone(obj) {
 }
 
 module.exports = {
-    toTrip: function(dispatchRequest) {
-      var r = clone(dispatchRequest);
+    toTripFromDispatchRequest: function(request) {
+      var r = clone(request);
       r.originatingPartner = { id: r.clientId };
-      r.servicingPartnerId = r.partner;
+      r.servicingPartner = r.partner;
       delete r['partner'];
       r.pickupTime = moment(r.pickupTime, moment.ISO_8601, true).toDate();
       r.dropoffTime = 
@@ -26,10 +26,19 @@ module.exports = {
       r.madeDirtyBy = '';
       return r;
     },
+    toTripFromUpdateTripStatusRequest: function(request, trip) {
+      trip.status = request.status;
+      trip.eta = moment(request.eta, moment.ISO_8601, true);
+      trip.driver = request.driver;
+      return trip;
+    },
     toDispatchRequest: function(trip) {
       
     },
     toUpdateTripStatusRequest: function(trip) {
+      
+    },
+    toGetTripStatusRequest: function(trip) {
       
     },
     toGetTripRequest: function(trip) {

@@ -8,5 +8,8 @@ module.exports = {
     
     newDispatchJob: function(request) {
       queue.newJob('dispatch', request);
+    },
+    newUpdateTripStatusJob: function(request) {
+      queue.newJob('update-trip-status', request);
     }
 }

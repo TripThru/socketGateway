@@ -17,15 +17,15 @@ var basicQuoteRequest = {
     name: 'passenger'
   },
   pickupLocation: { lat: 212312, lng: 123123 },
-  pickupTime: new Date(),
+  pickupTime: "2014-10-30T02:56:51+00:00",
   dropoffLocation: { lat: 123123, lng: 123123 },
-  dropoffTime: new Date(),
+  dropoffTime: "2014-10-30T02:56:51+00:00",
   luggage: 5,
   persons: 1,
   vehicleType: 'sedan',
   paymentMethod: 'cash',
   maxPrice: 10,
-  eta: new Date()
+  eta: "2014-10-30T02:56:51+00:00"
 }
 
 module.exports = {

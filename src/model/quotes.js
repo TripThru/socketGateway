@@ -22,7 +22,7 @@ var self = module.exports = {
   getById: function(quoteId) {
     return store.getQuoteBy({id: quoteId}).then(function(res){
       if(res.length > 0)
-        res = res[0];
+        res = res[0].toObject();
       else
         res = null;
       return res;

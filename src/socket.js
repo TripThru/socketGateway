@@ -1,3 +1,4 @@
+Promise = require('bluebird');
 var trips = require('./controller/trips');
 var quotes = require('./controller/quotes');
 var users = require('./model/users');
@@ -74,35 +75,48 @@ function appendClientId(socket, request) {
   return request;
 }
 
-function emit(action, clientId, data, cb) {
-  var socket = activeSocketsByClientId[clientId];
-  if (socket)
-    socket.emit(action, data, cb);
-  else
-    throw new Error('Client not connected');
+function SocketError(resultCode, error) {
+  this.resultCode = resultCode;
+  this.error = error;
+  Error.captureStackTrace(this, SocketError);
 }
+SocketError.prototype = Object.create(Error.prototype);
+SocketError.prototype.constructor = SocketError;
+
+function emit(action, clientId, data) {
+  return new Promise(function(resolve, reject){
+    var socket = activeSocketsByClientId[clientId];
+    if (socket)
+      socket.emit(action, data, function(res){
+        resolve(res);
+      });
+    else
+      reject(new SocketError('Client not connected'));
+  });
+};
 
 var self = module.exports = {
     io: io,
-    dispatchTrip: function(clientId, request, cb) {
-      emit('dispatch-trip', clientId, request, cb);
+    SocketError: SocketError,
+    dispatchTrip: function(clientId, request) {
+      return emit('dispatch-trip', clientId, request, cb);
     },
-    getTrip: function(clientId, request, cb) {
-      emit('get-trip', clientId, request, cb);
+    getTrip: function(clientId, request) {
+      return emit('get-trip', clientId, request);
     },
-    getTripStatus: function(clientId, request, cb) {
-      emit('get-trip-status', clientId, request, cb);
+    getTripStatus: function(clientId, request) {
+      return emit('get-trip-status', clientId, request);
     },
-    updateTripStatus: function(clientId, request, cb) {
-      emit('update-trip-status', clientId, request, cb);
+    updateTripStatus: function(clientId, request) {
+      return emit('update-trip-status', clientId, request);
     },
-    createQuote: function(clientId, request, cb) {
-      emit('create-quote', clientId, request, cb);
+    createQuote: function(clientId, request) {
+      return emit('create-quote', clientId, request);
     },
-    getQuote: function(clientId, request, cb) {
-      emit('get-quote', clientId, request, cb);
+    getQuote: function(clientId, request) {
+      return emit('get-quote', clientId, request);
     },
-    updateQuote: function(clientId, request, cb) {
-      emit('update-quote', clientId, request, cb);
+    updateQuote: function(clientId, request) {
+      return emit('update-quote', clientId, request);
     }
 }

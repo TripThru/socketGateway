@@ -23,7 +23,7 @@ var self = module.exports = {
   getById: function(userId) {
     return store.getUserBy({id: userId}).then(function(res){
       if(res.length > 0)
-        res = res[0];
+        res = res[0].toObject();
       else
         res = null;
       return res;
@@ -35,7 +35,7 @@ var self = module.exports = {
   getByToken: function(token) {
     return store.getUserBy({token: token}).then(function(res){
       if(res.length > 0)
-        res = res[0];
+        res = res[0].toObject();
       else
         res = null;
       return res;
