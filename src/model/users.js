@@ -24,6 +24,20 @@ var self = module.exports = {
     return store.getUserBy({id: userId}).then(function(res){
       if(res.length > 0)
         res = res[0];
+      else
+        res = null;
+      return res;
+    }).error(function(err){
+      console.log('Error ocurred getting user ' + err);
+      throw new Error();
+    });
+  },
+  getByToken: function(token) {
+    return store.getUserBy({token: token}).then(function(res){
+      if(res.length > 0)
+        res = res[0];
+      else
+        res = null;
       return res;
     }).error(function(err){
       console.log('Error ocurred getting user ' + err);

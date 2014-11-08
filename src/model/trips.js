@@ -23,6 +23,8 @@ var self = module.exports = {
     return store.getTripBy({id: tripId}).then(function(res){
       if(res.length > 0)
         res = res[0];
+      else
+        res = null;
       return res;
     }).error(function(err){
       console.log('Error ocurred getting trip ' + err);
