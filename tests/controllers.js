@@ -56,6 +56,21 @@ describe("Controller tests", function(){
     });
   });
   
+  it("should fail for dispatching same trip twice", function (done){
+    var testTrip = tripFixtures.completeTrip;
+    trips.dispatchTrip(testTrip, function(res){
+      res.result.should.be.equal(codes.resultCodes.ok);
+      tripsWorkerSpy.newDispatchJob.calledOnce.should.be.equal(true);
+      tripsModelSpy.add.calledOnce.should.be.equal(true);      
+      trips.dispatchTrip(testTrip, function(res){
+        res.result.should.be.equal(codes.resultCodes.rejected);
+        tripsWorkerSpy.newDispatchJob.calledOnce.should.be.equal(true);
+        tripsModelSpy.add.calledOnce.should.be.equal(true);      
+        done();
+      });
+    });
+  });
+  
   afterEach(function(){
     sandbox.restore();
     store.clear();
