@@ -18,5 +18,11 @@ var self = module.exports = {
       jobs.process(name, function (job, done){
         task(job.data, done);
       });
+    },
+    clear: function() {
+      jobs.client.keys("q:*", function(err, key) {
+        jobs.client.del(key, function(err) {
+        });
+      });
     }
 }

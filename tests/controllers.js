@@ -9,6 +9,7 @@ var store = require('../src/store/store');
 var trips = require('../src/controller/trips');
 var quotes = require('../src/controller/quotes');
 var socket = require('../src/socket');
+var jobQueue = require('../src/workers/job_queue');
 
 var sandbox = sinon.sandbox.create();
 var tripsWorker = require('../src/workers/trips');
@@ -53,7 +54,7 @@ describe("Controller tests", function(){
   });
   
   it("should dispatch correctly", function (done){
-    var testTrip = tripFixtures.completeTrip;
+    var testTrip = tripFixtures.correctDispatchRequest;
     trips.dispatchTrip(testTrip, function(res){
       res.result.should.be.equal(codes.resultCodes.ok);
       tripsWorkerSpy.newDispatchJob.calledOnce.should.be.equal(true);
@@ -63,7 +64,7 @@ describe("Controller tests", function(){
   });
   
   it("should fail for dispatching same trip twice", function (done){
-    var testTrip = tripFixtures.completeTrip;
+    var testTrip = tripFixtures.correctDispatchRequest;
     trips.dispatchTrip(testTrip, function(res){
       res.result.should.be.equal(codes.resultCodes.ok);     
       trips.dispatchTrip(testTrip, function(res){
@@ -76,20 +77,9 @@ describe("Controller tests", function(){
   });
   
   it("should dispatch, update status and get new status", function (done){
-    var testTrip = tripFixtures.completeTrip;
-    var updateStatusRequest = {
-        id: testTrip.id,
-        status: 'dispatched',
-        eta: '2014-11-10T00:00:00+00:00',
-        driver: { 
-          id: 'driver',
-          name: 'driver',
-          location: { lat: 23412.3312, lng: -12212.334 }
-        }
-    };
-    var getStatusRequest = {
-        id: testTrip.id
-    };
+    var testTrip = tripFixtures.correctDispatchRequest;
+    var updateStatusRequest = tripFixtures.correctUpdateStatusRequest;
+    var getStatusRequest = tripFixtures.correctGetStatusRequest;
     trips.dispatchTrip(testTrip, function(res){
       res.result.should.be.equal(codes.resultCodes.ok);
       trips.updateTripStatus(updateStatusRequest, function(res){
@@ -115,5 +105,6 @@ describe("Controller tests", function(){
   afterEach(function(){
     sandbox.restore();
     store.clear();
+    jobQueue.clear();
   });
 });

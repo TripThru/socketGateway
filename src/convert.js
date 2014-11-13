@@ -22,8 +22,6 @@ module.exports = {
       r.creation = new Date();
       r.lastUpdate = new Date();
       r.state = 'new';
-      r.isDirty = false;
-      r.madeDirtyBy = '';
       return r;
     },
     toTripFromUpdateTripStatusRequest: function(request, trip) {

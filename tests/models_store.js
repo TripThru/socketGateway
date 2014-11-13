@@ -18,9 +18,10 @@ describe("Model and store tests", function() {
   });
   
   it("should save a trip in store", function (done) {
-    var testTrip = tripFixtures.completeTrip;
+    var testTrip = tripFixtures.basicTrip;
     trips
-      .add(testTrip).then(function(res){
+      .add(testTrip)
+      .then(function(res){
         return trips.getById(testTrip.id);
       })
       .then(function(trip){
@@ -35,7 +36,8 @@ describe("Model and store tests", function() {
   it("should save a quote in store", function(done) {
     var testQuote = quoteFixtures.basicQuote;
     quotes
-      .add(testQuote).then(function(res){
+      .add(testQuote)
+      .then(function(res){
         return quotes.getById(testQuote.id);
       })
       .then(function(quote){
@@ -50,7 +52,8 @@ describe("Model and store tests", function() {
   it("should save a user in store", function(done) {
     var testUser = userFixtures.basicUser;
     users
-     .add(testUser).then(function(res){
+     .add(testUser)
+     .then(function(res){
        return users.getById(testUser.id);
      })
      .then(function(user){

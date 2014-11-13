@@ -3,7 +3,7 @@ var trips = require('../model/trips');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var validate = require('./validate');
-var convert = require('./convert');
+var convert = require('../convert');
 var workers = require('../workers/trips');
 var socket = require('../socket');
 SocketError = socket.SocketError;
@@ -55,7 +55,7 @@ var self = module.exports = {
             throw new RequestError(resultCodes.rejected, 'trip already exists');
         })
         .then(function(res){
-          workers.newDispatchJob(request);
+          workers.newDispatchJob(trip.id);
           cb(successResponse());
         })
         .catch(RequestError, function(err){
@@ -124,17 +124,20 @@ var self = module.exports = {
     });
   },
   updateTripStatus: function(request, cb) {
+    var sendTo;
     trips
     .getById(request.id)
     .then(function(trip){
       var t = convert.toTripFromUpdateTripStatusRequest(request, trip);
+      sendTo = request.clientId == t.originatingPartner.id ?
+                t.servicingPartner.id : t.originatingPartner.id;
       if( trip )
         return trips.update(t);
       else
         throw new RequestError(resultCodes.rejected, 'trip not found');
     })
     .then(function(){
-      workers.newUpdateTripStatusJob(request);
+      workers.newUpdateTripStatusJob(request, sendTo);
       cb(successResponse());
     })
     .catch(RequestError, function(err){

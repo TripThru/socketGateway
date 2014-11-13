@@ -91,7 +91,7 @@ function emit(action, clientId, data) {
         resolve(res);
       });
     else
-      reject(new SocketError('Client not connected'));
+      reject(new SocketError(null, 'Client not connected'));
   });
 };
 
@@ -99,7 +99,7 @@ var self = module.exports = {
     io: io,
     SocketError: SocketError,
     dispatchTrip: function(clientId, request) {
-      return emit('dispatch-trip', clientId, request, cb);
+      return emit('dispatch-trip', clientId, request);
     },
     getTrip: function(clientId, request) {
       return emit('get-trip', clientId, request);

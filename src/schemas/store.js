@@ -66,9 +66,7 @@ var self = module.exports = {
       eta: Date,
       creation: Date,
       lastUpdate: Date,
-      state: { type: String, enum: common.tripState },
-      isDirty: Boolean,
-      madeDirtyBy: Boolean
+      state: { type: String, enum: common.tripState }
     }),
     quote: new mongoose.Schema({
       id: { type: String, trim: true, required: true },
