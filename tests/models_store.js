@@ -7,14 +7,10 @@ var tripFixtures = require('./fixtures/trips');
 var userFixtures = require('./fixtures/users');
 var quoteFixtures = require('./fixtures/quotes');
 
-function clearStore() {
-  store.clear();
-}
-
 describe("Model and store tests", function() {
   
   before(function(){
-    clearStore();
+    store.clear();
   });
   
   it("should save a trip in store", function (done) {
@@ -66,7 +62,7 @@ describe("Model and store tests", function() {
   });
   
   afterEach(function() {
-    clearStore();
+    store.clear();
   });
   
 });

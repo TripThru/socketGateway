@@ -23,6 +23,11 @@ var socketSpy;
 
 describe("Controller tests", function(){
   
+  before(function(){
+    store.clear();
+    jobQueue.clear();
+  });
+  
   beforeEach(function(){
     tripsWorkerSpy = {
         newDispatchJob: sandbox.spy(tripsWorker, 'newDispatchJob'),
@@ -105,6 +110,5 @@ describe("Controller tests", function(){
   afterEach(function(){
     sandbox.restore();
     store.clear();
-    jobQueue.clear();
   });
 });
