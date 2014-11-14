@@ -36,6 +36,10 @@ function UnsuccessfulRequestError(resultCode, error) {
 UnsuccessfulRequestError.prototype = Object.create(Error.prototype);
 UnsuccessfulRequestError.prototype.constructor = UnsuccessfulRequestError;
 
+function tripIsLocal(trip, request) {
+  return trip.originatingPartner.id == trip.servicingPartner.id;
+}
+
 //Public
 
 var self = module.exports = {
@@ -55,7 +59,8 @@ var self = module.exports = {
             throw new RequestError(resultCodes.rejected, 'trip already exists');
         })
         .then(function(res){
-          workers.newDispatchJob(trip.id);
+          if( !tripIsLocal(trip) )
+            workers.newDispatchJob(trip.id);
           cb(successResponse());
         })
         .catch(RequestError, function(err){
@@ -125,19 +130,22 @@ var self = module.exports = {
   },
   updateTripStatus: function(request, cb) {
     var sendTo;
+    var trip;
     trips
     .getById(request.id)
-    .then(function(trip){
-      var t = convert.toTripFromUpdateTripStatusRequest(request, trip);
-      sendTo = request.clientId == t.originatingPartner.id ?
-                t.servicingPartner.id : t.originatingPartner.id;
-      if( trip )
+    .then(function(t){
+      if( t ) {
+        trip = convert.toTripFromUpdateTripStatusRequest(request, t);
+        sendTo = request.clientId == trip.originatingPartner.id ?
+                  trip.servicingPartner.id : trip.originatingPartner.id;
         return trips.update(t);
+      }
       else
         throw new RequestError(resultCodes.rejected, 'trip not found');
     })
     .then(function(){
-      workers.newUpdateTripStatusJob(request, sendTo);
+      if( !tripIsLocal(trip) )
+        workers.newUpdateTripStatusJob(request, sendTo);
       cb(successResponse());
     })
     .catch(RequestError, function(err){
