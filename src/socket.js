@@ -21,8 +21,8 @@ io.use(function(socket, next){
   } else {
     users.getByToken(query.token).then(function(user){
       if (user) {
-        activeSocketsByClientId[user.id] = socket;
-        activeClientIdsBySocket[socket] = user.id;
+        activeSocketsByClientId[user.clientId] = socket;
+        activeClientIdsBySocket[socket] = user.clientId;
         next();
       } else {
         console.log("Invalid access token");
