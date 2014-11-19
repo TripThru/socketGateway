@@ -16,7 +16,7 @@ function successResponse() {
 function failResponse(resultCode, error) {
   return {
     result: resultCode,
-    error: error
+    message: error
   }
 }
 
