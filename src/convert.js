@@ -31,7 +31,21 @@ module.exports = {
       return trip;
     },
     toDispatchRequest: function(trip) {
-      
+      var r = {
+          id: trip.id,
+          clientId: 'tripthru',
+          passenger : trip.passenger,
+          pickupLocation: trip.pickupLocation,
+          pickupTime: trip.pickupTime,
+          dropoffLocation: trip.dropoffLocation
+      };
+      if( trip.fleet )
+        r.fleet = trip.fleet;
+      if( trip.driver )
+        r.driver = trip.driver;
+      if( trip.vehicleType )
+        r.vehicleType = trip.vehicleType;
+      return r;
     },
     toUpdateTripStatusRequest: function(trip) {
       
