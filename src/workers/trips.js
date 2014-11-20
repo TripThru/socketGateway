@@ -14,7 +14,7 @@ function dispatchTrip(job, done) {
       return socket.dispatchTrip(trip.servicingPartner.id, request);
     })
     .then(function(res){
-      if( res == resultCodes.ok )
+      if( res.result == resultCodes.ok )
         done();
       else 
         throw new socket.SocketError(res.resultCode, res.error);
@@ -33,7 +33,7 @@ function updateTripStatus(job, done){
   socket
     .updateTripStatus(sendTo, request)
     .then(function(res){
-      if( res == resultCodes.ok )
+      if( res.result == resultCodes.ok )
         done();
       else 
         throw new socket.SocketError(res.resultCode, res.error);
