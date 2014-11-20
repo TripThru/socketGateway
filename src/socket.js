@@ -96,6 +96,9 @@ function emit(action, clientId, data) {
 };
 
 var self = module.exports = {
+    init: function() {
+      trips.init(this);
+    },
     io: io,
     SocketError: SocketError,
     dispatchTrip: function(clientId, request) {

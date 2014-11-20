@@ -2,6 +2,7 @@
 var express = require('express');
 var config = require('./config');
 var socket = require('./src/socket');
+socket.init();
 
 var app = express();
 
@@ -19,4 +20,3 @@ var server = app.listen(app.get('port'), function (){
 	console.log("server listening on port " + app.get('port'));
 	socket.io.attach(server);
 });
-

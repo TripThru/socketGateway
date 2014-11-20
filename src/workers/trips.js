@@ -1,12 +1,11 @@
 var queue = require('./job_queue');
 var trips = require('../model/trips');
 var convert = require('../convert');
-var socket = require('../socket');
-SocketError = socket.SocketError;
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
+var socket; // Initialized with init to avoid circular dependency
 
-queue.processJob('dispatch', function(job, done){
+function dispatchTrip(job, done) {
   var tripId = job.tripId;
   trips
     .getById(tripId)
@@ -18,17 +17,17 @@ queue.processJob('dispatch', function(job, done){
       if( res == resultCodes.ok )
         done();
       else 
-        throw new SocketError(res.resultCode, res.error);
+        throw new socket.SocketError(res.resultCode, res.error);
     })
-    .catch(SocketError, function(err){
-      console.log('SocketError updating ' + tripId + ' : ' + err);
+    .catch(socket.SocketError, function(err){
+      console.log('SocketError dispatch ' + tripId + ' : ' + err);
     })
     .error(function(err){
       console.log('Error dispatching ' + tripId + ' : ' + err);
     });
-});
+}
 
-queue.processJob('update-trip-status', function(job, done){
+function updateTripStatus(job, done){
   var request = job.request;
   var sendTo = job.sendTo;
   socket
@@ -37,18 +36,22 @@ queue.processJob('update-trip-status', function(job, done){
       if( res == resultCodes.ok )
         done();
       else 
-        throw new SocketError(res.resultCode, res.error);
+        throw new socket.SocketError(res.resultCode, res.error);
     })
-    .catch(SocketError, function(err){
-      console.log('SocketError updating ' + request.id + ' : ' + err);
+    .catch(socket.SocketError, function(err){
+      console.log('SocketError update trip status ' + request.id + ' : ' + err);
     })
     .error(function(err){
       console.log('Error updating ' + request.id + ' : ' + err);
     });
-});
+}
 
 module.exports = {
-    
+    init: function(gateway) {
+      socket = gateway;
+      queue.processJob('dispatch', dispatchTrip);
+      queue.processJob('update-trip-status', updateTripStatus)
+    },
     newDispatchJob: function(tripId) {
       var data = { tripId: tripId };
       queue.newJob('dispatch', data);

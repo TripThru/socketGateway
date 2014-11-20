@@ -5,8 +5,7 @@ var resultCodes = codes.resultCodes;
 var validate = require('./validate');
 var convert = require('../convert');
 var workers = require('../workers/trips');
-var socket = require('../socket');
-SocketError = socket.SocketError;
+var socket; // Initialized with init to avoid circular dependency
 
 function successResponse() {
   return {
@@ -43,7 +42,10 @@ function tripIsLocal(trip, request) {
 //Public
 
 var self = module.exports = {
-    
+  init: function(gateway) {
+    socket = gateway;
+    workers.init(socket);
+  },
   dispatchTrip: function(request, cb) {
     var validation = validate.dispatchTripRequest(request);
     if( !validation.valid ) {
@@ -112,7 +114,7 @@ var self = module.exports = {
         throw(new UnsuccessfulRequestError('Unsuccessful result code ' +
             response.resultCode));
     })
-    .catch(SocketError, UnsuccessfulRequestError, function(err){
+    .catch(socket.SocketError, UnsuccessfulRequestError, function(err){
       // If call to client fails, fall back to last known status
       var response = successResponse();
       response.id = storedTrip.id;
