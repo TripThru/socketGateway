@@ -50,7 +50,7 @@ module.exports = {
     init: function(gateway) {
       socket = gateway;
       queue.processJob('dispatch', dispatchTrip);
-      queue.processJob('update-trip-status', updateTripStatus)
+      queue.processJob('update-trip-status', updateTripStatus);
     },
     newDispatchJob: function(tripId) {
       var data = { tripId: tripId };

@@ -2,7 +2,7 @@
   "name": "tripthru_gateway",
   "version": "0.0.0",
   "private": true,
-  "description": "",
+  "description": "Daniel Montes de Oca",
   "author": "",
   "engines": {
     "node": "~0.10.0"

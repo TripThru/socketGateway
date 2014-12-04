@@ -9,7 +9,8 @@ var socket; // Initialized with init to avoid circular dependency
 
 function successResponse() {
   return {
-    result: codes.resultCodes.ok
+    result: codes.resultCodes.ok,
+    message: 'ok'
   }
 }
 function failResponse(resultCode, error) {
@@ -66,7 +67,7 @@ var self = module.exports = {
           cb(successResponse());
         })
         .catch(RequestError, function(err){
-          cb(failResponse(err.resultCode, err.error))
+          cb(failResponse(err.resultCode, err.error));
         })
         .error(function(err){
           cb(failResponse(resultCodes.unknownError));
@@ -86,7 +87,7 @@ var self = module.exports = {
         }
       })
       .catch(RequestError, function(err){
-        cb(failResponse(err.resultCode, err.error))
+        cb(failResponse(err.resultCode, err.error));
       })
       .error(function(err){
         cb(failResponse(resultCodes.unknownError));
@@ -124,7 +125,7 @@ var self = module.exports = {
       cb(response);
     })
     .catch(RequestError, function(err){
-      cb(failResponse(err.resultCode, err.error))
+      cb(failResponse(err.resultCode, err.error));
     })
     .error(function(err){
       cb(failResponse(resultCodes.unknownError));
@@ -151,7 +152,7 @@ var self = module.exports = {
       cb(successResponse());
     })
     .catch(RequestError, function(err){
-      cb(failResponse(err.resultCode, err.error))
+      cb(failResponse(err.resultCode, err.error));
     })
     .error(function(err){
       cb(failResponse(resultCodes.unknownError));

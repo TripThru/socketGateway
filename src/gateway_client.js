@@ -18,6 +18,10 @@ function GatewayClient(url, token) {
   this.socket.on('disconnect', function (){
     console.log('disconnect from ' + url);
   });
+  this.socket.on('hello', function(msg, cb){
+    console.log(msg);
+    cb('hello back');
+  });
   
   this.dispatchTrip = function(trip, cb) {
     self.socket.emit('dispatch-trip', trip, cb);

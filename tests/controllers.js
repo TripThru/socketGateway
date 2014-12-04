@@ -1,3 +1,5 @@
+var socket = require('../src/socket');
+socket.init(); // Avoid circular dependencies by making socket pass it's own reference
 var should = require('should');
 var sinon = require('sinon');
 var mockery = require('mockery');
@@ -8,7 +10,6 @@ var quoteFixtures = require('./fixtures/quotes');
 var store = require('../src/store/store');
 var trips = require('../src/controller/trips');
 var quotes = require('../src/controller/quotes');
-var socket = require('../src/socket');
 var jobQueue = require('../src/workers/job_queue');
 
 var sandbox = sinon.sandbox.create();

@@ -36,6 +36,11 @@ io.sockets.on('connection', function (socket){
   //TODO: log connect
   console.log('Client connected', token);
   
+  socket.on('hi', function(msg, cb){
+    console.log(msg);
+    cb('hi');
+  });
+  
   // Trips
   socket.on('dispatch-trip', function(req, cb){
     trips.dispatchTrip(appendClientId(socket, req), cb);
@@ -47,6 +52,7 @@ io.sockets.on('connection', function (socket){
     trips.getTripStatus(appendClientId(socket, req), cb);
   });
   socket.on('update-trip-status', function(req, cb){
+    console.log('update trip received ', req.id);
     trips.updateTripStatus(appendClientId(socket, req), cb);
   });
   
@@ -59,6 +65,11 @@ io.sockets.on('connection', function (socket){
   });
   socket.on('update-quote', function(req, cb){
     quotes.updateQuote(appendClientId(socket, req), cb);
+  });
+  
+  //Users
+  socket.on('get-partner-info', function(req ,cb){
+  
   });
   
   socket.on('disconnect', function(){
