@@ -32,9 +32,18 @@ function tripIsLocal(trip, request) {
     trip.originatingPartner.id === trip.servicingPartner.id;
 }
 
-function shouldForwardUpdate(trip) {
-  return trip.servicingPartner && 
+function isActiveStatus(status) {
+  return status === 'dispatched' || status === 'enroute' || 
+    status === 'pickedup';
+}
+
+function shouldForwardUpdate(trip, currentStatus, newStatus) {
+  var shouldForward = trip.servicingPartner && 
     trip.originatingPartner.id !== trip.servicingPartner.id;
+  if(!isActiveStatus(currentStatus) && !isActiveStatus(newStatus)) {
+    shouldForward = false;
+  }
+  return shouldForward;
 }
 
 function TripsController() {
@@ -185,8 +194,10 @@ TripsController.prototype.updateTripStatus = function(request, cb) {
   .bind({})
   .then(function(t){
     if(t) {
+      this.oldStatus = t.status;
       this.trip = TripThruApiFactory.createTripFromRequest(request, 
           'update-trip-status', {trip: t});
+      this.newStatus = this.trip.status;
       if(this.trip.status === 'pickedup') {
         this.trip.pickupTime = moment();
       }
@@ -196,7 +207,7 @@ TripsController.prototype.updateTripStatus = function(request, cb) {
     throw new RequestError(resultCodes.rejected, 'trip not found');
   })
   .then(function(){
-    if(shouldForwardUpdate(this.trip)) {
+    if(shouldForwardUpdate(this.trip, this.oldStatus, this.newStatus)) {
       var sendTo = request.clientId === this.trip.originatingPartner.id ?
           this.trip.servicingPartner.id : this.trip.originatingPartner.id;
       log.log('Trip has foreign dependency so creating update trip status job');
