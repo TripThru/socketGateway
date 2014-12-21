@@ -10,18 +10,23 @@ tv4.addFormat('date-time', function(data, schema){
 });
 
 function validate(data, schema) {
-  return tv4.validateResult(data, schema);
+  var validation = tv4.validateResult(data, schema);
+  if(!validation.valid) {
+    validation.error.message += ' for ' + validation.error.dataPath;
+  }
+  return validation;
 }
 
-// Public
+var dispatchTripRequest = function(request) {
+  return validate(request, schemas.dispatchTripRequest);
+};
+
+var quoteRequest = function(request) {
+  return validate(request, schemas.quoteRequest);
+};
 
 module.exports = {
-    
-    dispatchTripRequest: function(request) {
-      return validate(request, schemas.dispatchTripRequest);
-    },
-    quoteRequest: function(request) {
-      return validate(request, schemas.quoteRequest);
-    }
-}
+  dispatchTripRequest: dispatchTripRequest,
+  quoteRequest: quoteRequest
+};
 

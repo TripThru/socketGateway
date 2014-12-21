@@ -12,6 +12,7 @@
     "kue": "*",
     "express": "*",
     "express-session": "*",
+    "body-parser": "*",
     "moment": "*",
     "mongoose": "*",
     "socket.io": "*",

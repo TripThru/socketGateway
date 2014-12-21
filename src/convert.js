@@ -9,11 +9,18 @@ function clone(obj) {
   return copy;
 }
 
+function idName(obj) {
+  return {
+    id: obj ? (obj.id || null) : null,
+    name: obj ? (obj.name || null) : null
+  };
+}
+
 module.exports = {
     toTripFromDispatchRequest: function(request) {
       var r = clone(request);
-      r.originatingPartner = { id: r.clientId };
-      r.servicingPartner = r.partner;
+      r.originatingPartner = idName({ id: r.clientId });
+      r.servicingPartner = idName(r.partner);
       delete r['partner'];
       r.pickupTime = moment(r.pickupTime, moment.ISO_8601, true).toDate();
       r.dropoffTime = 
@@ -27,7 +34,8 @@ module.exports = {
     toTripFromUpdateTripStatusRequest: function(request, trip) {
       trip.status = request.status;
       trip.eta = moment(request.eta, moment.ISO_8601, true);
-      trip.driver = request.driver;
+      if(!trip.driver) trip.driver = {};
+      trip.driver.location = request.driverLocation;
       return trip;
     },
     toDispatchRequest: function(trip) {
@@ -40,9 +48,9 @@ module.exports = {
           dropoffLocation: trip.dropoffLocation
       };
       if( trip.fleet )
-        r.fleet = trip.fleet;
+        r.fleet = idName(trip.fleet);
       if( trip.driver )
-        r.driver = trip.driver;
+        r.driver = idName(trip.driver);
       if( trip.vehicleType )
         r.vehicleType = trip.vehicleType;
       return r;

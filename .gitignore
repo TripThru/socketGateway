@@ -4,3 +4,4 @@ coverage.html
 .DS_Store
 .project
 dump.rdb
+.settings

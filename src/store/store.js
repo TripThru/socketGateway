@@ -17,53 +17,59 @@ Promise.promisifyAll(Trip.prototype);
 var Quote = mongoose.model('quotes', schemas.quote);
 Promise.promisifyAll(Quote);
 Promise.promisifyAll(Quote.prototype);
-var User = mongoose.model('users', schemas.user);
+var User = mongoose.model('user', schemas.user, 'usernode'); //temporary collection name while migrating website
 Promise.promisifyAll(User);
 Promise.promisifyAll(User.prototype);
 
-var self = module.exports = {
-  createTrip: function(trip) {
-    return create(Trip, trip);
-  },
+function Store(){
   
-  updateTrip: function(trip) {
-    return update(Trip, trip);
-  },
-  
-  getTripBy: function(query) { 
-    return get(Trip, query);
-  },
-  
-  createQuote: function(quote) {
-    return create(Quote, quote);
-  },
-  
-  updateQuote: function(quote) {
-    return update(Quote, quote);
-  },
-    
-  getQuoteBy: function(query) {
-    return get(Quote, query);
-  },
-  
-  createUser: function(user) {
-    return create(User, user);
-  },
-  
-  updateUser: function(user) {
-    return update(User, user);
-  },
-    
-  getUserBy: function(query) { 
-    return get(User, query);
-  },
-  
-  clear: function() {
-    mongoose.connection.db.dropCollection('trips');
-    mongoose.connection.db.dropCollection('quotes');
-    mongoose.connection.db.dropCollection('users');
-  }
 }
+
+Store.prototype.createTrip = function(trip) {
+  return create(Trip, trip);
+};
+  
+Store.prototype.updateTrip = function(trip) {
+  return update(Trip, trip);
+};
+  
+Store.prototype.getTripBy = function(query) { 
+  return get(Trip, query);
+};
+  
+Store.prototype.createQuote = function(quote) {
+  return create(Quote, quote);
+};
+  
+Store.prototype.updateQuote = function(quote) {
+  return update(Quote, quote);
+};
+    
+Store.prototype.getQuoteBy = function(query) {
+  return get(Quote, query);
+};
+  
+Store.prototype.createUser = function(user) {
+  return create(User, user);
+};
+  
+Store.prototype.updateUser = function(user) {
+  return update(User, user);
+};
+    
+Store.prototype.getUserBy = function(query) { 
+  return get(User, query);
+};
+
+Store.prototype.getAllUsers = function() {
+  return getAll(User);
+};
+  
+Store.prototype.clear = function() {
+  mongoose.connection.db.dropCollection('trips');
+  mongoose.connection.db.dropCollection('quotes');
+  mongoose.connection.db.dropCollection('users');
+};
 
 function create(model, data) {
   return model.createAsync(data);
@@ -76,3 +82,9 @@ function update(model, data) {
 function get(model, query) {
   return model.findAsync(query);
 }
+
+function getAll(model) {
+  return model.findAsync();
+}
+
+module.exports = new Store();
