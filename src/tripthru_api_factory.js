@@ -234,6 +234,7 @@ function createQuoteFromTrip(trip) {
 
 function createQuoteFromQuoteRequest(request) {
   var quote = {
+    id: request.id,
     request: {
         clientId: request.clientId,
         id: request.id,
@@ -285,19 +286,22 @@ function createGetQuoteResponseFromQuote(quote) {
     clientId: tripthruClientId,
     quotes: []
   };
-  for(var i = 0; quote.receivedQuotes.length; i++) {
+  for(var i = 0; i < quote.receivedQuotes.length; i++) {
     var q = quote.receivedQuotes[i];
-    r.quotes.push({
-      partner: idName(q.partner),
-      fleet: idName(q.fleet),
-      driver: idName(q.driver),
-      passenger: idName(q.passenger),
-      eta: getISOStringFromMoment(q.eta),
-      vehicleType: q.vehicleType,
-      price: q.price,
-      distance: q.distance,
-      duration: q.duration.asSeconds()
-    });
+    if(q) {
+      var qt = {
+        partner: idName(q.partner),
+        fleet: idName(q.fleet),
+        eta: getISOStringFromMoment(q.eta),
+        vehicleType: q.vehicleType,
+        price: q.price,
+        distance: q.distance
+      };
+      if(q.driver) qt.driver = idName(q.driver);
+      if(q.passenger) qt.passenger = idName(q.passenger);
+      if(q.duration) qt.duration = q.duration.asSeconds();
+      r.quotes.push(qt);
+    }
   }
   return r;
 }
@@ -311,7 +315,7 @@ function createQuoteRequestFromQuote(quote) {
 }
 
 function createUpdateQuoteRequestFromQuote(quote) {
-  return createGetQuoteRequestFromQuote(quote);
+  return createGetQuoteResponseFromQuote(quote);
 }
 
 function createGetQuoteRequestFromQuote(quote) {

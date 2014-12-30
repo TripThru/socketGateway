@@ -28,13 +28,13 @@ function dispatchTrip(job, done) {
         throw new Error('Trip ' + tripId + ' not found');
       }
     })
-    .then(done)
     .catch(socket.SocketError, function(err){
       log.log('SocketError dispatch ' + tripId + ' : ' + err.error);
     })
     .error(function(err){
       log.log('Error dispatching ' + tripId + ' : ' + err);
-    });
+    })
+    .finally(done);
 }
 
 function updateTripStatus(job, done){
@@ -43,13 +43,13 @@ function updateTripStatus(job, done){
   var log = logger.getSublog(request.id);
   log.log('Processing update trip status job ' + request.id, job);
   forwardUpdateToPartner(sendTo, request, log)
-    .then(done)
     .catch(socket.SocketError, function(err){
       log.log('SocketError update trip status ' + request.id + ' : ' + err.error);
     })
     .error(function(err){
       log.log('Error updating ' + request.id + ' : ' + err);
-    });
+    })
+    .finally(done);
 }
 
 function createQuoteAutoDispatchJob(trip) {
@@ -76,13 +76,13 @@ function autoDispatchTrip(job, done) {
   }
   
   promise
-    .then(done)
     .catch(socket.SocketError, function(err){
       log.log('SocketError autodispatch ' + tripId + ' : ' + err.error);
     })
     .error(function(err){
       log.log('Error autodispatch ' + tripId + ' : ' + err);
-    });
+    })
+    .finally(done);
 }
 
 function dispatchTripAndUpdatePartner(tripId, servicingPartner, log) {

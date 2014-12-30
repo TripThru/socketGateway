@@ -22,7 +22,7 @@ var dispatchTripRequest = function(request) {
 };
 
 var quoteRequest = function(request) {
-  return validate(request, schemas.quoteRequest);
+  return validate(request, schemas.quoteTripRequest);
 };
 
 module.exports = {

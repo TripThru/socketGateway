@@ -7,7 +7,7 @@ var moment = require('moment');
 var logger = require('../logger');
 var socket; // Initialized with init to avoid circular dependency
 var tripsJobQueue; // Initialized with init to avoid circular dependency
-var quoteMaxDuration = moment.duration(5, 'seconds');
+var quoteMaxDuration = moment.duration(2, 'seconds');
 var missedBookingPeriod = moment.duration(30, 'minutes');
 
 function quote(job, done) {
@@ -23,16 +23,16 @@ function quote(job, done) {
       return quotes.update(quote);
     })
     .then(function(){
-      var updateRequest = TripThruApiFactory.createRequestFromQuote(quote, 'update');
-      return forwardCompletedQuoteToPartner(this.quote.request.clientId, this.updateRequest, log);
+      var updateRequest = TripThruApiFactory.createRequestFromQuote(this.quote, 'update');
+      return forwardCompletedQuoteToPartner(this.quote.request.clientId, updateRequest, log);
     })
-    .then(done)
     .catch(socket.SocketError, function(err){
       log.log('SocketError quote error ' + quoteId + ' : ' + err);
     })
     .error(function(err){
       log.log('Error quoting ' + quoteId + ' : ' + err);
-    });
+    })
+    .finally(done);
 }
 
 function autoDispatchQuote(job, done) {
@@ -52,14 +52,14 @@ function autoDispatchQuote(job, done) {
       var partnerId = bestQuote !== null ? bestQuote.partner.id : null;
       log.log('Creating autodispatch trip with best quote', {quote: quoteId, partner: partnerId});
       tripsJobQueue.newAutoDispatchJob(quoteId, partnerId);
-      done();
     })
     .catch(socket.SocketError, function(err){
       log.log('SocketError autodispatch quote error ' + quoteId + ' : ' + err);
     })
     .error(function(err){
       log.log('Error autodispatch quoting ' + quoteId + ' : ' + err);
-    });
+    })
+    .finally(done);
 }
 
 function getBestQuotePartnerId(request, quotes) {
@@ -99,11 +99,11 @@ function broadcastQuoteAndGetResult(quoteId, log) {
 function forwardCompletedQuoteToPartner(sendTo, request, log){
   log.log('Forward complete quote to ' + sendTo, request);
   return socket
-    .updateQuote(sendTo, updateRequest)
+    .updateQuote(sendTo, request)
     .then(function(result){
       log.log('Response', result);
-      if(result !== resultCodes.ok) {
-        throw new SocketError(res.resultCode, res.error);
+      if(result.result !== resultCodes.ok) {
+        throw new socket.SocketError(result.resultCode, result.error);
       }
     });
 }

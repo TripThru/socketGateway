@@ -108,34 +108,34 @@ QuotesController.prototype.updateQuote = function(request, cb) {
   var log = logger.getSublog(request.id);
   log.log('Update quote ' + request.id + ' from ' + request.clientId, request);
   quotes
-  .getById(request.id)
-  .bind({})
-  .then(function(q){
-    if(q) {
-      this.quote = q;
-      var partnerQuote = TripThruApiFactory.createQuoteFromRequest(request, 
-          'update', {quote: q});
-      return quotes.update(this.quote);
-    }
-    throw new RequestError(resultCodes.rejected, 'quote not found');
-  })
-  .then(function(){
-    var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'update');
-    log.log('Response', response);
-    cb(response);
-  })
-  .catch(RequestError, function(err){
-    var response = TripThruApiFactory.createResponseFromQuote(null, null, 
-        err.resultCode, err.error);
-    log.log('Response', response);
-    cb(response);
-  })
-  .error(function(err){
-    var response = TripThruApiFactory.createResponseFromQuote(null, null, 
-        resultCodes.unknownError, 'unknown error ocurred');
-    log.log('Response', response);
-    cb(response);
-  });
+    .getById(request.id)
+    .bind({})
+    .then(function(q){
+      if(q) {
+        this.quote = q;
+        var partnerQuote = TripThruApiFactory.createQuoteFromRequest(request, 
+            'update', {quote: q});
+        return quotes.update(this.quote);
+      }
+      throw new RequestError(resultCodes.rejected, 'quote not found');
+    })
+    .then(function(){
+      var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'update');
+      log.log('Response', response);
+      cb(response);
+    })
+    .catch(RequestError, function(err){
+      var response = TripThruApiFactory.createResponseFromQuote(null, null, 
+          err.resultCode, err.error);
+      log.log('Response', response);
+      cb(response);
+    })
+    .error(function(err){
+      var response = TripThruApiFactory.createResponseFromQuote(null, null, 
+          resultCodes.unknownError, 'unknown error ocurred');
+      log.log('Response', response);
+      cb(response);
+    });
 };
 
 module.exports = new QuotesController();

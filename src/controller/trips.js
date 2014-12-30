@@ -89,19 +89,19 @@ TripsController.prototype.dispatchTrip =  function(request, cb) {
           workers.newDispatchJob(trip.id);
         }
         var response = TripThruApiFactory.createResponseFromTrip(trip, 'dispatch');
-        log.log('Response', response);
+        log.log('Response', response.result);
         cb(response);
       })
       .catch(RequestError, function(err){
         var response = TripThruApiFactory.createResponseFromTrip(null, null, 
             err.resultCode, err.error);
-        log.log('Response', response);
+        log.log('Response', response.result);
         cb(response);
       })
       .error(function(err){
         var response = TripThruApiFactory.createResponseFromTrip(null, null, 
             resultCodes.unknownError, 'unknown error ocurred');
-        log.log('Response', response);
+        log.log('Response', response.result);
         cb(response);
       });
   }
@@ -136,100 +136,98 @@ TripsController.prototype.getTrip = function(request, cb) {
 };
 
 TripsController.prototype.getTripStatus = function(request, cb) {
-  // To do: Make sure it's an active trip by checking with ActiveTripsTracker
   //var log = logger.getSublog(request.id);
   //log.log('Get trip status ' + request.id, request);
   var trip;
   trips
-  .getById(request.id)
-  .bind(this)
-  .then(function(t){
-    trip = t;
-    if(!trip) {
-      throw new RequestError(resultCodes.rejected, 'trip ' + request.id + ' not found');
-    } else if(!trip.servicingPartner) {
-      return {result: resultCodes.notFound};
-    } else { 
-      return this.socket.getTripStatus(trip.servicingPartner.id, request);
-    }
-  })
-  .then(function(response){
-    if(response.result === resultCodes.ok) {
-      var res = 
-        TripThruApiFactory.createGetTripStatusResponseFromPartnerGetTripStatusResponse(response, trip);
-      //log.log('Response', res);
-      cb(res);
-    } else {
-      throw(new UnsuccessfulRequestError('Unsuccessful result code ' +
-          response.resultCode));
-    }
-  })
-  .catch(this.socket.SocketError, UnsuccessfulRequestError, function(err){
-    // If request to client fails, fall back to last known status
-    var response = 
-      TripThruApiFactory.createResponseFromTrip(trip, 'get-trip-status');
-    //log.log('Response', response);
-    cb(response);
-  })
-  .catch(RequestError, function(err){
-    var response = TripThruApiFactory.createResponseFromTrip(null, null, 
-        err.resultCode, err.error);
-    //log.log('Response', response);
-    cb(response);
-  })
-  .error(function(err){
-    var response = TripThruApiFactory.createResponseFromTrip(null, null, 
-        resultCodes.unknownError, 'unknown error ocurred');
-    //log.log('Response', response);
-    cb(response);
-  });
+    .getById(request.id)
+    .bind(this)
+    .then(function(t){
+      trip = t;
+      if(!trip || !activeTripsTracker.getTrip(trip)) {
+        throw new RequestError(resultCodes.rejected, 'trip ' + request.id + ' not found');
+      } else if(!trip.servicingPartner) {
+        return {result: resultCodes.notFound};
+      } else { 
+        return this.socket.getTripStatus(trip.servicingPartner.id, request);
+      }
+    })
+    .then(function(response){
+      if(response.result === resultCodes.ok) {
+        var res = 
+          TripThruApiFactory.createGetTripStatusResponseFromPartnerGetTripStatusResponse(response, trip);
+        //log.log('Response', res);
+        cb(res);
+      } else {
+        throw(new UnsuccessfulRequestError('Unsuccessful result code ' +
+            response.resultCode));
+      }
+    })
+    .catch(this.socket.SocketError, UnsuccessfulRequestError, function(err){
+      // If request to client fails, fall back to last known status
+      var response = 
+        TripThruApiFactory.createResponseFromTrip(trip, 'get-trip-status');
+      //log.log('Response', response);
+      cb(response);
+    })
+    .catch(RequestError, function(err){
+      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+          err.resultCode, err.error);
+      //log.log('Response', response);
+      cb(response);
+    })
+    .error(function(err){
+      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+          resultCodes.unknownError, 'unknown error ocurred');
+      //log.log('Response', response);
+      cb(response);
+    });
 };
 
 TripsController.prototype.updateTripStatus = function(request, cb) {
-  // To do: Make sure it's an active trip by checking with ActiveTripsTracker
   var log = logger.getSublog(request.id);
   log.log('Update trip status (' + request.status + ') ' + request.id, request);
   trips
-  .getById(request.id)
-  .bind({})
-  .then(function(t){
-    if(t) {
-      this.oldStatus = t.status;
-      this.trip = TripThruApiFactory.createTripFromRequest(request, 
-          'update-trip-status', {trip: t});
-      this.newStatus = this.trip.status;
-      if(this.trip.status === 'pickedup') {
-        this.trip.pickupTime = moment();
+    .getById(request.id)
+    .bind({})
+    .then(function(t){
+      if(t && activeTripsTracker.getTrip(t)) {
+        this.oldStatus = t.status;
+        this.trip = TripThruApiFactory.createTripFromRequest(request, 
+            'update-trip-status', {trip: t});
+        this.newStatus = this.trip.status;
+        if(this.trip.status === 'pickedup') {
+          this.trip.pickupTime = moment();
+        }
+        activeTripsTracker.updateTrip(this.trip);
+        return trips.update(this.trip);
       }
-      activeTripsTracker.updateTrip(this.trip);
-      return trips.update(this.trip);
-    }
-    throw new RequestError(resultCodes.rejected, 'trip not found');
-  })
-  .then(function(){
-    if(shouldForwardUpdate(this.trip, this.oldStatus, this.newStatus)) {
-      var sendTo = request.clientId === this.trip.originatingPartner.id ?
-          this.trip.servicingPartner.id : this.trip.originatingPartner.id;
-      log.log('Trip has foreign dependency so creating update trip status job');
-      workers.newUpdateTripStatusJob(request, sendTo);
-    }
-    var response = 
-      TripThruApiFactory.createResponseFromTrip(this.trip, 'update-trip-status');
-    log.log('Response', response);
-    cb(response);
-  })
-  .catch(RequestError, function(err){
-    var response = TripThruApiFactory.createResponseFromTrip(null, null, 
-        err.resultCode, err.error);
-    log.log('Response', response);
-    cb(response);
-  })
-  .error(function(err){
-    var response = TripThruApiFactory.createResponseFromTrip(null, null, 
-        resultCodes.unknownError, 'unknown error ocurred');
-    log.log('Response', response);
-    cb(response);
-  });
+      throw new RequestError(resultCodes.rejected, 'trip not found');
+    })
+    .then(function(){
+      if(shouldForwardUpdate(this.trip, this.oldStatus, this.newStatus)) {
+        var sendTo = request.clientId === this.trip.originatingPartner.id ?
+            this.trip.servicingPartner.id : this.trip.originatingPartner.id;
+        log.log('Trip has foreign dependency so creating update trip status job');
+        workers.newUpdateTripStatusJob(request, sendTo);
+      }
+      var response = 
+        TripThruApiFactory.createResponseFromTrip(this.trip, 'update-trip-status');
+      log.log('Response', response);
+      cb(response);
+    })
+    .catch(RequestError, function(err){
+      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+          err.resultCode, err.error);
+      log.log('Response', response);
+      cb(response);
+    })
+    .error(function(err){
+      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+          resultCodes.unknownError, 'unknown error ocurred');
+      log.log('Response', response);
+      cb(response);
+    });
 };
 
 module.exports = new TripsController();

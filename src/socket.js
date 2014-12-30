@@ -117,7 +117,9 @@ function broadcastQuoteToAllPartnersThatServe(request) {
     .getPartnersThatServeLocation(request.pickupLocation)
     .then(function(partners){
       for(var i = 0; i < partners.length; i++) {
-        emit('quote-trip', partners[i].id, request);
+        if(partners[i].id !== request.clientId) {
+          emit('quote-trip', partners[i].id, request);
+        }
       }
     });
 }

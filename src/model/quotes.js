@@ -14,12 +14,12 @@ function cloneQuote(quote) {
         dropoffLocation: quote.request.dropoffLocation,
         luggage: quote.request.luggage || 1,
         persons: quote.request.persons || 1,
-        vehicleType: quote.request.vehicleType,
         paymentMethod: quote.request.paymentMethod || 'cash',
         maxPrice: quote.request.maxPrice || 0
       },
       receivedQuotes: []
   };
+  if(quote.request.vehicleType) qt.vehicleType = quote.request.vehicleType;
   if(quote.request.partner) qt.partner = quote.request.partner;
   if(quote.request.fleet) qt.fleet = quote.request.fleet;
   if(quote.request.driver) qt.driver = quote.request.driver;

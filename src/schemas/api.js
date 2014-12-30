@@ -136,4 +136,4 @@ module.exports = {
       },
       "required": [ "pickupLocation", "pickupTime", "dropoffLocation", "id" ]
     }
-}
+};
