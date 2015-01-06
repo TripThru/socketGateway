@@ -18,7 +18,7 @@ Sublog.prototype.log = function(message, json) {
 
 function Logger(){
   this.logs = [];
-  this.logLifeTime = moment.duration(30, 'minutes');
+  this.logLifeTime = moment.duration(20, 'minutes');
   this.cleanupInterval = moment.duration(5, 'minutes');
   setInterval(this.removeOldLogs.bind(this), this.cleanupInterval.asMilliseconds());
 }

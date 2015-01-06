@@ -44,7 +44,7 @@ app.get('/stats', function(req, res) {
 });
 app.get('/trips/:status', function(req, res) {
   var status = req.params.status;
-  var trips = activeTripsTracker.getAll(status);
+  var trips = activeTripsTracker.getDashboardTrips(status);
   var response = {
       trips: trips,
       result: resultCodes.ok
