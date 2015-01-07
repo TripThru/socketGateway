@@ -14,7 +14,7 @@ ActiveTripsTracker.prototype.addTrip = function(trip) {
   }
   this.activeTripsById[trip.id] = trip;
   if(Object.keys(this.dashboardTripsById).length < this.maxDashboardTrips || 
-        trip.id.indexOf(this.bookingWebsiteTripIdTag) > -1) {
+        trip.id.indexOf(this.bookingWebsiteTripTag) > -1) {
     this.dashboardTripsById[trip.id] = trip;
   }
 };
