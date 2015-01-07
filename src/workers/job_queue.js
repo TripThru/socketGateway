@@ -1,6 +1,8 @@
 var kue = require('kue');   
 var config = require('../../config');
 var jobs = kue.createQueue(config.kue); 
+kue.app.set('Job queue', 'TripThru');
+kue.app.listen(3301);
 
 var self = module.exports = {
     
@@ -25,4 +27,4 @@ var self = module.exports = {
         });
       });
     }
-}
+};
