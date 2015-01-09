@@ -8,6 +8,7 @@ var self = module.exports = {
     
     newJob: function(name, data, onComplete, onFailed, onProgress) {
       var job = jobs.create(name, data);
+      job.removeOnComplete(true);
       job.save();
       if(onComplete)
         job.on('complete', onComplete);
