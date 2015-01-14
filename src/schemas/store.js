@@ -123,12 +123,7 @@ var quote = new mongoose.Schema({
 
 var user = new mongoose.Schema({
   id: { type: String, trim: true },
-  username: { type: String, trim: true },
-  partnerName: { type: String, trim: true },
-  email: { type: String, trim: true },
-  pwdhash: String,
-  salt: String,
-  isAdmin: Boolean,
+  name: { type: String, trim: true },
   token: String,
   coverage: [coverage],
   fleets: [{ 

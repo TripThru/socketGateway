@@ -94,7 +94,6 @@ UsersController.prototype.getByToken = function(token) {
   return users.getByToken(token);
 };
 
-
 // This is a temporary solution to work with the current website without changes
 UsersController.prototype.getNetworks = function(cb) {
   users
@@ -110,7 +109,7 @@ UsersController.prototype.getNetworks = function(cb) {
           id: u.fleets[0].id,
           name: u.fleets[0].name,
           coverage: u.coverage,
-          partner: { id: u.id, name: u.fleets[0].name }
+          partner: { id: u.id, name: u.name }
         });
         for(var j = 0; j < u.vehicleTypes.length; j++) {
           response.vehicleTypes.push(u.vehicleTypes[j]);
