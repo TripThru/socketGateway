@@ -58,6 +58,7 @@ function createDispatchRequest(trip, partner) {
   if(trip.driver) r.driver = idName(trip.driver);
   if(trip.vehicleType) r.vehicleType = trip.vehicleType;
   if(trip.servicingPartner) r.partner = idName(trip.servicingPartner);
+  if(trip.servicingFleet) r.fleet = idName(trip.servicingFleet);
   return r;
 }
 
@@ -87,6 +88,7 @@ function createTripFromDispatchRequest(request) {
   var trip = {
       id: request.id,
       originatingPartner: idName({id: request.clientId, name: request.clientId}),
+      originatingFleet: idName(request.originatingFleet),
       passenger: request.passenger,
       pickupLocation: request.pickupLocation,
       pickupTime: getMomentFromISOString(request.pickupTime),
@@ -96,11 +98,11 @@ function createTripFromDispatchRequest(request) {
       creation: moment(),
       lastUpdate: moment()
   };
-  if(request.fleet) trip.fleet = idName(request.fleet);
   if(request.driver) trip.driver = idName(request.driver);
   if(request.vehicleType) trip.vehicleType = request.vehicleType;
   if(request.partner) {
     trip.servicingPartner = idName(request.partner);
+    if(request.fleet) trip.servicingFleet = idName(request.fleet);
     trip.autoDispatch = false;
   } else {
     trip.autoDispatch = true;

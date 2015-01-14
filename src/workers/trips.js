@@ -64,12 +64,13 @@ function createQuoteAutoDispatchJob(trip) {
 function autoDispatchTrip(job, done) {
   var tripId = job.tripId;
   var servicingPartner = job.servicingPartner;
+  var servicingFleet = job.servicingFleet;
   var log = logger.getSublog(tripId);
   var promise;
   
   log.log('Processing autodispatch job ' + tripId, job);
   if(servicingPartner) {
-    promise = dispatchTripAndUpdatePartner(tripId, servicingPartner, log);
+    promise = dispatchTripAndUpdatePartner(tripId, servicingPartner, servicingFleet, log);
   } else {
     log.log('No best quote found so rejecting trip');
     promise = rejectTripAndUpdate(tripId, servicingPartner, log);
@@ -85,13 +86,14 @@ function autoDispatchTrip(job, done) {
     .finally(done);
 }
 
-function dispatchTripAndUpdatePartner(tripId, servicingPartner, log) {
+function dispatchTripAndUpdatePartner(tripId, servicingPartner, servicingFleet, log) {
   return trips
     .getById(tripId)
     .bind({})
     .then(function(trip){
       if(trip) {
         trip.servicingPartner = servicingPartner;
+        trip.servicingFleet = servicingFleet;
         this.trip = trip;
         return trips.update(this.trip);
       } else {
@@ -188,13 +190,12 @@ module.exports = {
     };
     queue.newJob('update-trip-status', data);
   },
-  newAutoDispatchJob: function(tripId, servicingPartnerId) {
+  newAutoDispatchJob: function(tripId, servicingPartner, servicingFleet) {
     var data = {
-        tripId: tripId
+        tripId: tripId,
+        servicingPartner: servicingPartner,
+        servicingFleet: servicingFleet
     };
-    if(servicingPartnerId){
-      data.servicingPartner = { id: servicingPartnerId };
-    }
     queue.newJob('autodispatch-trip', data);
   }
 };

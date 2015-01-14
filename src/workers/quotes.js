@@ -49,9 +49,11 @@ function autoDispatchQuote(job, done) {
     })
     .then(function(){
       var bestQuote = getBestQuotePartnerId(this.quote.request, this.quote.receivedQuotes);
-      var partnerId = bestQuote !== null ? bestQuote.partner.id : null;
-      log.log('Creating autodispatch trip with best quote', {quote: quoteId, partner: partnerId});
-      tripsJobQueue.newAutoDispatchJob(quoteId, partnerId);
+      var partner = bestQuote !== null ? bestQuote.partner : null;
+      var fleet = bestQuote !== null ? bestQuote.fleet : null;
+      log.log('Creating autodispatch trip with best quote', 
+          {quote: quoteId, partner: partner !== null ? partner.id : null, fleet: fleet !== null ? fleet.id : null});
+      tripsJobQueue.newAutoDispatchJob(quoteId, partner, fleet);
     })
     .catch(socket.SocketError, function(err){
       log.log('SocketError autodispatch quote error ' + quoteId + ' : ' + err);

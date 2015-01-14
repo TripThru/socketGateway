@@ -77,10 +77,16 @@ var trip = new mongoose.Schema({
     name: String
   },
   servicingPartnerId: String,
-  fleet: { 
+  originatingFleet: { 
     id: { type: String, trim: true },
     name: String
   },
+  originatingFleetId: String,
+  servicingFleet: { 
+    id: { type: String, trim: true },
+    name: String
+  },
+  servicingFleetId: String,
   driver: { 
     id: { type: String, trim: true },
     name: String,

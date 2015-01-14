@@ -12,6 +12,7 @@ function cloneTrip(trip) {
   var t = {
       id: trip.id,
       originatingPartner: trip.originatingPartner,
+      originatingFleet: trip.originatingFleet,
       pickupLocation: trip.pickupLocation,
       pickupTime: trip.pickupTime,
       dropoffLocation: trip.dropoffLocation,
@@ -25,6 +26,7 @@ function cloneTrip(trip) {
   if(trip.dropoffTime) t.dropoffTime = trip.dropoffTime;
   if(trip.eta) t.eta = trip.eta;
   if(trip.servicingPartner) t.servicingPartner = trip.servicingPartner;
+  if(trip.servicingFleet) t.servicingFleet = trip.servicingFleet;
   if(trip.fleet) t.fleet = trip.fleet;
   if(trip.driver) t.driver = trip.driver;
   if(trip.passenger) t.passenger = trip.passenger;
@@ -47,7 +49,9 @@ function toStoreTrip(apiTrip) {
   trip.loc = locationIndexFromLocation(apiTrip.pickupLocation);
   trip.samplingPercentage = 1;
   trip.originatingPartnerId = trip.originatingPartner.id;
+  trip.originatingFleetId = trip.originatingFleet.id;
   trip.servicingPartnerId = trip.servicingPartner ? trip.servicingPartner.id : null;
+  trip.servicingFleetId = trip.servicingFleet ? trip.servicingFleet.id : null;
   
   return trip;
 }
