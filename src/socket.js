@@ -28,7 +28,7 @@ io.use(function(socket, next){
           activeClientIdsBySocket[socket] = user.id;
           next();
         } else {
-          console.log("Invalid access token");
+          console.log("Invalid access token " + query.token);
         }
       });
   }

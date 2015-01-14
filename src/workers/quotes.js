@@ -7,7 +7,7 @@ var moment = require('moment');
 var logger = require('../logger');
 var socket; // Initialized with init to avoid circular dependency
 var tripsJobQueue; // Initialized with init to avoid circular dependency
-var quoteMaxDuration = moment.duration(2, 'seconds');
+var quoteMaxDuration = moment.duration(10, 'seconds');
 var missedBookingPeriod = moment.duration(30, 'minutes');
 
 function quote(job, done) {

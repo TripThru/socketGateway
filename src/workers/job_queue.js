@@ -18,7 +18,7 @@ var self = module.exports = {
         job.on('progress', onProgress);
     },
     processJob: function(name, task) {
-      jobs.process(name, function (job, done){
+      jobs.process(name, 20, function (job, done){
         task(job.data, done);
       });
     },
