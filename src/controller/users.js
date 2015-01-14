@@ -105,12 +105,15 @@ UsersController.prototype.getNetworks = function(cb) {
       };
       for(var i = 0; i < allUsers.length; i++) {
         var u = allUsers[i];
-        response.fleets.push({
-          id: u.fleets[0].id,
-          name: u.fleets[0].name,
-          coverage: u.coverage,
-          partner: { id: u.id, name: u.name }
-        });
+        for(var j = 0; j < u.fleets.length; j++){
+          var fleet = u.fleets[j];
+          response.fleets.push({
+            id: fleet.id,
+            name: fleet.name,
+            coverage: u.coverage[j],
+            partner: { id: u.id, name: u.name }
+          });
+        }
         for(var j = 0; j < u.vehicleTypes.length; j++) {
           response.vehicleTypes.push(u.vehicleTypes[j]);
         }
