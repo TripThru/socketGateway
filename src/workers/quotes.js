@@ -12,7 +12,7 @@ var missedBookingPeriod = moment.duration(30, 'minutes');
 
 function quote(job, done) {
   var quoteId = job.quoteId;
-  var log = logger.getSublog(quoteId);
+  var log = logger.getSublog(quoteId, 'tripthru', 'servicing', 'quote');
   log.log('Processing quote job ' + quoteId, job);
   broadcastQuoteAndGetResult(quoteId, log)
     .bind({})
@@ -37,7 +37,7 @@ function quote(job, done) {
 
 function autoDispatchQuote(job, done) {
   var quoteId = job.quoteId;
-  var log = logger.getSublog(quoteId);
+  var log = logger.getSublog(quoteId, 'tripthru', 'servicing', 'quote');
   log.log('Processing autodispatch quote ' + quoteId, job);
   broadcastQuoteAndGetResult(quoteId, log)
     .bind({})

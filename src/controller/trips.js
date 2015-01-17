@@ -56,7 +56,7 @@ TripsController.prototype.init = function(gatewayClient) {
 };
 
 TripsController.prototype.dispatchTrip =  function(request, cb) {
-  var log = logger.getSublog(request.id);
+  var log = logger.getSublog(request.id, 'origin', 'tripthru', 'dispatch');
   log.log('Dispatch ' + request.id + ' from ' + request.clientId, request);
   var validation = validate.dispatchTripRequest(request);
   if( !validation.valid ) {
@@ -108,13 +108,15 @@ TripsController.prototype.dispatchTrip =  function(request, cb) {
 };
 
 TripsController.prototype.getTrip = function(request, cb) {
-  var log = logger.getSublog(request.id);
+  var log = logger.getSublog(request.id, null, 'tripthru', 'get-trip');
   log.log('Get trip ' + request.id, request);
   trips
     .getById(request.id)
     .then(function(trip){
       if(trip) {
         var response = TripThruApiFactory.createResponseFromTrip(trip, 'get-trip');
+        log.setOrigin(
+            trip.originatingPartner.id === request.clientId ? 'origin' : 'servicing');
         log.log('Response', response);
         cb(response);
       } else {
@@ -185,13 +187,15 @@ TripsController.prototype.getTripStatus = function(request, cb) {
 };
 
 TripsController.prototype.updateTripStatus = function(request, cb) {
-  var log = logger.getSublog(request.id);
+  var log = logger.getSublog(request.id, null, 'tripthru', 'update-trip-status');
   log.log('Update trip status (' + request.status + ') ' + request.id, request);
   trips
     .getById(request.id)
     .bind({})
     .then(function(t){
       if(t && activeTripsTracker.getTrip(t)) {
+        log.setOrigin(
+            t.originatingPartner.id === request.clientId ? 'origin' : 'servicing');
         this.oldStatus = t.status;
         this.trip = TripThruApiFactory.createTripFromRequest(request, 
             'update-trip-status', {trip: t});

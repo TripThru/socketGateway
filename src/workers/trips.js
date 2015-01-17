@@ -12,13 +12,15 @@ var quotesJobQueue; // Initialized with init to avoid circular dependency
 
 function dispatchTrip(job, done) {
   var tripId = job.tripId;
-  var log = logger.getSublog(tripId);
+  var log = logger.getSublog(tripId, 'tripthru');
   log.log('Processing dispatch job ' + tripId, job);
   trips
     .getById(tripId)
     .then(function(trip){
       if(trip) {
         if(!trip.autoDispatch) {
+          log.setDestination('servicing');
+          log.setType('dispatch');
           return forwardDispatchToPartner(trip, log);
         } else {
           log.log('Since trip is autodispatch create quote job');
@@ -40,7 +42,14 @@ function dispatchTrip(job, done) {
 function updateTripStatus(job, done){
   var request = job.request;
   var sendTo = job.sendTo;
-  var log = logger.getSublog(request.id);
+  
+  var trip = activeTripsTracker.getTrip(request);
+  var destination = null;
+  if(trip) {
+    destination = trip.originatingPartner.id === sendTo ? 'servicing' : 'origin';
+  }
+  var log = logger.getSublog(request.id, 'tripthru', destination, 'update-trip-status');
+  
   log.log('Processing update trip status job ' + request.id, job);
   forwardUpdateToPartner(sendTo, request, log)
     .catch(socket.SocketError, function(err){

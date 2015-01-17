@@ -5,11 +5,26 @@ function Message(text, json) {
   this.json = json;
 }
 
-function Sublog(id) {
+function Sublog(id, origin, destination, type) {
   this.id = id;
+  this.origin = origin || null;
+  this.destination = destination || null;
+  this.type = type || null;
   this.creation = moment();
   this.messages = [];
 }
+
+Sublog.prototype.setOrigin = function(origin) {
+  this.origin = origin;
+};
+
+Sublog.prototype.setDestination = function(destination) {
+  this.destination = destination;
+};
+
+Sublog.prototype.setType = function(type) {
+  this.type = type;
+};
 
 Sublog.prototype.log = function(message, json) {
   console.log(this.id, ':', message);
@@ -32,8 +47,8 @@ Logger.prototype.removeOldLogs = function() {
   }
 };
 
-Logger.prototype.getSublog = function(id) {
-  var sublog = new Sublog(id);
+Logger.prototype.getSublog = function(id, origin, destination, type) {
+  var sublog = new Sublog(id, origin, destination, type);
   this.logs.push(sublog);
   return sublog;
 };

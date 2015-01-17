@@ -36,7 +36,7 @@ QuotesController.prototype.init = function(gatewayClient) {
 };
 
 QuotesController.prototype.createQuote =  function(request, cb) {
-  var log = logger.getSublog(request.id);
+  var log = logger.getSublog(request.id, 'origin', 'tripthru', 'quote');
   log.log('Quote request ' + request.id + ' from ' + request.clientId, request);
   var validation = validate.quoteRequest(request);
   if( !validation.valid ) {
@@ -77,7 +77,7 @@ QuotesController.prototype.createQuote =  function(request, cb) {
 };
 
 QuotesController.prototype.getQuote = function(request, cb) {
-  var log = logger.getSublog(request.id);
+  var log = logger.getSublog(request.id, 'origin', 'tripthru', 'get-quote');
   log.log('Get quote ' + request.id + ' from ' + request.clientId, request);
   quotes
     .getById(request.id)
@@ -105,7 +105,7 @@ QuotesController.prototype.getQuote = function(request, cb) {
 };
 
 QuotesController.prototype.updateQuote = function(request, cb) {
-  var log = logger.getSublog(request.id);
+  var log = logger.getSublog(request.id, 'servicing', 'tripthru', 'update-quote');
   log.log('Update quote ' + request.id + ' from ' + request.clientId, request);
   quotes
     .getById(request.id)
