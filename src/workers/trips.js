@@ -46,7 +46,7 @@ function updateTripStatus(job, done){
   var trip = activeTripsTracker.getTrip(request);
   var destination = null;
   if(trip) {
-    destination = trip.originatingPartner.id === sendTo ? 'servicing' : 'origin';
+    destination = trip.originatingPartner.id === sendTo ? 'origin' : 'servicing';
   }
   var log = logger.getSublog(request.id, 'tripthru', destination, 'update-trip-status');
   
