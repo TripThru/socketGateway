@@ -66,13 +66,12 @@ ActiveTripsTracker.prototype.deactivateTrip = function(trip) {
   if(!this.activeTripsById.hasOwnProperty(trip.id)) {
     throw new Error('Trip ' + trip.id + ' does not exist');
   }
-  var activeTrips = this.activeTripsById;
-  var dashboardTrips = this.dashboardTripsById;
+  var self = this;
   setTimeout(function(){
-    var t = activeTrips[trip.id];
+    var t = self.activeTripsById[trip.id];
     if(t && isNonActiveStatus(t.status)) {
-      delete activeTrips[trip.id];
-      this.deleteDashboardTrip(trip);
+      delete self.activeTripsById[trip.id];
+      self.deleteDashboardTrip(trip);
     }
   }, this.tripRemovalSpan.asMilliseconds());
 };
