@@ -74,13 +74,17 @@ function autoDispatchTrip(job, done) {
   var tripId = job.tripId;
   var servicingPartner = job.servicingPartner;
   var servicingFleet = job.servicingFleet;
-  var log = logger.getSublog(tripId);
+  var log = logger.getSublog(tripId, 'tripthru');
   var promise;
   
   log.log('Processing autodispatch job ' + tripId, job);
   if(servicingPartner) {
+    log.setDestination('servicing');
+    log.setType('dispatch');
     promise = dispatchTripAndUpdatePartner(tripId, servicingPartner, servicingFleet, log);
   } else {
+    log.setDestination('origin');
+    log.setType('update-trip-status');
     log.log('No best quote found so rejecting trip');
     promise = rejectTripAndUpdate(tripId, servicingPartner, log);
   }
