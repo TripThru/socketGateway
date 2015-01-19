@@ -48,7 +48,8 @@ function updateTripStatus(job, done){
   if(trip) {
     destination = trip.originatingPartner.id === sendTo ? 'origin' : 'servicing';
   }
-  var log = logger.getSublog(request.id, 'tripthru', destination, 'update-trip-status');
+  var log = logger.getSublog(request.id, 'tripthru', destination, 
+      'update-trip-status', request.status);
   
   log.log('Processing update trip status job ' + request.id, job);
   forwardUpdateToPartner(sendTo, request, log)
@@ -85,6 +86,7 @@ function autoDispatchTrip(job, done) {
   } else {
     log.setDestination('origin');
     log.setType('update-trip-status');
+    log.setStatus('rejected');
     log.log('No best quote found so rejecting trip');
     promise = rejectTripAndUpdate(tripId, servicingPartner, log);
   }

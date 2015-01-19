@@ -187,7 +187,8 @@ TripsController.prototype.getTripStatus = function(request, cb) {
 };
 
 TripsController.prototype.updateTripStatus = function(request, cb) {
-  var log = logger.getSublog(request.id, null, 'tripthru', 'update-trip-status');
+  var log = logger.getSublog(request.id, null, 'tripthru', 'update-trip-status', 
+      request.status);
   log.log('Update trip status (' + request.status + ') ' + request.id, request);
   trips
     .getById(request.id)

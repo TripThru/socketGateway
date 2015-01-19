@@ -5,11 +5,12 @@ function Message(text, json) {
   this.json = json;
 }
 
-function Sublog(id, origin, destination, type) {
+function Sublog(id, origin, destination, type, status) {
   this.id = id;
   this.origin = origin || null;
   this.destination = destination || null;
   this.type = type || null;
+  this.status = status || null;
   this.creation = moment();
   this.messages = [];
 }
@@ -24,6 +25,10 @@ Sublog.prototype.setDestination = function(destination) {
 
 Sublog.prototype.setType = function(type) {
   this.type = type;
+};
+
+Sublog.prototype.setStatus = function(status) {
+  this.status = status;
 };
 
 Sublog.prototype.log = function(message, json) {
@@ -47,8 +52,8 @@ Logger.prototype.removeOldLogs = function() {
   }
 };
 
-Logger.prototype.getSublog = function(id, origin, destination, type) {
-  var sublog = new Sublog(id, origin, destination, type);
+Logger.prototype.getSublog = function(id, origin, destination, type, status) {
+  var sublog = new Sublog(id, origin, destination, type, status);
   this.logs.push(sublog);
   return sublog;
 };
