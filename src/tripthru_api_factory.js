@@ -123,6 +123,21 @@ function createTripFromUpdateTripStatusRequest(request, trip) {
         trip.driver.enrouteLocation = request.driver.location;
       } else if(trip.status === 'pickedup') {
         trip.driver.pickupLocation = request.driver.location;
+        trip.pickupTime = moment();
+        trip.latenessMilliseconds = 
+          moment.duration(trip.pickupTime.diff(trip.creation)).asMilliseconds();
+        var minutes = (trip.latenessMilliseconds / 1000) / 60;
+        if(minutes < 3) {
+          trip.serviceLevel = 0;
+        } else if(minutes < 5) {
+          trip.serviceLevel = 1;
+        } else if(minutes < 10) {
+          trip.serviceLevel = 2;
+        } else if(minutes < 15) {
+          trip.serviceLevel = 3;
+        } else if(minutes > 15) {
+          trip.serviceLevel = 4;
+        }
       }
     }
   }

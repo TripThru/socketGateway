@@ -37,15 +37,10 @@ function toStoreTrip(apiTrip) {
   var trip = cloneTrip(apiTrip);
   trip.creation = trip.creation.toDate();
   trip.lastUpdate = trip.lastUpdate.toDate();
+  trip.latenessMilliseconds = trip.latenessMilliseconds || 0;
   if(trip.eta) trip.eta = trip.eta.toDate();
   if(trip.dropoffTime) trip.dropoffTime = trip.dropoffTime.toDate();
-  if(trip.pickupTime) { 
-    trip.latenessMilliseconds = 
-      moment.duration(trip.pickupTime.diff(trip.creation)).asMilliseconds();
-    trip.pickupTime = trip.pickupTime.toDate();
-  } else {
-    trip.latenessMilliseconds = 0;
-  }
+  if(trip.pickupTime) trip.pickupTime = trip.pickupTime.toDate();
   trip.loc = locationIndexFromLocation(apiTrip.pickupLocation);
   trip.samplingPercentage = 1;
   trip.originatingPartnerId = trip.originatingPartner.id;
