@@ -7,13 +7,14 @@ var moment = require('moment');
 var logger = require('../logger');
 var socket; // Initialized with init to avoid circular dependency
 var tripsJobQueue; // Initialized with init to avoid circular dependency
-var quoteMaxDuration = moment.duration(10, 'seconds');
+var quoteMaxDuration = moment.duration(30, 'seconds'); // this parameter will be much lower once we can handle the load
 var missedBookingPeriod = moment.duration(30, 'minutes');
 
 function quote(job, done) {
   var quoteId = job.quoteId;
   var log = logger.getSublog(quoteId, 'tripthru', 'servicing', 'quote');
   log.log('Processing quote job ' + quoteId, job);
+  done(); // Todo: implement delayed jobs to handle quote completion
   broadcastQuoteAndGetResult(quoteId, log)
     .bind({})
     .then(function(quote){
@@ -31,14 +32,14 @@ function quote(job, done) {
     })
     .error(function(err){
       log.log('Error quoting ' + quoteId + ' : ' + err);
-    })
-    .finally(done);
+    });
 }
 
 function autoDispatchQuote(job, done) {
   var quoteId = job.quoteId;
   var log = logger.getSublog(quoteId, 'tripthru', 'servicing', 'quote');
   log.log('Processing autodispatch quote ' + quoteId, job);
+  done();
   broadcastQuoteAndGetResult(quoteId, log)
     .bind({})
     .then(function(quote){
@@ -92,7 +93,7 @@ function broadcastQuoteAndGetResult(quoteId, log) {
         throw new Error('Quote ' + quoteId + ' not found');
       }
     })
-    .delay(quoteMaxDuration)
+    .delay(quoteMaxDuration.asMilliseconds())
     .then(function(){
       return quotes.getById(quoteId);
     });

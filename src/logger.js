@@ -32,7 +32,7 @@ Sublog.prototype.setStatus = function(status) {
 };
 
 Sublog.prototype.log = function(message, json) {
-  console.log(this.id, ':', message);
+  console.log(moment().utc().toDate().toISOString(), '-', this.id, ':', message);
   this.messages.push(new Message(message, json));
 };
 

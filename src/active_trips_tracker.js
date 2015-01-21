@@ -120,6 +120,9 @@ ActiveTripsTracker.prototype.getDashboardTrips = function(status) {
   if(status === 'pickedup' || status === 'all') {
     pushTrips(trips, this.dashboardTripsByIdByStatus.pickedup);
   }
+  if(status === 'complete' || status === 'all') {
+    pushTrips(trips, this.dashboardTripsByIdByStatus.pickedup);
+  }
   if(status === 'cancelled' || status === 'all') {
     pushTrips(trips, this.dashboardTripsByIdByStatus.cancelled);
   }
@@ -132,6 +135,7 @@ ActiveTripsTracker.prototype.getDashboardTrips = function(status) {
 ActiveTripsTracker.prototype.getStats = function() {
   stats = {
     activeTrips: Object.keys(this.activeTripsById).length,
+    queued: 0,
     dispatched: 0,
     enroute: 0,
     pickedup: 0,
@@ -146,7 +150,7 @@ ActiveTripsTracker.prototype.getStats = function() {
     var trip = this.activeTripsById[id];
     if(trip) {
       stats[trip.status]++;
-      if(trip.status === 'pickedup') {
+      if(trip.status === 'complete' || trip.status === 'pickedup') {
         stats.serviceLevels[trip.serviceLevel]++;
       }
     }
