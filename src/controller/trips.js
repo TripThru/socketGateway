@@ -201,9 +201,6 @@ TripsController.prototype.updateTripStatus = function(request, cb) {
         this.trip = TripThruApiFactory.createTripFromRequest(request, 
             'update-trip-status', {trip: t});
         this.newStatus = this.trip.status;
-        if(this.trip.status === 'pickedup') {
-          this.trip.pickupTime = moment();
-        }
         activeTripsTracker.updateTrip(this.trip);
         return trips.update(this.trip);
       }
