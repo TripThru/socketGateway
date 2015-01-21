@@ -30,6 +30,8 @@ function cloneTrip(trip) {
   if(trip.fleet) t.fleet = trip.fleet;
   if(trip.driver) t.driver = trip.driver;
   if(trip.passenger) t.passenger = trip.passenger;
+  if(trip.latenessMilliseconds) t.latenessMilliseconds = trip.latenessMilliseconds;
+  if(trip.serviceLevel >= 0) t.serviceLevel = trip.serviceLevel;
   return t;
 }
 
@@ -58,6 +60,7 @@ function toApiTrip(storeTrip) {
   if(trip.pickupTime) trip.pickupTime = moment(trip.pickupTime);
   if(trip.eta) trip.eta = moment(trip.eta);
   if(trip.dropoffTime) trip.dropoffTime = moment(trip.dropoffTime);
+  if(trip.serviceLevel >= 0) trip.serviceLevel = trip.serviceLevel;
   return trip;
 }
 

@@ -115,7 +115,8 @@ var trip = new mongoose.Schema({
     coordinates: []
   },
   latenessMilliseconds: Number,
-  samplingPercentage: Number
+  samplingPercentage: Number,
+  serviceLevel: Number
 });
 
 var quote = new mongoose.Schema({
