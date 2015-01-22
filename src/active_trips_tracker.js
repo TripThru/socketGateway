@@ -121,7 +121,7 @@ ActiveTripsTracker.prototype.getDashboardTrips = function(status) {
     pushTrips(trips, this.dashboardTripsByIdByStatus.pickedup);
   }
   if(status === 'complete' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus.pickedup);
+    pushTrips(trips, this.dashboardTripsByIdByStatus.complete);
   }
   if(status === 'cancelled' || status === 'all') {
     pushTrips(trips, this.dashboardTripsByIdByStatus.cancelled);
@@ -146,6 +146,8 @@ ActiveTripsTracker.prototype.getStats = function() {
   };
   stats['new'] = 0;
   
+  var durations = [];
+  var distances = [];
   for(var id in this.activeTripsById) {
     var trip = this.activeTripsById[id];
     if(trip) {
@@ -153,9 +155,61 @@ ActiveTripsTracker.prototype.getStats = function() {
       if(trip.status === 'complete' || trip.status === 'pickedup') {
         stats.serviceLevels[trip.serviceLevel]++;
       }
+      if(trip.status === 'complete') {
+        durations.push(trip.duration);
+        distances.push(trip.distance);
+      }
     }
   }
+  if(durations.length > 0) {
+    stats.durations = getFrequencyDistribution(durations, 5, 'min.');
+  }
+  if(distances.length > 0) {
+    stats.distances = getFrequencyDistribution(distances, 5, 'mi');
+  }
   return stats;
+};
+
+function sortNumber(a,b) {
+  return a - b;
+}
+
+var getFrequencyDistribution = function(values, classes, dataTypeName) {
+  values = values.sort(sortNumber);
+  var max = values[values.length-1];
+  var min = values[0];
+  var interval = (max - min) / classes;
+  interval = interval > 1 ? Math.ceil(interval) : interval;
+  
+  if(max === min) {
+    return {
+      name: '< '+ (Math.round(max * 100) / 100) + ' ' + dataTypeName, 
+      value: values.length
+    };
+  }
+  
+  var boundary = min + interval;
+  var valuesByClass = [];
+  var valueIndex = 0;
+  for(var i = 0; i < classes; i++) {
+    var valuesInClass = 0;
+    var inClass = true;
+    while(inClass && valueIndex < values.length) {
+      var v = values[valueIndex];
+      if(v <= boundary) {
+        valuesInClass++;
+        valueIndex++;
+      } else {
+        inClass = false;
+      }
+    }
+    valuesByClass.push({
+      name: '< '+ (Math.round(boundary * 100) / 100) + ' ' + dataTypeName, 
+      value: valuesInClass
+    });
+    boundary += interval;
+  }
+  return valuesByClass;
 };
 
 var isNonActiveStatus = function(status) {

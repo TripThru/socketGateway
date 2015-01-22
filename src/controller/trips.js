@@ -190,6 +190,7 @@ TripsController.prototype.updateTripStatus = function(request, cb) {
   var log = logger.getSublog(request.id, null, 'tripthru', 'update-trip-status', 
       request.status);
   log.log('Update trip status (' + request.status + ') ' + request.id, request);
+  var self = this;
   trips
     .getById(request.id)
     .bind({})
@@ -213,6 +214,9 @@ TripsController.prototype.updateTripStatus = function(request, cb) {
         log.log('Trip has foreign dependency so creating update trip status job');
         workers.newUpdateTripStatusJob(request, sendTo);
       }
+      if(this.trip.status === 'complete') {
+        self.getTripStats(this.trip);
+      }
       var response = 
         TripThruApiFactory.createResponseFromTrip(this.trip, 'update-trip-status');
       log.log('Response', response);
@@ -229,6 +233,25 @@ TripsController.prototype.updateTripStatus = function(request, cb) {
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
       cb(response);
+    });
+};
+
+TripsController.prototype.getTripStats = function(trip) {
+  var log = logger.getSublog(trip.id, 'tripthru', 'servicing', 'get-trip-status');
+  var request = TripThruApiFactory.createRequestFromTrip(trip, 'get-trip-status');
+  log.log('Get trip stats ' + trip.id, request);
+  this
+    .socket
+    .getTripStatus(trip.servicingPartner.id, request)
+    .then(function(response){
+      trip = TripThruApiFactory.createTripFromResponse(response, 
+          'get-trip-status', {trip: trip});
+      activeTripsTracker.updateTrip(trip);
+      trips.update(trip);
+      log.log('Response', response);
+    })
+    .error(function(err){
+      log.log('Response', err);
     });
 };
 

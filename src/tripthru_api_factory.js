@@ -138,6 +138,9 @@ function createTripFromUpdateTripStatusRequest(request, trip) {
         } else if(minutes > 15) {
           trip.serviceLevel = 4;
         }
+      } else if(trip.status == 'complete') {
+        trip.duration = 
+          moment.duration(moment().diff(trip.pickupTime)).asMinutes();
       }
     }
   }
@@ -150,6 +153,11 @@ function createTripFromGetTripStatusRequest(request) {
   var trip = {
     id: request.id  
   };
+  return trip;
+}
+
+function createTripFromGetTripStatusResponse(response, trip) {
+  if(response.distance) trip.distance = response.distance;
   return trip;
 }
 
@@ -226,6 +234,18 @@ function createTripFromRequest(trip, type, args) {
       return createTripFromUpdateTripStatusRequest(trip, args.trip);
     case 'get-trip-status':
       return createTripFromGetTripStatusRequest(trip);
+    default:
+      throw new Error('Invalid request type ' + type);
+  }
+}
+
+function createTripFromResponse(response, type, args) {
+  switch(type) {
+    case 'get-trip-status':
+      if(!args || !args.trip) {
+        throw new Error('Need trip object');
+      }
+      return createTripFromGetTripStatusResponse(response, args.trip);
     default:
       throw new Error('Invalid request type ' + type);
   }
@@ -467,6 +487,7 @@ module.exports.createFaileResponse = failResponse;
 module.exports.createRequestFromTrip = createRequestFromTrip;
 module.exports.createResponseFromTrip = createResponseFromTrip;
 module.exports.createTripFromRequest = createTripFromRequest;
+module.exports.createTripFromResponse = createTripFromResponse;
 module.exports.createGetTripStatusResponseFromPartnerGetTripStatusResponse = 
   createGetTripStatusResponseFromPartnerGetTripStatusResponse;
 module.exports.createRequestFromQuote = createRequestFromQuote;
