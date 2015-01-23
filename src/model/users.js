@@ -1,12 +1,26 @@
 var store = require('../store/store');
 
+function cloneUser(user) {
+  var u = {
+      id: user.id,
+      name: user.name,
+      token: user.token,
+      role: user.role,
+      email: user.email,
+      coverage: user.coverage,
+      fleets: user.fleets,
+      vehicleTypes: user.vehicleTypes  
+  };
+  return u;
+}
+
 // Public
 
 var self = module.exports = {
     
   add: function(user) {
     return store
-      .createUser(user)
+      .createUser(cloneUser(user))
       .error(function(err){
         console.log('Error ocurred adding user ' + err);
         throw new Error('Error ocurred adding user ' + err);
@@ -14,7 +28,7 @@ var self = module.exports = {
   },
   update: function(user) {
     return store
-      .updateUser(user)
+      .updateUser(cloneUser(user))
       .error(function(err){
         console.log('Error ocurred updating user ' + err);
         throw new Error('Error ocurred updating user ' + err);
@@ -23,6 +37,18 @@ var self = module.exports = {
   getAll: function() {
     return store
       .getAllUsers()
+      .then(function(allUsers){
+        if(!allUsers || allUsers.length === 0) {
+          return [];
+        }
+        var users = [];
+        for(var i = 0; i < allUsers.length; i++) {
+          if(allUsers[i]){
+            users.push(cloneUser(allUsers[i]));
+          }
+        }
+        return users;
+      })
       .error(function(err){
         console.log('Error ocurred getting all users ' + err);
         throw new Error('Error ocurred getting all users ' + err);
@@ -33,7 +59,7 @@ var self = module.exports = {
       .getUserBy({id: userId})
       .then(function(res){
         if(res.length > 0)
-          res = res[0].toObject();
+          res = cloneUser(res[0].toObject());
         else
           res = null;
         return res;
@@ -48,7 +74,7 @@ var self = module.exports = {
       .getUserBy({token: token})
       .then(function(res){
         if(res.length > 0)
-          res = res[0].toObject();
+          res = cloneUser(res[0].toObject());
         else
           res = null;
         return res;

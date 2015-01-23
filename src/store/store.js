@@ -17,7 +17,7 @@ Promise.promisifyAll(Trip.prototype);
 var Quote = mongoose.model('quotes', schemas.quote);
 Promise.promisifyAll(Quote);
 Promise.promisifyAll(Quote.prototype);
-var User = mongoose.model('user', schemas.user, 'usernode'); //temporary collection name while migrating website
+var User = mongoose.model('users', schemas.user, 'users');
 Promise.promisifyAll(User);
 Promise.promisifyAll(User.prototype);
 
@@ -66,9 +66,8 @@ Store.prototype.getAllUsers = function() {
 };
   
 Store.prototype.clear = function() {
-  mongoose.connection.db.dropCollection('trips');
-  mongoose.connection.db.dropCollection('quotes');
-  mongoose.connection.db.dropCollection('users');
+  Trip.remove({}, function () { });
+  Quote.remove({}, function () { });
 };
 
 function create(model, data) {

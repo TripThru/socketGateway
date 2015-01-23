@@ -2,15 +2,17 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var config = require('./config');
 var socket = require('./src/socket');
+var store = require('./src/store/store');
 var tripsController = require('./src/controller/trips');
 var quotesController = require('./src/controller/quotes');
 var usersController = require('./src/controller/users');
+var jobQueue = require('./src/workers/job_queue');
 var tripsJobQueue = require('./src/workers/trips');
 var quotesJobQueue = require('./src/workers/quotes');
-var activeTripsTracker = require('./src/active_trips_tracker');
-var codes = require('./src/codes');
-var resultCodes = codes.resultCodes;
-var logger = require('./src/logger');
+var dashboard = require('./src/routes/dashboard');
+
+store.clear();
+jobQueue.clear();
 
 // Init and inject dependencies to avoid circular dependencies
 tripsController.init(socket);
@@ -35,60 +37,47 @@ app.all('*', function(req, res, next){
 	next();
 });
 
-
-//Move this functions to routes
 app.get('/stats', function(req, res) {
-  var stats = activeTripsTracker.getStats();
-  stats.result = resultCodes.ok;
-  res.json(stats);
+  dashboard
+    .getStats(req.query.token)
+    .then(function(response){
+      res.json(response);
+    });
 });
 app.get('/trips/:status', function(req, res) {
-  var status = req.params.status;
-  var trips = activeTripsTracker.getDashboardTrips(status);
-  var response = {
-      trips: trips,
-      result: resultCodes.ok
-  }
-  res.json(response);
+  dashboard
+    .getTripsList(req.query.token, req.params.status)
+    .then(function(response){
+      res.json(response);
+    });
 });
-app.get('/tripstatus/:tripId', function(req, res) {
-  var id = req.params.tripId;
-  tripsController.getTripStatus({id: id}, function(response){
-    response.result = resultCodes.ok;
-    res.json(response);
-  });
+app.get('/tripstatus/:id', function(req, res) {
+  dashboard
+    .getTripStatus(req.query.token, req.params.id)
+    .then(function(response){
+      res.json(response);
+    });
 });
-app.get('/triproute/:tripId', function(req, res){
-  var id = req.params.tripId;
-  var response;
-  var trip;
-  try {
-    trip = activeTripsTracker.getTrip({id: id});
-    response = {
-      historyEnrouteList: trip.driver.enrouteLocation,
-      historyPickUpList: trip.driver.pickupLocation,
-      result: resultCodes.ok
-    };
-  } catch(err) {
-    response = {};
-  }
-  console.log(trip);
-  res.json(response);
+app.get('/triproute/:id', function(req, res){
+  dashboard
+    .getTripRoute(req.query.token, req.params.id)
+    .then(function(response){
+      res.json(response);
+    });
 });
 app.get('/networks', function(req, res) {
-  usersController.getNetworks(function(response){
-    response.result = resultCodes.ok;
-    res.json(response);
-  });
+  dashboard
+    .getNetworks(req.query.token)
+    .then(function(response){
+      res.json(response);
+    });
 });
-app.get('/log/:tripId', function(req, res) {
-  var id = req.params.tripId;
-  var logs = id !== 'all' ? logger.getLogsById(id) : logger.getLogs();
-  var response = {
-    result: resultCodes.ok,
-    logs: logs
-  };
-  res.json(response);
+app.get('/log/:id', function(req, res) {
+  dashboard
+    .getTripLogs(req.query.token, req.params.id)
+    .then(function(response){
+      res.json(response);
+    });
 });
 
 var server = app.listen(app.get('port'), function (){

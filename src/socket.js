@@ -23,7 +23,7 @@ io.use(function(socket, next){
     users
       .getByToken(query.token)
       .then(function(user){
-        if (user) {
+        if (user && user.role === 'partner') {
           activeSocketsByClientId[user.id] = socket;
           activeClientIdsBySocket[socket] = user.id;
           next();
@@ -45,35 +45,35 @@ io.sockets.on('connection', function (socket){
   
   // Trips
   socket.on('dispatch-trip', function(req, cb){
-    trips.dispatchTrip(req, cb);
+    trips.dispatchTrip(req).then(cb);
   });
   socket.on('get-trip', function(req, cb){
-    trips.getTrip(req, cb);
+    trips.getTrip(req).then(cb);
   });
   socket.on('get-trip-status', function(req, cb){
-    trips.getTripStatus(req, cb);
+    trips.getTripStatus(req).then(cb);
   });
   socket.on('update-trip-status', function(req, cb){
-    trips.updateTripStatus(req, cb);
+    trips.updateTripStatus(req).then(cb);
   });
   
   //Quotes
   socket.on('quote-trip', function(req, cb){
-    quotes.createQuote(req, cb);
+    quotes.createQuote(req).then(cb);
   });
   socket.on('get-quote', function(req, cb){
-    quotes.getQuote(req, cb);
+    quotes.getQuote(req).then(cb);
   });
   socket.on('update-quote', function(req, cb){
-    quotes.updateQuote(req, cb);
+    quotes.updateQuote(req).then(cb);
   });
   
   //Users
   socket.on('get-partner-info', function(req ,cb){
-    users.getPartnerInfo(req, cb);
+    users.getPartnerInfo(req).then(cb);
   });
   socket.on('set-partner-info', function(req, cb){
-    users.setPartnerInfo(req, cb);
+    users.setPartnerInfo(req).then(cb);
   });
   
   socket.on('disconnect', function(){

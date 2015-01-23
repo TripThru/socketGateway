@@ -55,18 +55,18 @@ TripsController.prototype.init = function(gatewayClient) {
   this.socket = gatewayClient;
 };
 
-TripsController.prototype.dispatchTrip =  function(request, cb) {
+TripsController.prototype.dispatchTrip =  function(request) {
   var log = logger.getSublog(request.id, 'origin', 'tripthru', 'dispatch');
   log.log('Dispatch ' + request.id + ' from ' + request.clientId, request);
   var validation = validate.dispatchTripRequest(request);
-  if( !validation.valid ) {
+  if(!validation.valid) {
     var response = TripThruApiFactory.createResponseFromTrip(null, null,
         resultCodes.invalidParameters, validation.error.message);
     log.log('Response', response);
-    cb(response);
+    return Promise.resolve(response);
   } else {
     var trip = TripThruApiFactory.createTripFromRequest(request, 'dispatch');
-    trips
+    return trips
       .getById(trip.id)
       .then(function(res){
         if(!res) {
@@ -90,27 +90,27 @@ TripsController.prototype.dispatchTrip =  function(request, cb) {
         }
         var response = TripThruApiFactory.createResponseFromTrip(trip, 'dispatch');
         log.log('Response', response.result);
-        cb(response);
+        return response;
       })
       .catch(RequestError, function(err){
         var response = TripThruApiFactory.createResponseFromTrip(null, null, 
             err.resultCode, err.error);
         log.log('Response', response.result);
-        cb(response);
+        return response;
       })
       .error(function(err){
         var response = TripThruApiFactory.createResponseFromTrip(null, null, 
             resultCodes.unknownError, 'unknown error ocurred');
         log.log('Response', response.result);
-        cb(response);
+        return response;
       });
   }
 };
 
-TripsController.prototype.getTrip = function(request, cb) {
+TripsController.prototype.getTrip = function(request) {
   var log = logger.getSublog(request.id, null, 'tripthru', 'get-trip');
   log.log('Get trip ' + request.id, request);
-  trips
+  return trips
     .getById(request.id)
     .then(function(trip){
       if(trip) {
@@ -118,7 +118,7 @@ TripsController.prototype.getTrip = function(request, cb) {
         log.setOrigin(
             trip.originatingPartner.id === request.clientId ? 'origin' : 'servicing');
         log.log('Response', response);
-        cb(response);
+        return response;
       } else {
         throw new RequestError(resultCodes.rejected, 'trip not found');
       }
@@ -127,21 +127,21 @@ TripsController.prototype.getTrip = function(request, cb) {
       var response = TripThruApiFactory.createResponseFromTrip(null, null, 
           err.resultCode, err.error);
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromTrip(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
-      cb(response);
+      return response;
     });
 };
 
-TripsController.prototype.getTripStatus = function(request, cb) {
+TripsController.prototype.getTripStatus = function(request) {
   //var log = logger.getSublog(request.id);
   //log.log('Get trip status ' + request.id, request);
   var trip;
-  trips
+  return trips
     .getById(request.id)
     .bind(this)
     .then(function(t){
@@ -159,7 +159,7 @@ TripsController.prototype.getTripStatus = function(request, cb) {
         var res = 
           TripThruApiFactory.createGetTripStatusResponseFromPartnerGetTripStatusResponse(response, trip);
         //log.log('Response', res);
-        cb(res);
+        return res;
       } else {
         throw(new UnsuccessfulRequestError('Unsuccessful result code ' +
             response.resultCode));
@@ -170,28 +170,28 @@ TripsController.prototype.getTripStatus = function(request, cb) {
       var response = 
         TripThruApiFactory.createResponseFromTrip(trip, 'get-trip-status');
       //log.log('Response', response);
-      cb(response);
+      return response;
     })
     .catch(RequestError, function(err){
       var response = TripThruApiFactory.createResponseFromTrip(null, null, 
           err.resultCode, err.error);
       //log.log('Response', response);
-      cb(response);
+      return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromTrip(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
       //log.log('Response', response);
-      cb(response);
+      return response;
     });
 };
 
-TripsController.prototype.updateTripStatus = function(request, cb) {
+TripsController.prototype.updateTripStatus = function(request) {
   var log = logger.getSublog(request.id, null, 'tripthru', 'update-trip-status', 
       request.status);
   log.log('Update trip status (' + request.status + ') ' + request.id, request);
   var self = this;
-  trips
+  return trips
     .getById(request.id)
     .bind({})
     .then(function(t){
@@ -220,19 +220,19 @@ TripsController.prototype.updateTripStatus = function(request, cb) {
       var response = 
         TripThruApiFactory.createResponseFromTrip(this.trip, 'update-trip-status');
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .catch(RequestError, function(err){
       var response = TripThruApiFactory.createResponseFromTrip(null, null, 
           err.resultCode, err.error);
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromTrip(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
-      cb(response);
+      return response;
     });
 };
 

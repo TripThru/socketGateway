@@ -35,18 +35,18 @@ QuotesController.prototype.init = function(gatewayClient) {
   this.socket = gatewayClient;
 };
 
-QuotesController.prototype.createQuote =  function(request, cb) {
+QuotesController.prototype.createQuote =  function(request) {
   var log = logger.getSublog(request.id, 'origin', 'tripthru', 'quote');
   log.log('Quote request ' + request.id + ' from ' + request.clientId, request);
   var validation = validate.quoteRequest(request);
-  if( !validation.valid ) {
+  if(!validation.valid) {
     var response = TripThruApiFactory.createResponseFromQuote(null, null,
         resultCodes.invalidParameters, validation.error.message);
     log.log('Response', response);
-    cb(response);
+    return Promise.resolve(response);
   } else {
     var quote = TripThruApiFactory.createQuoteFromRequest(request, 'quote');
-    quotes
+    return quotes
       .getById(quote.id)
       .then(function(res){
         if(!res) {
@@ -59,33 +59,33 @@ QuotesController.prototype.createQuote =  function(request, cb) {
         workers.newQuoteJob(quote.id);
         var response = TripThruApiFactory.createResponseFromQuote(quote, 'quote');
         log.log('Response', response);
-        cb(response);
+        return response;
       })
       .catch(RequestError, function(err){
         var response = TripThruApiFactory.createResponseFromQuote(null, null, 
             err.resultCode, err.error);
         log.log('Response', response);
-        cb(response);
+        return response;
       })
       .error(function(err){
         var response = TripThruApiFactory.createResponseFromQuote(null, null, 
             resultCodes.unknownError, 'unknown error ocurred');
         log.log('Response', response);
-        cb(response);
+        return response;
       });
   }
 };
 
-QuotesController.prototype.getQuote = function(request, cb) {
+QuotesController.prototype.getQuote = function(request) {
   var log = logger.getSublog(request.id, 'origin', 'tripthru', 'get-quote');
   log.log('Get quote ' + request.id + ' from ' + request.clientId, request);
-  quotes
+  return quotes
     .getById(request.id)
     .then(function(quote){
       if(quote) {
         var response = TripThruApiFactory.createResponseFromQuote(quote, 'get');
         log.log('Response', response);
-        cb(response);
+        return response;
       } else {
         throw new RequestError(resultCodes.rejected, 'quote not found');
       }
@@ -94,20 +94,20 @@ QuotesController.prototype.getQuote = function(request, cb) {
       var response = TripThruApiFactory.createResponseFromQuote(null, null, 
           err.resultCode, err.error);
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromQuote(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
-      cb(response);
+      return response;
     });
 };
 
-QuotesController.prototype.updateQuote = function(request, cb) {
+QuotesController.prototype.updateQuote = function(request) {
   var log = logger.getSublog(request.id, 'servicing', 'tripthru', 'update-quote');
   log.log('Update quote ' + request.id + ' from ' + request.clientId, request);
-  quotes
+  return quotes
     .getById(request.id)
     .bind({})
     .then(function(q){
@@ -122,19 +122,19 @@ QuotesController.prototype.updateQuote = function(request, cb) {
     .then(function(){
       var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'update');
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .catch(RequestError, function(err){
       var response = TripThruApiFactory.createResponseFromQuote(null, null, 
           err.resultCode, err.error);
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromQuote(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
-      cb(response);
+      return response;
     });
 };
 

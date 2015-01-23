@@ -95,125 +95,66 @@ ActiveTripsTracker.prototype.getAll = function(status) {
   return trips;
 };
 
-function pushTrips(triplist, tripsToPush) {
+function pushTrips(partnerId, triplist, tripsToPush) {
   for(var id in tripsToPush) {
-    triplist.push(tripsToPush[id]);
+    var trip = tripsToPush[id];
+    if( trip &&
+        !partnerId || 
+        partnerId === 'all' || 
+        trip.originatingPartner.id === partnerId || 
+        (trip.servicingPartner && trip.servicingPartner.id === partnerId)) {
+      
+      triplist.push(trip);
+    }
   }
   return triplist;
 }
 
 // Smaller list used by the website dashboard
-ActiveTripsTracker.prototype.getDashboardTrips = function(status) {
+ActiveTripsTracker.prototype.getDashboardTrips = function(partnerId, status) {
   var trips = [];
   if(status === 'new' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus['new']);
+    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus['new']);
   }
   if(status === 'queued' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus.queued);
+    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.queued);
   }
   if(status === 'dispatched' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus.dispatched);
+    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.dispatched);
   }
   if(status === 'enroute' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus.enroute);
+    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.enroute);
   }
   if(status === 'pickedup' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus.pickedup);
+    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.pickedup);
   }
   if(status === 'complete' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus.complete);
+    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.complete);
   }
   if(status === 'cancelled' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus.cancelled);
+    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.cancelled);
   }
   if(status === 'rejected' || status === 'all') {
-    pushTrips(trips, this.dashboardTripsByIdByStatus.rejected);
+    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.rejected);
   }
   return trips;
 };
 
-ActiveTripsTracker.prototype.getStats = function() {
-  stats = {
-    activeTrips: Object.keys(this.activeTripsById).length,
-    queued: 0,
-    dispatched: 0,
-    enroute: 0,
-    pickedup: 0,
-    complete: 0,
-    cancelled: 0,
-    rejected: 0,
-    serviceLevels: [0, 0, 0, 0, 0]
-  };
-  stats['new'] = 0;
-  
-  var durations = [];
-  var distances = [];
-  for(var id in this.activeTripsById) {
-    var trip = this.activeTripsById[id];
-    if(trip) {
-      stats[trip.status]++;
-      if(trip.status === 'complete' || trip.status === 'pickedup') {
-        stats.serviceLevels[trip.serviceLevel]++;
-      }
-      if(trip.status === 'complete') {
-        durations.push(trip.duration);
-        if(trip.distance >= 0) {
-          // Sometimes we can reach this before updating the trip info after
-          // calling get-trip-status on servicing network
-          distances.push(trip.distance);
-        }
+ActiveTripsTracker.prototype.getAll = function(partnerId) {
+  var trips = {};
+  if(!partnerId || partnerId === 'all') {
+    trips = this.activeTripsById;
+  } else {
+    for(var id in this.activeTripsById) {
+      var trip = this.activeTripsById[id];
+      if( trip && 
+          trip.originatingPartner.id === partnerId || 
+          (trip.servicingPartner && trip.servicingPartner.id === partnerId)) {
+        trips[id] = trip;
       }
     }
   }
-  if(durations.length > 0) {
-    stats.durations = getFrequencyDistribution(durations, 5, 'min.');
-  }
-  if(distances.length > 0) {
-    stats.distances = getFrequencyDistribution(distances, 5, 'mi');
-  }
-  return stats;
-};
-
-function sortNumber(a,b) {
-  return a - b;
-}
-
-var getFrequencyDistribution = function(values, classes, dataTypeName) {
-  values = values.sort(sortNumber);
-  var max = values[values.length-1];
-  var min = values[0];
-  var interval = (max - min) / classes;
-  interval = interval > 1 ? Math.ceil(interval) : interval;
-  
-  if(max === min) {
-    return {
-      name: '< '+ (Math.round(max * 100) / 100) + ' ' + dataTypeName, 
-      value: values.length
-    };
-  }
-  
-  var boundary = min + interval;
-  var valuesByClass = [];
-  var valueIndex = 0;
-  for(var i = 0; i < classes; i++) {
-    var valuesInClass = 0;
-    var inClass = true;
-    while(inClass && valueIndex < values.length) {
-      var v = values[valueIndex];
-      if(v <= boundary) {
-        valuesInClass++;
-        valueIndex++;
-      } else {
-        inClass = false;
-      }
-    }
-    valuesByClass.push({
-      name: '< '+ (Math.round(boundary * 100) / 100) + ' ' + dataTypeName, 
-      value: valuesInClass
-    });
-    boundary += interval;
-  }
-  return valuesByClass;
+  return trips;
 };
 
 var isNonActiveStatus = function(status) {

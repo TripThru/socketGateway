@@ -25,17 +25,17 @@ UsersController.prototype.init = function(gatewayClient) {
   this.socket = gatewayClient;
 };
 
-UsersController.prototype.getPartnerInfo = function(request, cb) {
+UsersController.prototype.getPartnerInfo = function(request) {
   var log = logger.getSublog(request.id);
   log.log('Get partner info ' + request.id + ' from ' + request.clientId, request);
   var user = TripThruApiFactory.createUserFromRequest(request, 'get-partner-info');
-  users
+  return users
     .getById(user.id)
     .then(function(u){
       if(u) {
         var response = TripThruApiFactory.createResponseFromUser(u, 'get-partner-info');
         log.log('Response', response);
-        cb(response);
+        return response;
       } else {
         throw new RequestError(resultCodes.notFound, 'User ' + request.id + ' does not exist');
       }
@@ -44,20 +44,20 @@ UsersController.prototype.getPartnerInfo = function(request, cb) {
       var response = TripThruApiFactory.createResponseFromUser(null, null, 
           err.resultCode, err.error);
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromUser(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
-      cb(response);
+      return response;
     });
 };
 
-UsersController.prototype.setPartnerInfo = function(request, cb) {
+UsersController.prototype.setPartnerInfo = function(request) {
   var log = logger.getSublog(request.clientId);
   log.log('Set partner info ' + request.clientId, request);
-  users
+  return users
     .getById(request.clientId)
     .bind({})
     .then(function(u){
@@ -74,19 +74,19 @@ UsersController.prototype.setPartnerInfo = function(request, cb) {
       var response = 
         TripThruApiFactory.createResponseFromUser(this.updatedUser, 'set-partner-info');
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .catch(RequestError, function(err){
       var response = TripThruApiFactory.createResponseFromUser(null, null, 
           err.resultCode, err.error);
       log.log('Response', response);
-      cb(response);
+      return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromUser(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
-      cb(response);
+      return response;
     });
 };
 
@@ -94,9 +94,13 @@ UsersController.prototype.getByToken = function(token) {
   return users.getByToken(token);
 };
 
+UsersController.prototype.getAll = function(token) {
+  return users.getAll();
+};
+
 // This is a temporary solution to work with the current website without changes
-UsersController.prototype.getNetworks = function(cb) {
-  users
+UsersController.prototype.getNetworks = function() {
+  return users
     .getAll()
     .then(function(allUsers){
       var response = {
@@ -118,7 +122,8 @@ UsersController.prototype.getNetworks = function(cb) {
           response.vehicleTypes.push(u.vehicleTypes[j]);
         }
       }
-      cb(response);
+      response.result = resultCodes.ok;
+      return response;
     });
 };
 

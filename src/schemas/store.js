@@ -134,6 +134,8 @@ var user = new mongoose.Schema({
   id: { type: String, trim: true },
   name: { type: String, trim: true },
   token: String,
+  role: String,
+  email: String,
   coverage: [coverage],
   fleets: [{ 
     id: { type: String, trim: true },
