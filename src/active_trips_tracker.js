@@ -157,7 +157,11 @@ ActiveTripsTracker.prototype.getStats = function() {
       }
       if(trip.status === 'complete') {
         durations.push(trip.duration);
-        distances.push(trip.distance);
+        if(trip.distance >= 0) {
+          // Sometimes we can reach this before updating the trip info after
+          // calling get-trip-status on servicing network
+          distances.push(trip.distance);
+        }
       }
     }
   }
