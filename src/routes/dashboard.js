@@ -97,10 +97,12 @@ Dashboard.prototype.getTripRoute = function(token, id) {
       var trip = activeTripsTracker.getTrip({id: id});
       if(user && trip) {
         response = {
-            historyEnrouteList: trip.driver.enrouteLocation,
-            historyPickUpList: trip.driver.pickupLocation,
             result: resultCodes.ok
           };
+        if(trip.driver) {
+          response.historyEnrouteList = trip.driver.enrouteLocation;
+          response.historyPickUpList = trip.driver.pickupLocation;
+        }
       } else {
         response = { result: resultCodes.notFound };
       }

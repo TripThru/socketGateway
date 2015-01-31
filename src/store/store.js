@@ -70,6 +70,13 @@ Store.prototype.clear = function() {
   Quote.remove({}, function () { });
 };
 
+Store.prototype.clearAllCompleted = function(beforeDate) {
+  var query = {
+    lastUpdate: {$lt: beforeDate}
+  };
+  Trip.remove(query, function(){});
+};
+
 function create(model, data) {
   return model.createAsync(data);
 }
