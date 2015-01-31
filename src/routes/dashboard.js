@@ -1,4 +1,4 @@
-var activeTripsTracker = require('../active_trips_tracker');
+var activeTrips = require('../active_trips');
 var tripsController = require('../controller/trips');
 var usersController = require('../controller/users');
 var logger = require('../logger');
@@ -41,7 +41,7 @@ Dashboard.prototype.getStats = function(token) {
       var response;
       if(user){
         var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.id;
-        var trips = activeTripsTracker.getAll(networkId);
+        var trips = activeTrips.getAllDashboardTrips(networkId);
         var stats = getStatsFromTripList(trips);
         response = stats;
         response.result = resultCodes.ok;
@@ -60,7 +60,7 @@ Dashboard.prototype.getTripsList = function(token, status) {
       if(user){
         var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.id;
         status = status || 'all';
-        var trips = activeTripsTracker.getDashboardTrips(networkId, status);
+        var trips = activeTrips.getDashboardTrips(networkId, status);
         response = {
             trips: trips,
             result: resultCodes.ok
@@ -94,7 +94,7 @@ Dashboard.prototype.getTripRoute = function(token, id) {
     .getUser(token)
     .then(function(user){
       var response;
-      var trip = activeTripsTracker.getTrip({id: id});
+      var trip = activeTrips.getById(id);
       if(user && trip) {
         response = {
             result: resultCodes.ok

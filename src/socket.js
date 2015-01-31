@@ -1,4 +1,4 @@
-Promise = require('bluebird');
+var Promise = require('bluebird');
 var trips = require('./controller/trips');
 var quotes = require('./controller/quotes');
 var users = require('./controller/users');

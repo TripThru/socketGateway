@@ -1,5 +1,5 @@
 var queue = require('./job_queue');
-var quotes = require('../model/quotes');
+var quotes = require('../active_quotes');
 var TripThruApiFactory = require('../tripthru_api_factory');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;

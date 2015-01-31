@@ -3,12 +3,11 @@ var Gateway = require('../gateway').Gateway;
 var IGateway = require('../gateway').IGateway;
 var Interface = require('../interface').Interface;
 var moment = require('moment');
-var trips = require('../model/trips');
+var trips = require('../active_trips');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var validate = require('./validate');
 var workers = require('../workers/trips');
-var activeTripsTracker = require('../active_trips_tracker');
 var logger = require('../logger');
 
 function RequestError(resultCode, error) {
@@ -70,15 +69,8 @@ TripsController.prototype.dispatchTrip =  function(request) {
       .getById(trip.id)
       .then(function(res){
         if(!res) {
-          activeTripsTracker.addTrip(trip);
           return trips.add(trip);
         } else if(res.status === 'rejected' || res.status === 'cancelled') {
-          // If trip was rejected or cancelled partner may try to dispatch again with same id
-          if(activeTripsTracker.getTrip(trip)) { // Trip may have not been deactivated yet
-            activeTripsTracker.updateTrip(trip);
-          } else {
-            activeTripsTracker.addTrip(trip);
-          }
           return trips.update(trip);
         }
         throw new RequestError(resultCodes.rejected, 'trip already exists');
@@ -146,7 +138,7 @@ TripsController.prototype.getTripStatus = function(request) {
     .bind(this)
     .then(function(t){
       trip = t;
-      if(!trip || !activeTripsTracker.getTrip(trip)) {
+      if(!trip) {
         throw new RequestError(resultCodes.rejected, 'trip ' + request.id + ' not found');
       } else if(!trip.servicingPartner) {
         return {result: resultCodes.notFound};
@@ -195,14 +187,13 @@ TripsController.prototype.updateTripStatus = function(request) {
     .getById(request.id)
     .bind({})
     .then(function(t){
-      if(t && activeTripsTracker.getTrip(t)) {
+      if(t) {
         log.setOrigin(
             t.originatingPartner.id === request.clientId ? 'origin' : 'servicing');
         this.oldStatus = t.status;
         this.trip = TripThruApiFactory.createTripFromRequest(request, 
             'update-trip-status', {trip: t});
         this.newStatus = this.trip.status;
-        activeTripsTracker.updateTrip(this.trip);
         return trips.update(this.trip);
       }
       throw new RequestError(resultCodes.rejected, 'trip not found');
@@ -246,7 +237,6 @@ TripsController.prototype.getTripStats = function(trip) {
     .then(function(response){
       trip = TripThruApiFactory.createTripFromResponse(response, 
           'get-trip-status', {trip: trip});
-      activeTripsTracker.updateTrip(trip);
       trips.update(trip);
       log.log('Response', response);
     })

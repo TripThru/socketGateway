@@ -3,12 +3,12 @@ var Gateway = require('../gateway').Gateway;
 var IGateway = require('../gateway').IGateway;
 var Interface = require('../interface').Interface;
 var moment = require('moment');
-var quotes = require('../model/quotes');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var validate = require('./validate');
 var workers = require('../workers/quotes');
 var logger = require('../logger');
+var quotes = require('../active_quotes');
 
 function RequestError(resultCode, error) {
   this.resultCode = resultCode;

@@ -1,10 +1,9 @@
 var queue = require('./job_queue');
-var trips = require('../model/trips');
-var quotes = require('../model/quotes');
+var trips = require('../active_trips');
+var quotes = require('../active_quotes');
 var TripThruApiFactory = require('../tripthru_api_factory');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
-var activeTripsTracker = require('../active_trips_tracker');
 var moment = require('moment');
 var logger = require('../logger');
 var socket; // Initialized with init to avoid circular dependency
@@ -42,17 +41,18 @@ function dispatchTrip(job, done) {
 function updateTripStatus(job, done){
   var request = job.request;
   var sendTo = job.sendTo;
-  
-  var trip = activeTripsTracker.getTrip(request);
-  var destination = null;
-  if(trip) {
-    destination = trip.originatingPartner.id === sendTo ? 'origin' : 'servicing';
-  }
-  var log = logger.getSublog(request.id, 'tripthru', destination, 
-      'update-trip-status', request.status);
-  
-  log.log('Processing update trip status job ' + request.id, job);
-  forwardUpdateToPartner(sendTo, request, log)
+  trips
+    .getById(request.id)
+    .then(function(trip){
+      var destination = null;
+      if(trip) {
+        destination = trip.originatingPartner.id === sendTo ? 'origin' : 'servicing';
+      }
+      var log = logger.getSublog(request.id, 'tripthru', destination, 
+          'update-trip-status', request.status);
+      log.log('Processing update trip status job ' + request.id, job);
+      return forwardUpdateToPartner(sendTo, request, log);
+    })
     .catch(socket.SocketError, function(err){
       log.log('SocketError update trip status ' + request.id + ' : ' + err.error);
     })
@@ -144,7 +144,6 @@ function rejectTripAndUpdate(tripId, servicingPartner, log) {
         this.trip = trip;
         this.trip.lastUpdate = moment();
         log.log('Trip status updated to ' + this.trip.status);
-        activeTripsTracker.updateTrip(this.trip);
         return trips.update(this.trip);
       } else {
         throw new Error('Autodispatch trip ' + tripId + ' not found');
