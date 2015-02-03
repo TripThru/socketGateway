@@ -37,7 +37,7 @@ QuotesController.prototype.init = function(gatewayClient) {
 
 QuotesController.prototype.createQuote =  function(request) {
   var log = logger.getSublog(request.id, 'origin', 'tripthru', 'quote');
-  log.log('Quote request ' + request.id + ' from ' + request.clientId, request);
+  log.log('Quote request from ' + request.clientId, request);
   var validation = validate.quoteRequest(request);
   if(!validation.valid) {
     var response = TripThruApiFactory.createResponseFromQuote(null, null,
@@ -78,7 +78,7 @@ QuotesController.prototype.createQuote =  function(request) {
 
 QuotesController.prototype.getQuote = function(request) {
   var log = logger.getSublog(request.id, 'origin', 'tripthru', 'get-quote');
-  log.log('Get quote ' + request.id + ' from ' + request.clientId, request);
+  log.log('Get quote from ' + request.clientId, request);
   return quotes
     .getById(request.id)
     .then(function(quote){
@@ -105,8 +105,8 @@ QuotesController.prototype.getQuote = function(request) {
 };
 
 QuotesController.prototype.updateQuote = function(request) {
-  var log = logger.getSublog(request.id, 'servicing', 'tripthru', 'update-quote');
-  log.log('Update quote ' + request.id + ' from ' + request.clientId, request);
+  //var log = logger.getSublog(request.id, 'servicing', 'tripthru', 'update-quote');
+  //log.log('Update quote from ' + request.clientId, request);
   return quotes
     .getById(request.id)
     .bind({})
@@ -121,20 +121,31 @@ QuotesController.prototype.updateQuote = function(request) {
     })
     .then(function(){
       var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'update');
-      log.log('Response', response);
+      //log.log('Response', response);
       return response;
     })
     .catch(RequestError, function(err){
       var response = TripThruApiFactory.createResponseFromQuote(null, null, 
           err.resultCode, err.error);
-      log.log('Response', response);
+      //log.log('Response', response);
       return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromQuote(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
-      log.log('Response', response);
+      //log.log('Response', response);
       return response;
+    });
+};
+
+
+
+QuotesController.prototype.createAutoDispatchQuote = function(trip) {
+  var quote = TripThruApiFactory.createQuoteFromTrip(trip);
+  return quotes
+    .add(quote)
+    .then(function(){
+      workers.newAutoDispatchJob(quote.id);
     });
 };
 

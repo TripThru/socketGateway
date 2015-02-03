@@ -5,6 +5,7 @@ var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var moment = require('moment');
 var logger = require('../logger');
+var users = require('../controller/users');
 var socket; // Initialized with init to avoid circular dependency
 var tripsJobQueue; // Initialized with init to avoid circular dependency
 var quoteMaxDuration = moment.duration(5, 'seconds'); // this parameter will be much lower once we can handle the load
@@ -13,14 +14,17 @@ var missedBookingPeriod = moment.duration(30, 'minutes');
 function quote(job, done) {
   var quoteId = job.quoteId;
   var log = logger.getSublog(quoteId, 'tripthru', 'servicing', 'quote');
-  log.log('Processing quote job ' + quoteId, job);
   done(); // Todo: implement delayed jobs to handle quote completion
   broadcastQuoteAndGetResult(quoteId, log)
     .bind({})
     .then(function(quote){
       this.quote = quote;
       this.quote.state = 'complete';
-      log.log('Changing quote state to complete');
+      log.log('Broadcasting quote', this.quote.request);
+      for(var i = 0; i < this.quote.receivedQuotes.length; i++) {
+        var q = this.quote.receivedQuotes[i];
+        log.log('Quote received from ' + q.partner.id, q); 
+      }
       return quotes.update(quote);
     })
     .then(function(){
@@ -38,22 +42,34 @@ function quote(job, done) {
 function autoDispatchQuote(job, done) {
   var quoteId = job.quoteId;
   var log = logger.getSublog(quoteId, 'tripthru', 'servicing', 'quote');
-  log.log('Processing autodispatch quote ' + quoteId, job);
   done();
   broadcastQuoteAndGetResult(quoteId, log)
     .bind({})
     .then(function(quote){
       this.quote = quote;
       this.quote.state = 'complete';
-      log.log('Changing quote state to complete');
       return quotes.update(quote);
     })
     .then(function(){
       var bestQuote = getBestQuotePartnerId(this.quote.request, this.quote.receivedQuotes);
       var partner = bestQuote !== null ? bestQuote.partner : null;
       var fleet = bestQuote !== null ? bestQuote.fleet : null;
-      log.log('Creating autodispatch trip with best quote', 
-          {quote: quoteId, partner: partner !== null ? partner.id : null, fleet: fleet !== null ? fleet.id : null});
+      var eta = bestQuote !== null ? bestQuote.eta.utc().toDate().toISOString() : null;
+      var details = bestQuote !== null ? (partner.id + ', ETA: ' + eta) : 'None';
+      
+      log.log('Finding best quote: ' + details, this.quote.request);
+      log.log('Broadcasting quote');
+      for(var i = 0; i < this.quote.receivedQuotes.length; i++) {
+        var q = this.quote.receivedQuotes[i];
+        log.log('Quote received from ' + q.partner.id, q); 
+      }
+      if(bestQuote) {
+        log.log('Best quote found from ' + partner.id, bestQuote);
+      } else {
+        log.log('No best quote found');
+      }
+      log.log('');
+      
       tripsJobQueue.newAutoDispatchJob(quoteId, partner, fleet);
     })
     .catch(socket.SocketError, function(err){
@@ -81,17 +97,19 @@ function getBestQuotePartnerId(request, quotes) {
 }
 
 function broadcastQuoteAndGetResult(quoteId, log) {
-  log.log('Broadcasting quote');
   return quotes
     .getById(quoteId)
     .bind({})
     .then(function(q){
       if(q) {
         this.quote = q;
-        return socket.broadcastQuoteToAllPartnersThatServe(q.request);
+        return users.getPartnersThatServeLocation(q.request.pickupLocation);
       } else {
         throw new Error('Quote ' + quoteId + ' not found');
       }
+    })
+    .then(function(usersThatServe){
+      return socket.broadcastQuote(this.quote.request, usersThatServe);
     })
     .delay(quoteMaxDuration.asMilliseconds())
     .then(function(){

@@ -112,18 +112,6 @@ function emit(action, id, data) {
   });
 }
 
-function broadcastQuoteToAllPartnersThatServe(request) {
-  return users
-    .getPartnersThatServeLocation(request.pickupLocation)
-    .then(function(partners){
-      for(var i = 0; i < partners.length; i++) {
-        if(partners[i].id !== request.clientId) {
-          emit('quote-trip', partners[i].id, request);
-        }
-      }
-    });
-}
-
 function Socket() {
   this.io = io;
   this.SocketError = SocketError;
@@ -156,6 +144,13 @@ Socket.prototype.getPartnerInfo = function(id, request) {
 Socket.prototype.setPartnerInfo = function(id, request) {
   return emit('set-partner-info', id, request);
 };
-Socket.prototype.broadcastQuoteToAllPartnersThatServe = broadcastQuoteToAllPartnersThatServe;
+Socket.prototype.broadcastQuote = function(request, partners) {
+  for(var i = 0; i < partners.length; i++) {
+    if(partners[i].id !== request.clientId) {
+      emit('quote-trip', partners[i].id, request);
+    }
+  }
+  return Promise.resolve();
+};
 
 module.exports = new Socket();

@@ -11,22 +11,14 @@ var quotesJobQueue; // Initialized with init to avoid circular dependency
 
 function dispatchTrip(job, done) {
   var tripId = job.tripId;
-  var log = logger.getSublog(tripId, 'tripthru');
-  log.log('Processing dispatch job ' + tripId, job);
+  var log = logger.getSublog(tripId, 'tripthru', 'servicing', 'dispatch');
   trips
     .getById(tripId)
     .then(function(trip){
       if(trip) {
-        if(!trip.autoDispatch) {
-          log.setDestination('servicing');
-          log.setType('dispatch');
-          return forwardDispatchToPartner(trip, log);
-        } else {
-          log.log('Since trip is autodispatch create quote job');
-          return createQuoteAutoDispatchJob(trip);
-        }
+        return forwardDispatchToPartner(trip, log);
       } else {
-        throw new Error('Trip ' + tripId + ' not found');
+        throw new Error('Trip not found');
       }
     })
     .catch(socket.SocketError, function(err){
@@ -50,7 +42,6 @@ function updateTripStatus(job, done){
       }
       var log = logger.getSublog(request.id, 'tripthru', destination, 
           'update-trip-status', request.status);
-      log.log('Processing update trip status job ' + request.id, job);
       return forwardUpdateToPartner(sendTo, request, log);
     })
     .catch(socket.SocketError, function(err){
@@ -62,15 +53,6 @@ function updateTripStatus(job, done){
     .finally(done);
 }
 
-function createQuoteAutoDispatchJob(trip) {
-  var quote = TripThruApiFactory.createQuoteFromTrip(trip);
-  return quotes
-    .add(quote)
-    .then(function(){
-      quotesJobQueue.newAutoDispatchJob(quote.id);
-    });
-}
-
 function autoDispatchTrip(job, done) {
   var tripId = job.tripId;
   var servicingPartner = job.servicingPartner;
@@ -78,7 +60,6 @@ function autoDispatchTrip(job, done) {
   var log = logger.getSublog(tripId, 'tripthru');
   var promise;
   
-  log.log('Processing autodispatch job ' + tripId, job);
   if(servicingPartner) {
     log.setDestination('servicing');
     log.setType('dispatch');
@@ -87,7 +68,6 @@ function autoDispatchTrip(job, done) {
     log.setDestination('origin');
     log.setType('update-trip-status');
     log.setStatus('rejected');
-    log.log('No best quote found so rejecting trip');
     promise = rejectTripAndUpdate(tripId, servicingPartner, log);
   }
   
@@ -143,7 +123,6 @@ function rejectTripAndUpdate(tripId, servicingPartner, log) {
         trip.status = 'rejected';
         this.trip = trip;
         this.trip.lastUpdate = moment();
-        log.log('Trip status updated to ' + this.trip.status);
         return trips.update(this.trip);
       } else {
         throw new Error('Autodispatch trip ' + tripId + ' not found');
@@ -152,12 +131,13 @@ function rejectTripAndUpdate(tripId, servicingPartner, log) {
     .then(function(result){
       var request = TripThruApiFactory.createRequestFromTrip(this.trip, 
           'update-trip-status');
+      log.log('No best quote found so rejecting trip', request);
       return forwardUpdateToPartner(this.trip.originatingPartner.id, request, log);
     });
 }
 
 function forwardUpdateToPartner(sendTo, request, log) {
-  log.log('Forward update trip status to ' + sendTo, request);
+  log.log('Update trip status (' + request.status + ') forwarded to ' + sendTo, request);
   return socket
     .updateTripStatus(sendTo, request)
     .then(function(res){
@@ -170,7 +150,7 @@ function forwardUpdateToPartner(sendTo, request, log) {
 
 function forwardDispatchToPartner(trip, log) {
   var request = TripThruApiFactory.createRequestFromTrip(trip, 'dispatch');
-  log.log('Forward dispatch to ' + trip.servicingPartner.id, request);
+  log.log('Dispatch to ' + trip.servicingPartner.id, request);
   return socket
     .dispatchTrip(trip.servicingPartner.id, request)
     .then(function(res){
