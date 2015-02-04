@@ -106,7 +106,7 @@ Dashboard.prototype.getNetworks = function(token) {
                   id: fleet.id,
                   name: fleet.name,
                   coverage: u.coverage[j],
-                  partner: { id: u.id, name: u.name }
+                  partner: { id: u.id, name: u.fullname }
                 });
               }
               for(var j = 0; j < u.vehicleTypes.length; j++) {
