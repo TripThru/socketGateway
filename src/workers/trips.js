@@ -1,6 +1,7 @@
 var queue = require('./job_queue');
 var trips = require('../active_trips');
 var quotes = require('../active_quotes');
+var users = require('../controller/users');
 var TripThruApiFactory = require('../tripthru_api_factory');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
@@ -33,6 +34,7 @@ function dispatchTrip(job, done) {
 function updateTripStatus(job, done){
   var request = job.request;
   var sendTo = job.sendTo;
+  var log = logger.getSublog(request.id, 'tripthru', '', 'update-trip-status', request.status);
   trips
     .getById(request.id)
     .then(function(trip){
@@ -40,8 +42,7 @@ function updateTripStatus(job, done){
       if(trip) {
         destination = trip.originatingPartner.id === sendTo ? 'origin' : 'servicing';
       }
-      var log = logger.getSublog(request.id, 'tripthru', destination, 
-          'update-trip-status', request.status);
+      log.setDestination(destination);
       return forwardUpdateToPartner(sendTo, request, log);
     })
     .catch(socket.SocketError, function(err){
@@ -137,9 +138,13 @@ function rejectTripAndUpdate(tripId, servicingPartner, log) {
 }
 
 function forwardUpdateToPartner(sendTo, request, log) {
-  log.log('Update trip status (' + request.status + ') forwarded to ' + sendTo, request);
-  return socket
-    .updateTripStatus(sendTo, request)
+  return users
+    .getById(sendTo)
+    .then(function(user){
+      var name = user ? user.fullname : 'unknown';
+      log.log('Update trip status (' + request.status + ') forwarded to ' + name, request);
+      return socket.updateTripStatus(sendTo, request);
+    })
     .then(function(res){
       log.log('Response', res);
       if( res.result !== resultCodes.ok )
@@ -150,9 +155,13 @@ function forwardUpdateToPartner(sendTo, request, log) {
 
 function forwardDispatchToPartner(trip, log) {
   var request = TripThruApiFactory.createRequestFromTrip(trip, 'dispatch');
-  log.log('Dispatch to ' + trip.servicingPartner.id, request);
-  return socket
-    .dispatchTrip(trip.servicingPartner.id, request)
+  return users
+    .getById(trip.servicingPartner.id)
+    .then(function(user){
+      var name = user ? user.fullname : 'unknown'; 
+      log.log('Dispatch to ' + name, request);
+      return socket.dispatchTrip(trip.servicingPartner.id, request);
+    })
     .then(function(res){
       log.log('Response', res);
       if( res.result !== resultCodes.ok && res.result !== resultCodes.rejected)

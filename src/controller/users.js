@@ -2,7 +2,7 @@ var TripThruApiFactory = require('../tripthru_api_factory');
 var Gateway = require('../gateway').Gateway;
 var IGateway = require('../gateway').IGateway;
 var Interface = require('../interface').Interface;
-var users = require('../model/users');
+var usersModel = require('../model/users');
 var maptools = require('../map_tools').MapTools;
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
@@ -18,6 +18,16 @@ RequestError.prototype.constructor = RequestError;
 
 function UsersController() {
   this.socket = null;
+  this.usersById = {};
+  this.usersByToken = {};
+  usersModel
+    .getAll()
+    .bind(this)
+    .then(function(allUsers){
+      for(var i = 0; i < allUsers.length; i++) {
+        this._add(allUsers[i]);
+      }
+    });
 }
 
 UsersController.prototype.init = function(gatewayClient) {
@@ -25,12 +35,50 @@ UsersController.prototype.init = function(gatewayClient) {
   this.socket = gatewayClient;
 };
 
+UsersController.prototype._getById = function(id) {
+  if(this.usersById.hasOwnProperty(id)) {
+    return Promise.resolve(this.usersById[id]);
+  } else {
+    return usersModel
+      .getById(id)
+      .bind(this)
+      .then(function(user){
+        if(user) {
+          this._add(user);
+        }
+        return user;
+      });
+  }
+};
+
+UsersController.prototype._getByToken = function(token) {
+  if(this.usersByToken.hasOwnProperty(token)) {
+    return Promise.resolve(this.usersByToken[token]);
+  } else {
+    return usersModel
+      .getByToken(token)
+      .bind(this)
+      .then(function(user){
+        if(user) {
+          this._add(user);
+        }
+        return user;
+      });
+  }
+};
+
+UsersController.prototype._add = function(user) {
+  this.usersById[user.id] = user;
+  this.usersByToken[user.token] = user;
+};
+
 UsersController.prototype.getPartnerInfo = function(request) {
   var log = logger.getSublog(request.id);
   log.log('Get partner info ' + request.id + ' from ' + request.clientId, request);
   var user = TripThruApiFactory.createUserFromRequest(request, 'get-partner-info');
-  return users
-    .getById(user.id)
+  return this
+    ._getById(user.id)
+    .bind(this)
     .then(function(u){
       if(u) {
         var response = TripThruApiFactory.createResponseFromUser(u, 'get-partner-info');
@@ -57,15 +105,14 @@ UsersController.prototype.getPartnerInfo = function(request) {
 UsersController.prototype.setPartnerInfo = function(request) {
   var log = logger.getSublog(request.clientId);
   log.log('Set partner info ' + request.clientId, request);
-  return users
-    .getById(request.clientId)
+  return this
+    ._getById(request.clientId)
     .bind({})
     .then(function(u){
       if(u) {
-        this.updatedUser = 
-          TripThruApiFactory.createUserFromRequest(request, 'set-partner-info', 
-              {user: u});
-        return users.update(this.updatedUser);
+        this.updatedUser = TripThruApiFactory.createUserFromRequest(request, 
+            'set-partner-info', {user: u});
+        return usersModel.update(this.updatedUser);
       } else {
         throw new RequestError(resultCodes.notFound, 'User ' + request.clientId + ' does not exist');
       }
@@ -91,58 +138,40 @@ UsersController.prototype.setPartnerInfo = function(request) {
 };
 
 UsersController.prototype.getByToken = function(token) {
-  return users.getByToken(token);
+  return this._getByToken(token);
 };
 
-UsersController.prototype.getAll = function(token) {
-  return users.getAll();
+UsersController.prototype.getById = function(id) {
+  return this._getById(id);
 };
 
-// This is a temporary solution to work with the current website without changes
-UsersController.prototype.getNetworks = function() {
-  return users
-    .getAll()
-    .then(function(allUsers){
-      var response = {
-        fleets: [],
-        vehicleTypes: []
-      };
-      for(var i = 0; i < allUsers.length; i++) {
-        var u = allUsers[i];
-        for(var j = 0; j < u.fleets.length; j++){
-          var fleet = u.fleets[j];
-          response.fleets.push({
-            id: fleet.id,
-            name: fleet.name,
-            coverage: u.coverage[j],
-            partner: { id: u.id, name: u.name }
-          });
-        }
-        for(var j = 0; j < u.vehicleTypes.length; j++) {
-          response.vehicleTypes.push(u.vehicleTypes[j]);
-        }
-      }
-      response.result = resultCodes.ok;
-      return response;
+UsersController.prototype.getAll = function() {
+  var users = this.usersById;
+  return new Promise(function(resolve, reject){
+    var result = Object.keys(users).map(function(id) {
+      return users[id];
     });
+    resolve(result);
+  });
 };
 
 UsersController.prototype.getPartnersThatServeLocation = function(location) {
-  return users
-    .getAll()
-    .then(function(allUsers){
-      var usersThatServeLocation = [];
-      for(var i = 0; i < allUsers.length; i++) {
-        var u = allUsers[i];
+  var users = this.usersById;
+  return new Promise(function(resolve, reject){
+    var usersThatServeLocation = [];
+    for(var id in users) {
+      if(users.hasOwnProperty(id)) {
+        var u = users[id];
         for(var j = 0; j < u.coverage.length; j++) {
-          var coverage = u.coverage[j].toObject();
+          var coverage = u.coverage[j];
           if(maptools.isInside(location, coverage)){
             usersThatServeLocation.push(u);
           }
         }
       }
-      return usersThatServeLocation;
-    });
+    }
+    resolve(usersThatServeLocation);
+  });
 };
 
 module.exports = new UsersController();

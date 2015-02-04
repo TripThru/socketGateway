@@ -10,6 +10,7 @@ var validate = require('./validate');
 var workers = require('../workers/trips');
 var quotesController = require('./quotes');
 var logger = require('../logger');
+var users = require('./users');
 
 function RequestError(resultCode, error) {
   this.resultCode = resultCode;
@@ -57,17 +58,22 @@ TripsController.prototype.init = function(gatewayClient) {
 
 TripsController.prototype.dispatchTrip =  function(request) {
   var log = logger.getSublog(request.id, 'origin', 'tripthru', 'dispatch');
-  log.log('Dispatch received from ' + request.clientId, request);
   var validation = validate.dispatchTripRequest(request);
   if(!validation.valid) {
+    log.log('Invalid dispatch received from ' + request.clientId, request);
     var response = TripThruApiFactory.createResponseFromTrip(null, null,
         resultCodes.invalidParameters, validation.error.message);
     log.log('Response', response);
     return Promise.resolve(response);
   } else {
     var trip = TripThruApiFactory.createTripFromRequest(request, 'dispatch');
-    return trips
-      .getById(trip.id)
+    return users
+      .getById(request.clientId)
+      .then(function(user){
+        var name = user ? user.fullname : 'unknown';
+        log.log('Dispatch received from ' + name, request);
+        return trips.getById(trip.id);
+      })
       .then(function(res){
         if(!res) {
           return trips.add(trip);
@@ -107,9 +113,13 @@ TripsController.prototype.dispatchTrip =  function(request) {
 
 TripsController.prototype.getTrip = function(request) {
   var log = logger.getSublog(request.id, null, 'tripthru', 'get-trip');
-  log.log('Get trip received from ' + request.clientId, request);
-  return trips
-    .getById(request.id)
+  return users
+    .getById(request.clientId)
+    .then(function(user){
+      var name = user ? user.fullname : 'unknown';
+      log.log('Get trip received from ' + name, request);
+      return trips.getById(request.id);
+    })
     .then(function(trip){
       if(trip) {
         var response = TripThruApiFactory.createResponseFromTrip(trip, 'get-trip');
@@ -137,11 +147,15 @@ TripsController.prototype.getTrip = function(request) {
 
 TripsController.prototype.getTripStatus = function(request) {
   //var log = logger.getSublog(request.id);
-  //log.log('Get trip status received from ' + request.clientId, request);
   var trip;
-  return trips
-    .getById(request.id)
+  return users
+    .getById(request.clientId)
     .bind(this)
+    .then(function(user){
+      //var name = user ? user.fullname : 'unknown';
+      //log.log('Get trip status received from ' + name, request);
+      return trips.getById(request.id);
+    })
     .then(function(t){
       trip = t;
       if(!trip) {
@@ -187,11 +201,15 @@ TripsController.prototype.getTripStatus = function(request) {
 TripsController.prototype.updateTripStatus = function(request) {
   var log = logger.getSublog(request.id, null, 'tripthru', 'update-trip-status', 
       request.status);
-  log.log('Update trip status (' + request.status + ') received from ' + request.clientId, request);
   var self = this;
-  return trips
-    .getById(request.id)
+  return users
+    .getById(request.clientId)
     .bind({})
+    .then(function(user){
+      var name = user ? user.fullname : 'unknown';
+      log.log('Update trip status (' + request.status + ') received from ' + name, request);
+      return trips.getById(request.id);
+    })
     .then(function(t){
       if(t) {
         log.setOrigin(
@@ -236,7 +254,7 @@ TripsController.prototype.updateTripStatus = function(request) {
 TripsController.prototype.getTripStats = function(trip) {
   var log = logger.getSublog(trip.id, 'tripthru', 'servicing', 'get-trip-status');
   var request = TripThruApiFactory.createRequestFromTrip(trip, 'get-trip-status');
-  log.log('Get trip status sent to ' + trip.servicingPartner.id, request);
+  log.log('Get trip status sent to ' + trip.servicingPartner.name, request);
   this
     .socket
     .getTripStatus(trip.servicingPartner.id, request)

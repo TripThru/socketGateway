@@ -4,6 +4,7 @@ function cloneUser(user) {
   var u = {
       id: user.id,
       name: user.name,
+      fullname: user.fullname,
       token: user.token,
       role: user.role,
       email: user.email,
@@ -44,7 +45,7 @@ var self = module.exports = {
         var users = [];
         for(var i = 0; i < allUsers.length; i++) {
           if(allUsers[i]){
-            users.push(cloneUser(allUsers[i]));
+            users.push(cloneUser(allUsers[i].toObject()));
           }
         }
         return users;

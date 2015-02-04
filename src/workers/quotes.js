@@ -55,16 +55,16 @@ function autoDispatchQuote(job, done) {
       var partner = bestQuote !== null ? bestQuote.partner : null;
       var fleet = bestQuote !== null ? bestQuote.fleet : null;
       var eta = bestQuote !== null ? bestQuote.eta.utc().toDate().toISOString() : null;
-      var details = bestQuote !== null ? (partner.id + ', ETA: ' + eta) : 'None';
+      var details = bestQuote !== null ? (partner.name + ', ETA: ' + eta) : 'None';
       
       log.log('Finding best quote: ' + details, this.quote.request);
       log.log('Broadcasting quote');
       for(var i = 0; i < this.quote.receivedQuotes.length; i++) {
         var q = this.quote.receivedQuotes[i];
-        log.log('Quote received from ' + q.partner.id, q); 
+        log.log('Quote received from ' + q.partner.name, q); 
       }
       if(bestQuote) {
-        log.log('Best quote found from ' + partner.id, bestQuote);
+        log.log('Best quote found from ' + partner.name, bestQuote);
       } else {
         log.log('No best quote found');
       }

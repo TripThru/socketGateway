@@ -133,6 +133,7 @@ var quote = new mongoose.Schema({
 var user = new mongoose.Schema({
   id: { type: String, trim: true },
   name: { type: String, trim: true },
+  fullname: { type: String },
   token: String,
   role: String,
   email: String,

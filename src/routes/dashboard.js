@@ -7,36 +7,12 @@ var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 
 function Dashboard() {
-  this.usersByToken = {};
-  usersController
-    .getAll()
-    .bind(this)
-    .then(function(allUsers){
-      for(var i = 0; i < allUsers.length; i++) {
-        var user = allUsers[i];
-        this.usersByToken[user.token] = user;
-      }
-    });
+  
 }
 
-Dashboard.prototype.getUser = function(token) {
-  if(this.usersByToken.hasOwnProperty(token)){
-    return Promise.resolve(this.usersByToken[token]);
-  } else {
-    return usersController
-      .getByToken(token)
-      .then(function(user){
-        if(user) {
-          this.usersByToken[user.token] = user;
-        }
-        return user;
-      });
-  }
-};
-
 Dashboard.prototype.getStats = function(token) {
-  return this
-    .getUser(token)
+  return usersController
+    .getByToken(token)
     .then(function(user){
       var response;
       if(user){
@@ -53,8 +29,8 @@ Dashboard.prototype.getStats = function(token) {
 };
 
 Dashboard.prototype.getTripsList = function(token, status) {
-  return this
-    .getUser(token)
+  return usersController
+    .getByToken(token)
     .then(function(user){
       var response;
       if(user){
@@ -73,8 +49,8 @@ Dashboard.prototype.getTripsList = function(token, status) {
 };
 
 Dashboard.prototype.getTripStatus = function(token, id, callback) {
-  return this
-    .getUser(token)
+  return usersController
+    .getByToken(token)
     .then(function(user){
       var response;
       if(user){
@@ -90,8 +66,8 @@ Dashboard.prototype.getTripStatus = function(token, id, callback) {
 };
 
 Dashboard.prototype.getTripRoute = function(token, id) {
-  return this
-    .getUser(token)
+  return usersController
+    .getByToken(token)
     .then(function(user){
       var response;
       var trip = activeTrips.getById(id);
@@ -111,22 +87,40 @@ Dashboard.prototype.getTripRoute = function(token, id) {
 };
 
 Dashboard.prototype.getNetworks = function(token) {
-  return this
-    .getUser(token)
+  return usersController
+    .getByToken(token)
     .then(function(user){
-      var response;
       if(user) {
-        return usersController.getNetworks();
+        return usersController
+          .getAll()
+          .then(function(users){
+            for(var i = 0; i < users.length; i++) {
+              var u = users[id];
+              for(var j = 0; j < u.fleets.length; j++){
+                var fleet = u.fleets[j];
+                response.fleets.push({
+                  id: fleet.id,
+                  name: fleet.name,
+                  coverage: u.coverage[j],
+                  partner: { id: u.id, name: u.name }
+                });
+              }
+              for(var j = 0; j < u.vehicleTypes.length; j++) {
+                response.vehicleTypes.push(u.vehicleTypes[j]);
+              }
+            }
+            response.result = resultCodes.ok;
+            return response;
+          });
       } else {
-        response = { result: resultCodes.notFound };
+        return { result: resultCodes.notFound };
       }
-      return response;
     });
 };
 
 Dashboard.prototype.getTripLogs = function(token, id) {
-  return this
-    .getUser(token)
+  return usersController
+    .getByToken(token)
     .then(function(user){
       var response;
       if(user) {
