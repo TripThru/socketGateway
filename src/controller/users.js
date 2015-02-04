@@ -148,9 +148,12 @@ UsersController.prototype.getById = function(id) {
 UsersController.prototype.getAll = function() {
   var users = this.usersById;
   return new Promise(function(resolve, reject){
-    var result = Object.keys(users).map(function(id) {
-      return users[id];
-    });
+    var result = [];
+    for(var id in users) {
+      if(users.hasOwnProperty(id)) {
+        result.push(users[id]);
+      }
+    }
     resolve(result);
   });
 };

@@ -94,8 +94,12 @@ Dashboard.prototype.getNetworks = function(token) {
         return usersController
           .getAll()
           .then(function(users){
+            var response = {
+                fleets: [],
+                vehicleTypes: []
+            };
             for(var i = 0; i < users.length; i++) {
-              var u = users[id];
+              var u = users[i];
               for(var j = 0; j < u.fleets.length; j++){
                 var fleet = u.fleets[j];
                 response.fleets.push({
