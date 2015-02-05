@@ -6,7 +6,7 @@ var resultCodes = codes.resultCodes;
 var moment = require('moment');
 var logger = require('../logger');
 var users = require('../controller/users');
-var socket; // Initialized with init to avoid circular dependency
+var gateway; // Initialized with init to avoid circular dependency
 var tripsJobQueue; // Initialized with init to avoid circular dependency
 var quoteMaxDuration = moment.duration(5, 'seconds'); // this parameter will be much lower once we can handle the load
 var missedBookingPeriod = moment.duration(30, 'minutes');
@@ -31,8 +31,8 @@ function quote(job, done) {
       var updateRequest = TripThruApiFactory.createRequestFromQuote(this.quote, 'update');
       return forwardCompletedQuoteToPartner(this.quote.request.clientId, updateRequest, log);
     })
-    .catch(socket.SocketError, function(err){
-      log.log('SocketError quote error ' + quoteId + ' : ' + err);
+    .catch(gateway.ConnectionError, function(err){
+      log.log('ConnectionError quote error ' + quoteId + ' : ' + err);
     })
     .error(function(err){
       log.log('Error quoting ' + quoteId + ' : ' + err);
@@ -72,8 +72,8 @@ function autoDispatchQuote(job, done) {
       
       tripsJobQueue.newAutoDispatchJob(quoteId, partner, fleet);
     })
-    .catch(socket.SocketError, function(err){
-      log.log('SocketError autodispatch quote error ' + quoteId + ' : ' + err);
+    .catch(gateway.ConnectionError, function(err){
+      log.log('ConnectionError autodispatch quote error ' + quoteId + ' : ' + err);
     })
     .error(function(err){
       log.log('Error autodispatch quoting ' + quoteId + ' : ' + err);
@@ -109,7 +109,7 @@ function broadcastQuoteAndGetResult(quoteId, log) {
       }
     })
     .then(function(usersThatServe){
-      return socket.broadcastQuote(this.quote.request, usersThatServe);
+      return gateway.broadcastQuote(this.quote.request, usersThatServe);
     })
     .delay(quoteMaxDuration.asMilliseconds())
     .then(function(){
@@ -126,19 +126,19 @@ function broadcastQuoteAndGetResult(quoteId, log) {
 
 function forwardCompletedQuoteToPartner(sendTo, request, log){
   log.log('Forward complete quote to ' + sendTo, request);
-  return socket
+  return gateway
     .updateQuote(sendTo, request)
     .then(function(result){
       log.log('Response', result);
       if(result.result !== resultCodes.ok) {
-        throw new socket.SocketError(result.resultCode, result.error);
+        throw new gateway.ConnectionError(result.resultCode, result.error);
       }
     });
 }
 
 module.exports = {
-  init: function(gateway, tripsJQ) {
-    socket = gateway;
+  init: function(gatewayClient, tripsJQ) {
+    gateway = gatewayClient;
     tripsJobQueue = tripsJQ;
     queue.processJob('quote', quote);
     queue.processJob('autodispatch-quote', autoDispatchQuote);

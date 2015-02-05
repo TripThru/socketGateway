@@ -2,6 +2,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var config = require('./config');
 var socket = require('./src/socket');
+var partnersGateway = require('./src/partners_gateway');
 var store = require('./src/store/store');
 var tripsController = require('./src/controller/trips');
 var quotesController = require('./src/controller/quotes');
@@ -19,11 +20,11 @@ store.clear();
 jobQueue.clear();
 
 // Init and inject dependencies to avoid circular dependencies
-tripsController.init(socket);
-quotesController.init(socket);
-usersController.init(socket);
-tripsJobQueue.init(socket, quotesJobQueue);
-quotesJobQueue.init(socket, tripsJobQueue);
+tripsController.init(partnersGateway);
+quotesController.init(partnersGateway);
+usersController.init(partnersGateway);
+tripsJobQueue.init(partnersGateway, quotesJobQueue);
+quotesJobQueue.init(partnersGateway, tripsJobQueue);
 
 var app = express();
 

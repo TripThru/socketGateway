@@ -3,6 +3,7 @@ var trips = require('./controller/trips');
 var quotes = require('./controller/quotes');
 var users = require('./controller/users');
 var Gateway = require('./gateway').Gateway;
+var partnersGateway = require('./partners_gateway');
 
 var activeSocketsByClientId = {};
 var activeClientIdsBySocket = {};
@@ -24,11 +25,13 @@ io.use(function(socket, next){
       .getByToken(query.token)
       .then(function(user){
         if (user && user.role === 'partner') {
+          var socketGateway = new SocketGateway(user.id, socket);
+          partnersGateway.subscribePartner(socketGateway);
           activeSocketsByClientId[user.id] = socket;
           activeClientIdsBySocket[socket] = user.id;
           next();
         } else {
-          console.log("Invalid access token " + query.token);
+          console.log("Invalid access token");
         }
       });
   }
@@ -80,6 +83,7 @@ io.sockets.on('connection', function (socket){
     var id = activeClientIdsBySocket[socket];
     delete activeSocketsByClientId[id];
     delete activeClientIdsBySocket[socket];
+    partnersGateway.unsubscribePartner(id);
     console.log('Client disconnected', id);
   });
 });
@@ -89,68 +93,55 @@ function appendClientId(socket, request) {
   return request;
 }
 
-function SocketError(resultCode, error) {
-  this.resultCode = resultCode;
-  this.error = error;
-  Error.captureStackTrace(this, SocketError);
+function SocketGateway(id, socket) {
+  this.id = id;
+  this.socket = socket;
+  Gateway.call(this, id, id);
 }
-SocketError.prototype = Object.create(Error.prototype);
-SocketError.prototype.constructor = SocketError;
 
-function emit(action, id, data) {
+SocketGateway.prototype.emit = function(action, data) {
+  var socket = this.socket;
   return new Promise(function(resolve, reject){
-    var socket = activeSocketsByClientId[id];
-    if (socket) {
-      socket.emit(action, data, function(res){
-        console.log(action, res);
-        resolve(res);
-      });
-    } else {
-      console.log('Client ' + id + ' not connected');
-      reject(new SocketError(null, 'Client ' + id + ' not connected'));
-    }
+    socket.emit(action, data, function(res){
+      resolve(res);
+    });
   });
-}
-
-function Socket() {
-  this.io = io;
-  this.SocketError = SocketError;
-  Gateway.call(this, 'socket', 'socket');
-}
-Socket.prototype.dispatchTrip = function(id, request) {
-  return emit('dispatch-trip', id, request);
-};
-Socket.prototype.getTrip = function(id, request) {
-  return emit('get-trip', id, request);
-};
-Socket.prototype.getTripStatus = function(id, request) {
-  return emit('get-trip-status', id, request);
-};
-Socket.prototype.updateTripStatus = function(id, request) {
-  return emit('update-trip-status', id, request);
-};
-Socket.prototype.quoteTrip = function(id, request) {
-  return emit('quote-trip', id, request);
-};
-Socket.prototype.getQuote = function(id, request) {
-  return emit('get-quote', id, request);
-};
-Socket.prototype.updateQuote = function(id, request) {
-  return emit('update-quote', id, request);
-};
-Socket.prototype.getPartnerInfo = function(id, request) {
-  return emit('get-partner-info', id, request);
-};
-Socket.prototype.setPartnerInfo = function(id, request) {
-  return emit('set-partner-info', id, request);
-};
-Socket.prototype.broadcastQuote = function(request, partners) {
-  for(var i = 0; i < partners.length; i++) {
-    if(partners[i].id !== request.clientId) {
-      emit('quote-trip', partners[i].id, request);
-    }
-  }
-  return Promise.resolve();
 };
 
-module.exports = new Socket();
+SocketGateway.prototype.dispatchTrip = function(request) {
+  return this.emit('dispatch-trip', request);
+};
+
+SocketGateway.prototype.getTrip = function(request) {
+  return this.emit('get-trip',request);
+};
+
+SocketGateway.prototype.getTripStatus = function(request) {
+  return this.emit('get-trip-status', request);
+};
+
+SocketGateway.prototype.updateTripStatus = function(request) {
+  return this.emit('update-trip-status', request);
+};
+
+SocketGateway.prototype.quoteTrip = function(request) {
+  return this.emit('quote-trip', request);
+};
+
+SocketGateway.prototype.getQuote = function(request) {
+  return this.emit('get-quote', request);
+};
+
+SocketGateway.prototype.updateQuote = function(request) {
+  return this.emit('update-quote', request);
+};
+
+SocketGateway.prototype.getPartnerInfo = function(request) {
+  return this.emit('get-partner-info', request);
+};
+
+SocketGateway.prototype.setPartnerInfo = function(request) {
+  return this.emit('set-partner-info', request);
+};
+
+module.exports.io = io;

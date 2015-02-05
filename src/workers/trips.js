@@ -7,7 +7,7 @@ var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var moment = require('moment');
 var logger = require('../logger');
-var socket; // Initialized with init to avoid circular dependency
+var gateway; // Initialized with init to avoid circular dependency
 var quotesJobQueue; // Initialized with init to avoid circular dependency
 
 function dispatchTrip(job, done) {
@@ -22,8 +22,8 @@ function dispatchTrip(job, done) {
         throw new Error('Trip not found');
       }
     })
-    .catch(socket.SocketError, function(err){
-      log.log('SocketError dispatch ' + tripId + ' : ' + err.error);
+    .catch(gateway.ConnectionError, function(err){
+      log.log('ConnectionError dispatch ' + tripId + ' : ' + err.error);
     })
     .error(function(err){
       log.log('Error dispatching ' + tripId + ' : ' + err);
@@ -45,8 +45,8 @@ function updateTripStatus(job, done){
       log.setDestination(destination);
       return forwardUpdateToPartner(sendTo, request, log);
     })
-    .catch(socket.SocketError, function(err){
-      log.log('SocketError update trip status ' + request.id + ' : ' + err.error);
+    .catch(gateway.ConnectionError, function(err){
+      log.log('ConnectionError update trip status ' + request.id + ' : ' + err.error);
     })
     .error(function(err){
       log.log('Error updating ' + request.id + ' : ' + err);
@@ -73,8 +73,8 @@ function autoDispatchTrip(job, done) {
   }
   
   promise
-    .catch(socket.SocketError, function(err){
-      log.log('SocketError autodispatch ' + tripId + ' : ' + err.error);
+    .catch(gateway.ConnectionError, function(err){
+      log.log('ConnectionError autodispatch ' + tripId + ' : ' + err.error);
     })
     .error(function(err){
       log.log('Error autodispatch ' + tripId + ' : ' + err);
@@ -143,12 +143,12 @@ function forwardUpdateToPartner(sendTo, request, log) {
     .then(function(user){
       var name = user ? user.fullname : 'unknown';
       log.log('Update trip status (' + request.status + ') forwarded to ' + name, request);
-      return socket.updateTripStatus(sendTo, request);
+      return gateway.updateTripStatus(sendTo, request);
     })
     .then(function(res){
       log.log('Response', res);
       if( res.result !== resultCodes.ok )
-        throw new socket.SocketError(res.resultCode, res.error);
+        throw new gateway.ConnectionError(res.resultCode, res.error);
       return res;
     });
 }
@@ -160,12 +160,12 @@ function forwardDispatchToPartner(trip, log) {
     .then(function(user){
       var name = user ? user.fullname : 'unknown'; 
       log.log('Dispatch to ' + name, request);
-      return socket.dispatchTrip(trip.servicingPartner.id, request);
+      return gateway.dispatchTrip(trip.servicingPartner.id, request);
     })
     .then(function(res){
       log.log('Response', res);
       if( res.result !== resultCodes.ok && res.result !== resultCodes.rejected)
-        throw new socket.SocketError(res.resultCode, res.error);
+        throw new gateway.ConnectionError(res.resultCode, res.error);
       return res;
     });
 }
@@ -175,8 +175,8 @@ function TripsJobQueue() {
 }
 
 module.exports = {
-  init: function(gateway, quotesJQ) {
-    socket = gateway;
+  init: function(gatewayClient, quotesJQ) {
+    gateway = gatewayClient;
     quotesJobQueue = quotesJQ;
     queue.processJob('dispatch', dispatchTrip);
     queue.processJob('update-trip-status', updateTripStatus);

@@ -17,7 +17,7 @@ RequestError.prototype = Object.create(Error.prototype);
 RequestError.prototype.constructor = RequestError;
 
 function UsersController() {
-  this.socket = null;
+  this.gateway = null;
   this.usersById = {};
   this.usersByToken = {};
   usersModel
@@ -32,7 +32,7 @@ function UsersController() {
 
 UsersController.prototype.init = function(gatewayClient) {
   Interface.ensureImplements(gatewayClient, IGateway);
-  this.socket = gatewayClient;
+  this.gateway = gatewayClient;
 };
 
 UsersController.prototype._getById = function(id) {

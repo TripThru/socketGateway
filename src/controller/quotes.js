@@ -28,12 +28,12 @@ UnsuccessfulRequestError.prototype = Object.create(Error.prototype);
 UnsuccessfulRequestError.prototype.constructor = UnsuccessfulRequestError;
 
 function QuotesController() {
-  this.socket = null;
+  this.gateway = null;
 }
 
 QuotesController.prototype.init = function(gatewayClient) {
   Interface.ensureImplements(gatewayClient, IGateway);
-  this.socket = gatewayClient;
+  this.gateway = gatewayClient;
 };
 
 QuotesController.prototype.createQuote =  function(request) {

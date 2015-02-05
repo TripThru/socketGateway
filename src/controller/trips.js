@@ -48,12 +48,12 @@ function shouldForwardUpdate(trip, currentStatus, newStatus) {
 }
 
 function TripsController() {
-  this.socket = null;
+  this.gateway = null;
 }
 
 TripsController.prototype.init = function(gatewayClient) {
   Interface.ensureImplements(gatewayClient, IGateway);
-  this.socket = gatewayClient;
+  this.gateway = gatewayClient;
 };
 
 TripsController.prototype.dispatchTrip =  function(request) {
@@ -163,7 +163,7 @@ TripsController.prototype.getTripStatus = function(request) {
       } else if(!trip.servicingPartner) {
         return {result: resultCodes.notFound};
       } else { 
-        return this.socket.getTripStatus(trip.servicingPartner.id, request);
+        return this.gateway.getTripStatus(trip.servicingPartner.id, request);
       }
     })
     .then(function(response){
@@ -177,7 +177,7 @@ TripsController.prototype.getTripStatus = function(request) {
             response.resultCode));
       }
     })
-    .catch(this.socket.SocketError, UnsuccessfulRequestError, function(err){
+    .catch(this.gateway.ConnectionError, UnsuccessfulRequestError, function(err){
       // If request to client fails, fall back to last known status
       var response = 
         TripThruApiFactory.createResponseFromTrip(trip, 'get-trip-status');
@@ -256,7 +256,7 @@ TripsController.prototype.getTripStats = function(trip) {
   var request = TripThruApiFactory.createRequestFromTrip(trip, 'get-trip-status');
   log.log('Get trip status sent to ' + trip.servicingPartner.name, request);
   this
-    .socket
+    .gateway
     .getTripStatus(trip.servicingPartner.id, request)
     .then(function(response){
       trip = TripThruApiFactory.createTripFromResponse(response, 
