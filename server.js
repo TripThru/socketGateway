@@ -10,7 +10,11 @@ var jobQueue = require('./src/workers/job_queue');
 var tripsJobQueue = require('./src/workers/trips');
 var quotesJobQueue = require('./src/workers/quotes');
 var dashboard = require('./src/routes/dashboard');
+var activeTrips = require('./src/active_trips');
+var activeQuotes = require('./src/active_quotes');
 
+activeQuotes.clear();
+activeTrips.clear();
 store.clear();
 jobQueue.clear();
 

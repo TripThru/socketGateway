@@ -63,33 +63,25 @@ function toApiQuote(storeQuote) {
   return quote;
 }
 
-var self = module.exports = {
-  add: function(quote) {
-    quote.state = 'inProgress'; //This should be done in a Quote constructor
-    return store
-      .createQuote(toStoreQuote(quote))
-      .error(function(err){
-        console.log('Error ocurred adding quote ' + err);
-        throw new Error('Error ocurred adding quote ' + err);
-      });
-  },
-  update: function(quote) {
-    return store
-      .updateQuote(toStoreQuote(quote))
-      .error(function(err){
-        console.log('Error ocurred updating quote ' + err);
-        throw new Error('Error ocurred updating quote ' + err);
-      });
-  },
-  getById: function(quoteId) {
-    return store
-      .getQuoteBy({id: quoteId})
-      .then(function(res){
-        return res.length > 0 ? toApiQuote(res[0].toObject()) : null;
-      })
-      .error(function(err){
-        console.log('Error ocurred getting quote ' + err);
-        throw new Error('Error ocurred getting quote ' + err);
-      });
-  }
+function QuotesModel() {
+  
+}
+
+QuotesModel.prototype.add = function(quote) {
+  quote.state = 'inProgress'; //This should be done in a Quote constructor
+  return store.createQuote(toStoreQuote(quote));
 };
+
+QuotesModel.prototype.update = function(quote) {
+  return store.updateQuote(toStoreQuote(quote));
+};
+
+QuotesModel.prototype.getById = function(id) {
+  return store
+    .getQuoteBy({id: id})
+    .then(function(res){
+      return res.length > 0 ? toApiQuote(res[0].toObject()) : null;
+    });
+};
+
+module.exports = new QuotesModel();

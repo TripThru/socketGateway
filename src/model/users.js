@@ -15,74 +15,57 @@ function cloneUser(user) {
   return u;
 }
 
-// Public
+function UsersModel() {
+  
+}
 
-var self = module.exports = {
-    
-  add: function(user) {
-    return store
-      .createUser(cloneUser(user))
-      .error(function(err){
-        console.log('Error ocurred adding user ' + err);
-        throw new Error('Error ocurred adding user ' + err);
-      });
-  },
-  update: function(user) {
-    return store
-      .updateUser(cloneUser(user))
-      .error(function(err){
-        console.log('Error ocurred updating user ' + err);
-        throw new Error('Error ocurred updating user ' + err);
-      });
-  },
-  getAll: function() {
-    return store
-      .getAllUsers()
-      .then(function(allUsers){
-        if(!allUsers || allUsers.length === 0) {
-          return [];
-        }
-        var users = [];
-        for(var i = 0; i < allUsers.length; i++) {
-          if(allUsers[i]){
-            users.push(cloneUser(allUsers[i].toObject()));
-          }
-        }
-        return users;
-      })
-      .error(function(err){
-        console.log('Error ocurred getting all users ' + err);
-        throw new Error('Error ocurred getting all users ' + err);
-      });
-  },
-  getById: function(userId) {
-    return store
-      .getUserBy({id: userId})
-      .then(function(res){
-        if(res.length > 0)
-          res = cloneUser(res[0].toObject());
-        else
-          res = null;
-        return res;
-      })
-      .error(function(err){
-        console.log('Error ocurred getting user ' + err);
-        throw new Error('Error ocurred getting user ' + err);
-      });
-  },
-  getByToken: function(token) {
-    return store
-      .getUserBy({token: token})
-      .then(function(res){
-        if(res.length > 0)
-          res = cloneUser(res[0].toObject());
-        else
-          res = null;
-        return res;
-      })
-      .error(function(err){
-        console.log('Error ocurred getting user ' + err);
-        throw new Error('Error ocurred getting user ' + err);
-      });
-  }
+UsersModel.prototype.add = function(user) {
+  return store.createUser(cloneUser(user));
 };
+
+UsersModel.prototype.update = function(user) {
+  return store.updateUser(cloneUser(user));
+};
+
+UsersModel.prototype.getAll = function() {
+  return store
+    .getAllUsers()
+    .then(function(allUsers){
+      if(!allUsers || allUsers.length === 0) {
+        return [];
+      }
+      var users = [];
+      for(var i = 0; i < allUsers.length; i++) {
+        if(allUsers[i]){
+          users.push(cloneUser(allUsers[i].toObject()));
+        }
+      }
+      return users;
+    });
+};
+
+UsersModel.prototype.getById = function(id) {
+  return store
+    .getUserBy({id: id})
+    .then(function(res){
+      if(res.length > 0)
+        res = cloneUser(res[0].toObject());
+      else
+        res = null;
+      return res;
+    });
+};
+
+UsersModel.prototype.getByToken = function(token) {
+  return store
+    .getUserBy({token: token})
+    .then(function(res){
+      if(res.length > 0)
+        res = cloneUser(res[0].toObject());
+      else
+        res = null;
+      return res;
+    });
+};
+
+module.exports = new UsersModel();

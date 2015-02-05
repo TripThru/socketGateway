@@ -50,8 +50,7 @@ function toStoreTrip(apiTrip) {
   trip.originatingPartnerId = trip.originatingPartner.id;
   trip.originatingFleetId = trip.originatingFleet.id;
   trip.servicingPartnerId = trip.servicingPartner ? trip.servicingPartner.id : null;
-  trip.servicingFleetId = trip.servicingFleet ? trip.servicingFleet.id : null;
-  
+  trip.servicingFleetId = trip.servicingFleet ? trip.servicingFleet.id : null; 
   return trip;
 }
 
@@ -65,32 +64,24 @@ function toApiTrip(storeTrip) {
   return trip;
 }
 
-var self = module.exports = {
-  add: function(trip) {
-    return store
-      .createTrip(toStoreTrip(trip))
-      .error(function(err){
-        console.log('Error ocurred adding trip ' + err);
-        throw new Error('Error ocurred adding trip ' + err);
-      });
-  },
-  update: function(trip) {
-    return store
-      .updateTrip(toStoreTrip(trip))
-      .error(function(err) {
-        console.log('Error ocurred updating trip ' + err);
-        throw new Error('Error ocurred updating trip ' + err);
-      });
-  },
-  getById: function(tripId) {
-    return store
-      .getTripBy({id: tripId})
-      .then(function(res){
-        return res.length > 0 ? toApiTrip(res[0].toObject()) : null;
-      })
-      .error(function(err){
-        console.log('Error ocurred getting trip ' + err);
-        throw new Error('Error ocurred getting trip ' + err);
-      });
-  }
+function TripsModel() {
+  
+}
+
+TripsModel.prototype.add = function(trip) {
+  return store.createTrip(toStoreTrip(trip));
 };
+
+TripsModel.prototype.update = function(trip) {
+  return store.updateTrip(toStoreTrip(trip));
+};
+
+TripsModel.prototype.getById = function(id) {
+  return store
+    .getTripBy({id: id})
+    .then(function(res){
+      return res.length > 0 ? toApiTrip(res[0].toObject()) : null;
+    });
+};
+
+module.exports = new TripsModel();

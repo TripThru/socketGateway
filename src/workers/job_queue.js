@@ -23,9 +23,12 @@ var self = module.exports = {
       });
     },
     clear: function() {
-      jobs.client.keys("q:*", function(err, key) {
-        jobs.client.del(key, function(err) {
-        });
+      jobs.client.keys("q:*", function(err, keys) {
+        if(keys) {
+          keys.forEach(function(key){
+            jobs.client.del(key, function(err) {});
+          });
+        }
       });
     }
 };

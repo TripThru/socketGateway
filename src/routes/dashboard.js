@@ -14,17 +14,19 @@ Dashboard.prototype.getStats = function(token) {
   return usersController
     .getByToken(token)
     .then(function(user){
-      var response;
       if(user){
         var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.id;
-        var trips = activeTrips.getAllDashboardTrips(networkId);
-        var stats = getStatsFromTripList(trips);
-        response = stats;
-        response.result = resultCodes.ok;
+        return activeTrips
+          .getAll(networkId)
+          .then(function(trips){
+            var stats = getStatsFromTripList(trips);
+            var response = stats;
+            response.result = resultCodes.ok;
+            return response;
+          });
       } else {
-        response = { result: resultCodes.notFound };
+        return { result: resultCodes.notFound };
       }
-      return response;
     });
 };
 
@@ -139,9 +141,9 @@ Dashboard.prototype.getTripLogs = function(token, id) {
     });
 };
 
-function getStatsFromTripList(tripsById) {
+function getStatsFromTripList(trips) {
   var stats = {
-    activeTrips: Object.keys(tripsById).length,
+    activeTrips: trips.length,
     queued: 0,
     dispatched: 0,
     enroute: 0,
@@ -155,8 +157,8 @@ function getStatsFromTripList(tripsById) {
   
   var durations = [];
   var distances = [];
-  for(var id in tripsById) {
-    var trip = tripsById[id];
+  for(var i = 0; i < trips.length; i++) {
+    var trip = trips[i];
     if(trip) {
       stats[trip.status]++;
       if(trip.status === 'complete' || trip.status === 'pickedup') {

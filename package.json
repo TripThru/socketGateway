@@ -17,7 +17,8 @@
     "mongoose": "*",
     "socket.io": "*",
     "socket.io-client": "*",
-    "tv4": "*"
+    "tv4": "*",
+    "redis": "*"
   },
   "devDependencies": {
     "blanket": "*",
