@@ -113,16 +113,18 @@ function createTripFromDispatchRequest(request) {
 function createTripFromUpdateTripStatusRequest(request, trip) {
   trip.status = request.status;
   if(request.driver) { 
-    trip.driver = idName(request.driver);
+    if(!trip.driver) {
+      trip.driver = idName(request.driver);
+    }
     if(request.driver.location) {
       trip.driver.location = apiLocation(request.driver.location);
       if(!trip.driver.initialLocation) {
         trip.driver.initialLocation = request.driver.location;
       }
       if(trip.status === 'enroute') {
-        trip.driver.enrouteLocation = request.driver.location;
+        trip.driver.routeEnrouteLocation = request.driver.location;
       } else if(trip.status === 'pickedup') {
-        trip.driver.pickupLocation = request.driver.location;
+        trip.driver.routePickupLocation = request.driver.location;
         trip.pickupTime = moment();
         trip.latenessMilliseconds = 
           moment.duration(trip.pickupTime.diff(trip.creation)).asMilliseconds();
@@ -138,7 +140,7 @@ function createTripFromUpdateTripStatusRequest(request, trip) {
         } else if(minutes > 15) {
           trip.serviceLevel = 4;
         }
-      } else if(trip.status == 'complete') {
+      } else if(trip.status === 'complete') {
         trip.duration = 
           moment.duration(moment().diff(trip.pickupTime)).asMinutes();
       }
