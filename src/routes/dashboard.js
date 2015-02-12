@@ -50,41 +50,27 @@ Dashboard.prototype.getTripsList = function(token, status) {
     });
 };
 
-Dashboard.prototype.getTripStatus = function(token, id, callback) {
-  return usersController
-    .getByToken(token)
-    .then(function(user){
-      var response;
-      if(user){
-        return tripsController.getTripStatus({id: id});
-      } else {
-        response = { result: resultCodes.notFound };
-      }
-      return response;
-    })
-    .then(function(response){
-      return response;
-    });
-};
-
 Dashboard.prototype.getTripRoute = function(token, id) {
   return usersController
     .getByToken(token)
+    .bind(this)
     .then(function(user){
-      var response;
-      var trip = activeTrips.getById(id);
-      if(user && trip) {
-        response = {
-            result: resultCodes.ok
-          };
-        if(trip.driver) {
-          response.historyEnrouteList = trip.driver.enrouteLocation;
-          response.historyPickUpList = trip.driver.pickupLocation;
-        }
+      if(user) {
+        return activeTrips
+          .getById(id)
+          .then(function(trip){
+            var response = {
+                result: resultCodes.ok
+              };
+            if(trip.driver) {
+              response.routeEnrouteLocation = trip.driver.routeEnrouteLocation;
+              response.routePickupLocation = trip.driver.routePickupLocation;
+            }
+            return response;
+          });
       } else {
-        response = { result: resultCodes.notFound };
+        return { result: resultCodes.notFound };
       }
-      return response;
     });
 };
 

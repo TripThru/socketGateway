@@ -18,7 +18,8 @@
     "socket.io": "*",
     "socket.io-client": "*",
     "tv4": "*",
-    "redis": "*"
+    "redis": "*",
+    "request": "*"
   },
   "devDependencies": {
     "blanket": "*",

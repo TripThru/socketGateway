@@ -2,17 +2,28 @@ var Promise = require('bluebird');
 var Gateway = require('./gateway').Gateway;
 var IGateway = require('./gateway').IGateway;
 var Interface = require('./interface').Interface;
+var RestfulGateway = require('./restful_gateway');
 var users = require('./controller/users');
 
 function PartnersGateway() {
   this.partnersById = {};
   Gateway.call(this, 'partners', 'partners');
+  users
+    .getAll()
+    .then(function(allUsers){
+      allUsers.forEach(function(user){
+        if(user.role === 'partner' && user.endpointType === 'restful') {
+          var gateway = new RestfulGateway(user.id, user.callbackUrl, user.callbackUrlToken);
+          this.partnersById[user.id] = gateway;
+        }
+      }.bind(this));
+    }.bind(this));
 }
 
 PartnersGateway.prototype.subscribePartner = function(gateway) {
   Interface.ensureImplements(gateway, IGateway);
   if(this.partnersById.hasOwnProperty(gateway.id)) {
-    throw new Error('Already exists');
+    throw new Error(gateway.id + ' already exists');
   }
   this.partnersById[gateway.id] = gateway;
 };
@@ -23,7 +34,7 @@ PartnersGateway.prototype.unsubscribePartner = function(id) {
 
 PartnersGateway.prototype.getPartner = function(id) {
   if(!this.partnersById.hasOwnProperty(id)) {
-    throw new Error('Not found');
+    throw new Error(id + ' not found');
   }
   return this.partnersById[id];
 };

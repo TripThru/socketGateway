@@ -1,7 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var config = require('./config');
-var socket = require('./src/socket');
+var socket = require('./socket');
 var partnersGateway = require('./src/partners_gateway');
 var store = require('./src/store/store');
 var tripsController = require('./src/controller/trips');
@@ -13,6 +13,9 @@ var quotesJobQueue = require('./src/workers/quotes');
 var dashboard = require('./src/routes/dashboard');
 var activeTrips = require('./src/active_trips');
 var activeQuotes = require('./src/active_quotes');
+var tripRoutes = require('./src/routes/trips');
+var quoteRoutes = require('./src/routes/quotes');
+var userRoutes = require('./src/routes/users');
 
 activeQuotes.clear();
 activeTrips.clear();
@@ -42,6 +45,65 @@ app.all('*', function(req, res, next){
 	next();
 });
 
+// API routes
+app.post('/network/:id', function(req, res){
+  userRoutes
+    .setPartnerInfo(req.query.token, req.params.id, req)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.get('/network/:id', function(req, res){
+  userRoutes
+    .getPartnerInfo(req.query.token, req.params.id)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.post('/quote/:id', function(req, res){
+  quoteRoutes
+    .quoteTrip(req.query.token, req.params.id, req)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.put('/quote/:id', function(req, res){
+  quoteRoutes
+    .updateQuote(req.query.token, req.params.id, req)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.get('/quote/:id', function(req, res){
+  quoteRoutes
+    .getQuote(req.query.token, req.params.id)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.post('/trip/:id', function(req, res){
+  tripRoutes
+    .dispatchTrip(req.query.token, req.params.id, req)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.put('/tripstatus/:id', function(req, res){
+  tripRoutes
+    .updateTripStatus(req.query.token, req.params.id, req)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.get('/tripstatus/:id', function(req, res){
+  tripRoutes
+    .getTripStatus(req.query.token, req.params.id)
+    .then(function(response){
+      res.json(response);
+    });
+});
+
+// Dashboard routes
 app.get('/stats', function(req, res) {
   dashboard
     .getStats(req.query.token)
@@ -52,13 +114,6 @@ app.get('/stats', function(req, res) {
 app.get('/trips/:status', function(req, res) {
   dashboard
     .getTripsList(req.query.token, req.params.status)
-    .then(function(response){
-      res.json(response);
-    });
-});
-app.get('/tripstatus/:id', function(req, res) {
-  dashboard
-    .getTripStatus(req.query.token, req.params.id)
     .then(function(response){
       res.json(response);
     });
