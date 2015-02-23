@@ -11,7 +11,7 @@ function RestfulGateway(id, rootUrl, token) {
   Gateway.call(this, id, id);
 }
 
-RestfulGateway.prototype.get = function(path, id, request) {
+RestfulGateway.prototype.get = function(path, id, req) {
   return new Promise(function(resolve, reject){
     path += '/' + id;
     request({
@@ -30,7 +30,7 @@ RestfulGateway.prototype.get = function(path, id, request) {
   }.bind(this));
 };
 
-RestfulGateway.prototype.post = function(path, id, request) {
+RestfulGateway.prototype.post = function(path, id, req) {
   return new Promise(function(resolve, reject){
     path += '/' + id;
     request({

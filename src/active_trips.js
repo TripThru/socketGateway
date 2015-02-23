@@ -21,13 +21,13 @@ function ActiveTrips() {
 }
 
 ActiveTrips.prototype.add = function(trip) {
-  return this
-    .redisClient
-    .add(trip.id, trip)
+  return tripsModel
+    .add(trip)
     .bind(this)
-    .then(function(reply){
+    .then(function(result){
+      trip.dbId = result.insertId;
       this.addDashboardTrip(trip);
-      tripsModel.add(trip);
+      return this.redisClient.add(trip.id, trip);
     });
 };
 
@@ -156,12 +156,12 @@ ActiveTrips.prototype.getAll = function(partnerId) {
         return allTrips;
       } else {
         var trips = [];
-        for(var i; i < allTrips.length; i++) {
+        for(var i = 0; i < allTrips.length; i++) {
           var trip = allTrips[i];
           if( trip && 
               trip.originatingPartner.id === partnerId || 
               (trip.servicingPartner && trip.servicingPartner.id === partnerId)) {
-            trips[id] = trip;
+            trips.push(trip);
           }
         }
         return trips;

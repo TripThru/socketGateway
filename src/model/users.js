@@ -1,30 +1,50 @@
 var store = require('../store/store');
 
-function cloneUser(user) {
-  var u = {
-      id: user.id,
-      name: user.name,
-      fullname: user.fullname,
-      token: user.token,
-      role: user.role,
-      email: user.email,
-      coverage: user.coverage,
-      fleets: user.fleets,
-      vehicleTypes: user.vehicleTypes  
+function toStoreUser(apiUser) {
+  return apiUser;
+}
+
+function toApiUser(storeUser) {
+  var user =  {
+    id: storeUser[0].user_db_id,
+    clientId: storeUser[0].user_client_id,
+    name: storeUser[0].user_name,
+    fullname: storeUser[0].full_name,
+    token: storeUser[0].token,
+    email: storeUser[0].email,
+    role: storeUser[0].role,
+    endpointType: storeUser[0].endpoint_type,
+    callbackUrl: storeUser[0].callback_url,
+    callbackToken: storeUser[0].callback_token,
+    fleets: [],
+    fleetsById: {}
   };
-  return u;
+  for(var i = 0; i < storeUser.length; i++) {
+    var su = storeUser[i];
+    var fleet = {
+      id: su.fleet_db_id,
+      clientId: su.fleet_client_id,
+      name: su.fleet_name,
+      coverage: {
+        radius: su.coverage_radius,
+        center: {
+          lat: su.coverage_lat,
+          lng: su.coverage_lng
+        }
+      }
+    };
+    user.fleets.push(fleet);
+    user.fleetsById[fleet.clientId] = fleet;
+  }
+  return user;
 }
 
 function UsersModel() {
   
 }
 
-UsersModel.prototype.add = function(user) {
-  return store.createUser(cloneUser(user));
-};
-
 UsersModel.prototype.update = function(user) {
-  return store.updateUser(cloneUser(user));
+  return store.updateUser(toStoreUser(user));
 };
 
 UsersModel.prototype.getAll = function() {
@@ -34,37 +54,40 @@ UsersModel.prototype.getAll = function() {
       if(!allUsers || allUsers.length === 0) {
         return [];
       }
-      var users = [];
+      var storeUsersById = {};
       for(var i = 0; i < allUsers.length; i++) {
-        if(allUsers[i]){
-          users.push(cloneUser(allUsers[i].toObject()));
+        var u = allUsers[i];
+        if(u) {
+          if(!storeUsersById.hasOwnProperty(u.user_client_id)) {
+            storeUsersById[u.user_client_id] = [u];
+          } else {
+            storeUsersById[u.user_client_id].push(u);
+          }
+        }
+      }
+      var users = [];
+      for(var id in storeUsersById) {
+        if(storeUsersById.hasOwnProperty(id)) {
+          users.push(toApiUser(storeUsersById[id]));
         }
       }
       return users;
     });
 };
 
-UsersModel.prototype.getById = function(id) {
+UsersModel.prototype.getByClientId = function(id) {
   return store
-    .getUserBy({id: id})
+    .getUserByClientId(id)
     .then(function(res){
-      if(res.length > 0)
-        res = cloneUser(res[0].toObject());
-      else
-        res = null;
-      return res;
+      return res.length > 0 ? toApiUser(res) : null;
     });
 };
 
 UsersModel.prototype.getByToken = function(token) {
   return store
-    .getUserBy({token: token})
+    .getUserByToken(token)
     .then(function(res){
-      if(res.length > 0)
-        res = cloneUser(res[0].toObject());
-      else
-        res = null;
-      return res;
+      return res.length > 0 ? toApiUser(res) : null;
     });
 };
 

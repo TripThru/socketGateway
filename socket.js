@@ -26,10 +26,10 @@ io.use(function(socket, next){
       .getByToken(query.token)
       .then(function(user){
         if (user && user.role === 'partner') {
-          var socketGateway = new SocketGateway(user.id, socket);
+          var socketGateway = new SocketGateway(user.clientId, socket);
           partnersGateway.subscribePartner(socketGateway);
-          activeSocketsByClientId[user.id] = socket;
-          activeClientIdsBySocket[socket] = user.id;
+          activeSocketsByClientId[user.clientId] = socket;
+          activeClientIdsBySocket[socket] = user.clientId;
           next();
         } else {
           console.log("Invalid access token");

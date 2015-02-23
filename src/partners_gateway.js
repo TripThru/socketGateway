@@ -13,8 +13,8 @@ function PartnersGateway() {
     .then(function(allUsers){
       allUsers.forEach(function(user){
         if(user.role === 'partner' && user.endpointType === 'restful') {
-          var gateway = new RestfulGateway(user.id, user.callbackUrl, user.callbackUrlToken);
-          this.partnersById[user.id] = gateway;
+          var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.callbackUrlToken);
+          this.partnersById[user.clientId] = gateway;
         }
       }.bind(this));
     }.bind(this));
@@ -78,7 +78,7 @@ PartnersGateway.prototype.setPartnerInfo = function(id, request) {
 PartnersGateway.prototype.broadcastQuote = function(request, partners) {
   return new Promise(function(resolve, reject){ 
     for(var i = 0; i < partners.length; i++) {
-      var id = partners[i].id;
+      var id = partners[i].clientId;
       if(id !== request.clientId && this.partnersById.hasOwnProperty(id)) {
         this.quoteTrip(id, request);
       }

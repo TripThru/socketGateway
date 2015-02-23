@@ -15,12 +15,11 @@ Dashboard.prototype.getStats = function(token) {
     .getByToken(token)
     .then(function(user){
       if(user){
-        var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.id;
+        var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.clientId;
         return activeTrips
           .getAll(networkId)
           .then(function(trips){
-            var stats = getStatsFromTripList(trips);
-            var response = stats;
+            var response = getStatsFromTripList(trips);
             response.result = resultCodes.ok;
             return response;
           });
@@ -36,7 +35,7 @@ Dashboard.prototype.getTripsList = function(token, status) {
     .then(function(user){
       var response;
       if(user){
-        var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.id;
+        var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.clientId;
         status = status || 'all';
         var trips = activeTrips.getDashboardTrips(networkId, status);
         response = {
@@ -66,42 +65,6 @@ Dashboard.prototype.getTripRoute = function(token, id) {
               response.routeEnrouteLocation = trip.driver.routeEnrouteLocation;
               response.routePickupLocation = trip.driver.routePickupLocation;
             }
-            return response;
-          });
-      } else {
-        return { result: resultCodes.notFound };
-      }
-    });
-};
-
-Dashboard.prototype.getNetworks = function(token) {
-  return usersController
-    .getByToken(token)
-    .then(function(user){
-      if(user) {
-        return usersController
-          .getAll()
-          .then(function(users){
-            var response = {
-                fleets: [],
-                vehicleTypes: []
-            };
-            for(var i = 0; i < users.length; i++) {
-              var u = users[i];
-              for(var j = 0; j < u.fleets.length; j++){
-                var fleet = u.fleets[j];
-                response.fleets.push({
-                  id: fleet.id,
-                  name: fleet.name,
-                  coverage: u.coverage[j],
-                  partner: { id: u.id, name: u.fullname }
-                });
-              }
-              for(var j = 0; j < u.vehicleTypes.length; j++) {
-                response.vehicleTypes.push(u.vehicleTypes[j]);
-              }
-            }
-            response.result = resultCodes.ok;
             return response;
           });
       } else {

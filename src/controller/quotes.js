@@ -48,7 +48,7 @@ QuotesController.prototype.createQuote =  function(request) {
   } else {
     var quote = TripThruApiFactory.createQuoteFromRequest(request, 'quote');
     return users
-      .getById(request.clientId)
+      .getByClientId(request.clientId)
       .then(function(user){
         var name = user ? user.fullname : 'unknown';
         log.log('Quote request from ' + name, request);
@@ -85,7 +85,7 @@ QuotesController.prototype.createQuote =  function(request) {
 QuotesController.prototype.getQuote = function(request) {
   var log = logger.getSublog(request.id, 'origin', 'tripthru', 'get-quote');
   return  users
-    .getById(request.clientId)
+    .getByClientId(request.clientId)
     .then(function(user){
       var name = user ? user.fullname : 'unknown';
       log.log('Get quote request from ' + name, request);
@@ -118,7 +118,7 @@ QuotesController.prototype.updateQuote = function(request) {
   //var log = logger.getSublog(request.id, 'servicing', 'tripthru', 'update-quote');
   //log.log('Update quote from ' + request.clientId, request);
   return  users
-    .getById(request.clientId)
+    .getByClientId(request.clientId)
     .bind({})
     .then(function(user){
       //var name = user ? user.fullname : 'unknown';

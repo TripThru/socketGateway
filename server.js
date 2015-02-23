@@ -1,3 +1,4 @@
+require('blocked')(function(ms){console.log('blocked for %sms', ms)});
 var express = require('express');
 var bodyParser = require('body-parser');
 var config = require('./config');
@@ -19,10 +20,10 @@ var userRoutes = require('./src/routes/users');
 
 activeQuotes.clear();
 activeTrips.clear();
-store.clear();
 jobQueue.clear();
+store.clear();
 
-// Init and inject dependencies to avoid circular dependencies
+//Init and inject dependencies to avoid circular dependencies
 tripsController.init(partnersGateway);
 quotesController.init(partnersGateway);
 usersController.init(partnersGateway);
@@ -38,11 +39,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.text());
 
 app.all('*', function(req, res, next){
-	res.header("Access-Control-Allow-Origin", '*');
-	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-	res.header("Access-Control-Allow-Credentials", "true");
-	res.header("Access-Control-Allow-Method", "GET,PUT,POST,DELETE,HEAD,OPTIONS");
-	next();
+  res.header("Access-Control-Allow-Origin", '*');
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Method", "GET,PUT,POST,DELETE,HEAD,OPTIONS");
+  next();
 });
 
 // API routes
@@ -125,13 +126,6 @@ app.get('/triproute/:id', function(req, res){
       res.json(response);
     });
 });
-app.get('/networks', function(req, res) {
-  dashboard
-    .getNetworks(req.query.token)
-    .then(function(response){
-      res.json(response);
-    });
-});
 app.get('/log/:id', function(req, res) {
   dashboard
     .getTripLogs(req.query.token, req.params.id)
@@ -141,6 +135,7 @@ app.get('/log/:id', function(req, res) {
 });
 
 var server = app.listen(app.get('port'), function (){
-	console.log("server listening on port " + app.get('port'));
-	socket.io.attach(server);
-});
+  console.log("server listening on port " + app.get('port'));
+  socket.io.attach(server);
+}); 
+

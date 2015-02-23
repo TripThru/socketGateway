@@ -14,12 +14,13 @@
     "express-session": "*",
     "body-parser": "*",
     "moment": "*",
-    "mongoose": "*",
     "socket.io": "*",
     "socket.io-client": "*",
     "tv4": "*",
     "redis": "*",
-    "request": "*"
+    "request": "*",
+    "mysql": "*",
+    "blocked": "*"
   },
   "devDependencies": {
     "blanket": "*",

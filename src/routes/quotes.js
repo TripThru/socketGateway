@@ -6,7 +6,7 @@ var resultCodes = codes.resultCodes;
 function callApiIfUserValid(token, request, fn) {
   var user = usersController.getByToken(req.query.token);
   if(user && user.role === 'partner') {
-    request.clientId = user.id;
+    request.clientId = user.clientId;
     return fn(request);
   } else {
     return Promise.resolve({ 

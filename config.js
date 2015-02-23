@@ -1,9 +1,10 @@
 module.exports = {
   port: 3300,
   db: {
-    url: 'mongodb://localhost:27017/tripthru', 
-    user:'', 
-    password:''
+    host: 'localhost', 
+    database: 'tripthru',
+    user:'vagrant', 
+    password:'vagrant'
   },
   kue: {
     prefix: 'q',

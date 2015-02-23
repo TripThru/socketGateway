@@ -1,4 +1,4 @@
-var mongoose = require("mongoose");
+/*var mongoose = require("mongoose");
 var common = require("./common");
 
 var location = {
@@ -153,3 +153,4 @@ module.exports = {
   quote: quote,
   user: user
 };
+*/

@@ -1,3 +1,4 @@
+var Promise = require('bluebird');
 var TripThruApiFactory = require('../tripthru_api_factory');
 var Gateway = require('../gateway').Gateway;
 var IGateway = require('../gateway').IGateway;
@@ -27,6 +28,9 @@ function UsersController() {
       for(var i = 0; i < allUsers.length; i++) {
         this._add(allUsers[i]);
       }
+    })
+    .error(function(err){
+      logger.getSublog().log('init', err);
     });
 }
 
@@ -35,12 +39,12 @@ UsersController.prototype.init = function(gatewayClient) {
   this.gateway = gatewayClient;
 };
 
-UsersController.prototype._getById = function(id) {
+UsersController.prototype._getByClientId = function(id) {
   if(this.usersById.hasOwnProperty(id)) {
     return Promise.resolve(this.usersById[id]);
   } else {
     return usersModel
-      .getById(id)
+      .getByClientId(id)
       .bind(this)
       .then(function(user){
         if(user) {
@@ -68,7 +72,7 @@ UsersController.prototype._getByToken = function(token) {
 };
 
 UsersController.prototype._add = function(user) {
-  this.usersById[user.id] = user;
+  this.usersById[user.clientId] = user;
   this.usersByToken[user.token] = user;
 };
 
@@ -77,7 +81,7 @@ UsersController.prototype.getPartnerInfo = function(request) {
   log.log('Get partner info ' + request.id + ' from ' + request.clientId, request);
   var user = TripThruApiFactory.createUserFromRequest(request, 'get-partner-info');
   return this
-    ._getById(user.id)
+    ._getByClientId(user.clientId)
     .bind(this)
     .then(function(u){
       if(u) {
@@ -106,7 +110,7 @@ UsersController.prototype.setPartnerInfo = function(request) {
   var log = logger.getSublog(request.clientId);
   log.log('Set partner info ' + request.clientId, request);
   return this
-    ._getById(request.clientId)
+    ._getByClientId(request.clientId)
     .bind({})
     .then(function(u){
       if(u) {
@@ -141,8 +145,8 @@ UsersController.prototype.getByToken = function(token) {
   return this._getByToken(token);
 };
 
-UsersController.prototype.getById = function(id) {
-  return this._getById(id);
+UsersController.prototype.getByClientId = function(id) {
+  return this._getByClientId(id);
 };
 
 UsersController.prototype.getAll = function() {
@@ -162,9 +166,8 @@ UsersController.prototype.getPartnersThatServeLocation = function(location) {
     for(var id in users) {
       if(users.hasOwnProperty(id)) {
         var u = users[id];
-        for(var j = 0; j < u.coverage.length; j++) {
-          var coverage = u.coverage[j];
-          if(maptools.isInside(location, coverage)){
+        for(var i = 0; i < u.fleets.length; i++) {
+          if(maptools.isInside(location, u.fleets[i].coverage)){
             usersThatServeLocation.push(u);
           }
         }

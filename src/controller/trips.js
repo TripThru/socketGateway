@@ -68,7 +68,7 @@ TripsController.prototype.dispatchTrip =  function(request) {
   } else {
     var trip = TripThruApiFactory.createTripFromRequest(request, 'dispatch');
     return users
-      .getById(request.clientId)
+      .getByClientId(request.clientId)
       .then(function(user){
         var name = user ? user.fullname : 'unknown';
         log.log('Dispatch received from ' + name, request);
@@ -114,7 +114,7 @@ TripsController.prototype.dispatchTrip =  function(request) {
 TripsController.prototype.getTrip = function(request) {
   var log = logger.getSublog(request.id, null, 'tripthru', 'get-trip');
   return users
-    .getById(request.clientId)
+    .getByClientId(request.clientId)
     .then(function(user){
       var name = user ? user.fullname : 'unknown';
       log.log('Get trip received from ' + name, request);
@@ -149,7 +149,7 @@ TripsController.prototype.getTripStatus = function(request) {
   //var log = logger.getSublog(request.id);
   var trip;
   return users
-    .getById(request.clientId)
+    .getByClientId(request.clientId)
     .bind(this)
     .then(function(user){
       //var name = user ? user.fullname : 'unknown';
@@ -203,7 +203,7 @@ TripsController.prototype.updateTripStatus = function(request) {
       request.status);
   var self = this;
   return users
-    .getById(request.clientId)
+    .getByClientId(request.clientId)
     .bind({})
     .then(function(user){
       var name = user ? user.fullname : 'unknown';

@@ -1,96 +1,204 @@
-var config = require('../../config');
-var schemas = require('../schemas/store');
-var mongoose = require("mongoose");
-Promise = require('bluebird');
+var Promise = require('bluebird');
+var promiseHelper = require('../promise_helper');
+var mysql = require('mysql');
+var logger = require('../logger');
+var config = require('../../config').db;
+var pool;
 
-mongoose.connect(config.db.url, function (err, res) {
-  if (err) {
-    console.log ('Error connecting to: ' + config.db.url + '. ' + err);
-  } else {
-    console.log('Successfully connected to: ' + config.db.url);
-  }
-});
+function execute(query, data) {
+  var attempts = 0;
+  return new Promise(function(resolve, reject){
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        reject(err);
+        return;
+      }
+      if(attempts > 3) {
+        logger.getSublog('store').log(err.code + ' : ' + 'Max attemps reached to commit transaction', err);
+        reject(new Error('Max attemps to commit transaction exceeded'));
+        return;
+      }
+      connection.query(mysql.format(query, data), function(err, result){
+        if(err) {
+          if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+            logger.getSublog('store').log('Retrying transaction', err.code);
+            execute(query, data).then(function(result){ resolve(result); }); 
+          } else {
+            logger.getSublog('store').log(err.code + ' : ' + mysql.format(query, data), err);
+            reject(err);
+          }
+        } else {
+          resolve(result);
+        }
+        connection.release();
+      });
+      attempts++;
+    });
+  });
+}
 
-var Trip = mongoose.model('trips', schemas.trip);
-Promise.promisifyAll(Trip);
-Promise.promisifyAll(Trip.prototype);
-var Quote = mongoose.model('quotes', schemas.quote);
-Promise.promisifyAll(Quote);
-Promise.promisifyAll(Quote.prototype);
-var User = mongoose.model('users', schemas.user, 'users');
-Promise.promisifyAll(User);
-Promise.promisifyAll(User.prototype);
+function execute_sequence(queries) {
+  return promiseHelper.runInSequence(queries, 
+      function(query) { 
+        return execute(query.query, query.data); 
+      }
+  );
+}
 
 function Store(){
-  
+  pool = mysql.createPool({
+    connectionLimit: 300,
+    waitForConnections: true,
+    acquireTimeout: 30000,
+    queueLimit: 0,
+    host: config.host,
+    database: config.database,
+    user: config.user,
+    password: config.password,
+    connectTimeout: 30000
+  });
 }
 
 Store.prototype.createTrip = function(trip) {
-  return create(Trip, trip);
+  var query = "INSERT INTO trips SET ?";
+  var fields = {
+    user_id: trip.userId,
+    fleet_id: trip.fleetId, 
+    vehicle_id: trip.vehicleId, 
+    passenger_id: trip.passengerId, 
+    trip_id: trip.id,
+    pickup_location_lat: trip.pickupLocation.lat, 
+    pickup_location_lng: trip.pickupLocation.lng, 
+    pickup_time: trip.pickupTime,
+    dropoff_location_lat: trip.dropoffLocation.lat, 
+    dropoff_location_lng: trip.dropoffLocation.lng, 
+    status: trip.status,  
+    last_update: trip.lastUpdate, 
+    autodispatch: trip.autoDispatch, 
+    created_at: trip.creation,
+    servicing_network_id: trip.servicingNetworkId, 
+    servicing_fleet_id: trip.servicingFleetId, 
+    dropoff_time: trip.dropoffTime,
+    price: trip.price, 
+    lateness_milliseconds: trip.latenessMilliseconds, 
+    sampling_percentage: trip.samplingPercentage,
+    service_level: trip.serviceLevel, 
+    duration_seconds: trip.distance, 
+    distance: trip.duration, 
+    eta: trip.eta
+  };
+  var data = [fields];
+  return execute(query, data);
 };
   
 Store.prototype.updateTrip = function(trip) {
-  return update(Trip, trip);
+  var queries = [];
+  var fields = {
+    status: trip.status,
+    last_update: trip.lastUpdate,
+    pickup_time: trip.pickupTime,
+    lateness_milliseconds: trip.latenessMilliseconds,
+    service_level: trip.serviceLevel,
+    duration_seconds: trip.duration,
+    distance: trip.distance,
+    eta: trip.eta,
+    servicing_network_id: trip.servicingNetworkId,
+    servicing_fleet_id: trip.servicingFleetId,
+    dropoff_time: trip.dropoffTime,
+    price: trip.price
+  };
+  if(trip.driver) {
+    fields.driver_id = trip.driver.id;
+  }
+  var query = "UPDATE trips SET ? WHERE id = ?";
+  var data = [fields, trip.dbId];
+  queries.push({query: query, data: data});
+
+  if(trip.driver && trip.driver.location) {
+      var locationUpdateQuery = "INSERT INTO trip_locations SET ? ";
+      var locationData = {
+        trip_id: trip.dbId,
+        lat: trip.driver.location.lat,
+        lng: trip.driver.location.lng
+      };
+      queries.push({query: locationUpdateQuery, data: locationData});
+  }
+  return execute_sequence(queries);
 };
   
-Store.prototype.getTripBy = function(query) { 
-  return get(Trip, query);
+Store.prototype.getTripById = function(id) { 
+  return execute( "SELECT t.*, " +
+  		            "       u.client_id as user_client_id, " +
+  		            "       u.full_name as user_name,  " +
+  		            "       f.fleet_id as fleet_id, " +
+  		            "       f.name as fleet_name " +
+  		            "FROM trips t, users u, fleets f " +
+  		            "WHERE trip_id LIKE ?",
+  		            [id]);
 };
   
 Store.prototype.createQuote = function(quote) {
-  return create(Quote, quote);
+  throw new Error('Not implemented');
 };
   
 Store.prototype.updateQuote = function(quote) {
-  return update(Quote, quote);
+  throw new Error('Not implemented');
 };
     
-Store.prototype.getQuoteBy = function(query) {
-  return get(Quote, query);
-};
-  
-Store.prototype.createUser = function(user) {
-  return create(User, user);
+Store.prototype.getQuoteById = function(id) {
+  throw new Error('Not implemented');
 };
   
 Store.prototype.updateUser = function(user) {
-  return update(User, user);
+  return Promise
+    .resolve(user)
+    .then(function(user){
+      var queries = [];
+      for(var i = 0; i < user.fleets.length; i++) {
+        var f = user.fleets[i];
+        var query = "INSERT INTO fleets " +
+                    "  (user_id, client_id, name, coverage_radius, coverage_lat, coverage_lng) " +
+                    "VALUES (?, ?, ?, ?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE " +
+                    "  coverage_radius = VALUES(coverage_radius), " +
+                    "  coverage_lat = VALUES(coverage_lat), " +
+                    "  coverage_lng = VALUES(coverage_lng)";
+        var data = [user.id, f.fleet_id, f.name, f.coverage.radius, f.coverage.center.lat, f.coverage.center.lng];
+        queries.push({query: query, data: data});
+      }
+      return execute_sequence(queries);
+    });
 };
+
+function getUserQuery() {
+  return  "SELECT " +
+  		    "  u.*, " +
+          "  u.id as user_db_id, " +
+          "  u.client_id as user_client_id, " +
+          "  u.name as user_name, " +
+          "  f.id as fleet_db_id, " + 
+          "  f.client_id as fleet_client_id, " +
+          "  f.name as fleet_name, " +
+          "  f.* " +
+          "FROM users u " +
+          "LEFT JOIN fleets f ON u.id = f.user_id ";
+} 
     
-Store.prototype.getUserBy = function(query) { 
-  return get(User, query);
+Store.prototype.getUserByClientId = function(client_id) {
+  return execute(getUserQuery() + "WHERE u.client_id LIKE ?", [client_id]);
+};
+
+Store.prototype.getUserByToken = function(token) {
+  return execute(getUserQuery() + "WHERE u.token LIKE ?", [token]);
 };
 
 Store.prototype.getAllUsers = function() {
-  return getAll(User);
+  return execute(getUserQuery());
 };
   
 Store.prototype.clear = function() {
-  Trip.remove({}, function () { });
-  Quote.remove({}, function () { });
+  return execute_sequence([{query:"DELETE FROM trip_locations", data:[]},
+                           {query:"DELETE FROM trips", data:[]}]) ;
 };
-
-Store.prototype.clearAllCompleted = function(beforeDate) {
-  var query = {
-    lastUpdate: {$lt: beforeDate}
-  };
-  Trip.remove(query, function(){});
-};
-
-function create(model, data) {
-  return model.createAsync(data);
-}
-
-function update(model, data) {
-  return model.updateAsync({id: data.id}, data);
-}
-
-function get(model, query) {
-  return model.findAsync(query);
-}
-
-function getAll(model) {
-  return model.findAsync();
-}
 
 module.exports = new Store();

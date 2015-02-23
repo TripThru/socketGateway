@@ -139,7 +139,7 @@ function rejectTripAndUpdate(tripId, servicingPartner, log) {
 
 function forwardUpdateToPartner(sendTo, request, log) {
   return users
-    .getById(sendTo)
+    .getByClientId(sendTo)
     .then(function(user){
       var name = user ? user.fullname : 'unknown';
       log.log('Update trip status (' + request.status + ') forwarded to ' + name, request);
@@ -156,7 +156,7 @@ function forwardUpdateToPartner(sendTo, request, log) {
 function forwardDispatchToPartner(trip, log) {
   var request = TripThruApiFactory.createRequestFromTrip(trip, 'dispatch');
   return users
-    .getById(trip.servicingPartner.id)
+    .getByClientId(trip.servicingPartner.id)
     .then(function(user){
       var name = user ? user.fullname : 'unknown'; 
       log.log('Dispatch to ' + name, request);

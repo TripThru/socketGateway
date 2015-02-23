@@ -68,7 +68,7 @@ function QuotesModel() {
 }
 
 QuotesModel.prototype.add = function(quote) {
-  quote.state = 'inProgress'; //This should be done in a Quote constructor
+  quote.state = 'inProgress';
   return store.createQuote(toStoreQuote(quote));
 };
 
@@ -78,9 +78,9 @@ QuotesModel.prototype.update = function(quote) {
 
 QuotesModel.prototype.getById = function(id) {
   return store
-    .getQuoteBy({id: id})
+    .getQuoteById(id)
     .then(function(res){
-      return res.length > 0 ? toApiQuote(res[0].toObject()) : null;
+      return res.length > 0 ? toApiQuote(res[0]) : null;
     });
 };
 

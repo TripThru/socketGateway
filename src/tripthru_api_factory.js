@@ -160,6 +160,7 @@ function createTripFromGetTripStatusRequest(request) {
 
 function createTripFromGetTripStatusResponse(response, trip) {
   if(response.distance) trip.distance = response.distance;
+  if(response.price) trip.price = response.price;
   return trip;
 }
 
@@ -409,39 +410,25 @@ function createQuoteFromRequest(quote, type, args) {
 
 function createUserFromGetPartnerInfoRequest(request) {
   var r = {
-      id: request.clientId
+      clientId: request.clientId
   };
   return r;
 }
 
 function createUserFromSetPartnerInfoRequest(request, user) {
-  coverage = [];
-  fleets = [];
-  for(var i = 0; i < request.coverage.length; i++) {
-    var c = request.coverage[i];
-    coverage.push({
-      center: apiLocation(c.center),
-      radius: c.radius
-    });
+  user.fleets = request.fleets;
+  for(var i = 0; i < user.fleets.length; i++) {
+    user.fleets[i].fleet_id = user.fleets[i].id;
   }
-  for(var i = 0; i < request.fleets.length; i++) {
-    var fleet = request.fleets[i];
-    fleets.push(idName(fleet));
-  }
-  user.coverage = coverage;
-  user.fleets = fleets;
-  user.vehicleTypes = request.vehicleTypes;
   return user;
 }
 
 function createGetPartnerInfoResponseFromUser(user) {
   var r = {
-    coverage: user.coverage,
-    fleets: [],
-    vehicleTypes: user.vehicleTypes 
+    fleets: user.fleets
   };
-  for(var i = 0; i < user.fleets; i++) {
-    r.fleets.push(idName(user.fleets[i]));
+  for(var i = 0; i < r.fleets.length; i++) {
+    r.fleets[i].id = r.fleets[i].fleet_id;
   }
   return r;
 }
