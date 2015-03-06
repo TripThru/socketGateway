@@ -104,4 +104,12 @@ RestfulGateway.prototype.setPartnerInfo = function(request) {
   return this.post('network', request.id, request);
 };
 
+RestfulGateway.prototype.requestPayment = function(request) {
+  return this.post('payment', request.id, request);
+};
+
+RestfulGateway.prototype.acceptPayment = function(request) {
+  return this.put('payment', request.id, request);
+};
+
 module.exports = RestfulGateway;

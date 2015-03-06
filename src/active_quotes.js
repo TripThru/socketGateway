@@ -1,5 +1,4 @@
 var moment = require('moment');
-var quotesModel = require('./model/quotes');
 var Promise = require('bluebird');
 var RedisClient = require("./store/redis_client");
 
@@ -9,13 +8,7 @@ function ActiveQuotes() {
 }
 
 ActiveQuotes.prototype.add = function(quote) {
-  return this
-    .redisClient
-    .add(quote.id, quote)
-    .bind(this)
-    .then(function(reply){
-      //quotesModel.add(quote);
-    });
+  return this.redisClient.add(quote.id, quote);
 };
 
 ActiveQuotes.prototype.update = function(quote) { 
@@ -24,7 +17,6 @@ ActiveQuotes.prototype.update = function(quote) {
     .update(quote.id, quote)
     .bind(this)
     .then(function(reply){
-      //quotesModel.update(quote);
       if(isNonActiveState(quote.status)) {
         this.deactivate(quote);
       }

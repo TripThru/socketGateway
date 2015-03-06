@@ -52,4 +52,12 @@ SocketGateway.prototype.setPartnerInfo = function(request) {
   return this.emit('set-partner-info', request);
 };
 
+SocketGateway.prototype.requestPayment = function(request) {
+  return this.emit('request-payment', request);
+};
+
+SocketGateway.prototype.acceptPayment = function(request) {
+  return this.emit('accept-payment', request);
+};
+
 module.exports = SocketGateway;

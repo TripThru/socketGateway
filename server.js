@@ -14,12 +14,15 @@ var quotesJobQueue = require('./src/workers/quotes');
 var dashboard = require('./src/routes/dashboard');
 var activeTrips = require('./src/active_trips');
 var activeQuotes = require('./src/active_quotes');
+var activeTripPayments = require('./src/active_trip_payments');
 var tripRoutes = require('./src/routes/trips');
 var quoteRoutes = require('./src/routes/quotes');
 var userRoutes = require('./src/routes/users');
 
 activeQuotes.clear();
 activeTrips.clear();
+activeTripPayments.clear();
+
 jobQueue.clear();
 store.clear();
 
@@ -99,6 +102,20 @@ app.put('/tripstatus/:id', function(req, res){
 app.get('/tripstatus/:id', function(req, res){
   tripRoutes
     .getTripStatus(req.query.token, req.params.id)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.post('/payment/:id', function(req, res){
+  tripRoutes
+    .requestPayment(req.query.token, req.params.id)
+    .then(function(response){
+      res.json(response);
+    });
+});
+app.put('/payment/:id', function(req, res){
+  tripRoutes
+    .acceptPayment(req.query.token, req.params.id)
     .then(function(response){
       res.json(response);
     });

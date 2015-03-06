@@ -25,8 +25,8 @@ ActiveTrips.prototype.add = function(trip) {
     .add(trip)
     .bind(this)
     .then(function(result){
-      trip.dbId = result.insertId;
       this.addDashboardTrip(trip);
+      trip.dbId = result.dbId;
       return this.redisClient.add(trip.id, trip);
     });
 };

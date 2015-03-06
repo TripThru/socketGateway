@@ -4,6 +4,7 @@ var IGateway = require('../gateway').IGateway;
 var Interface = require('../interface').Interface;
 var moment = require('moment');
 var trips = require('../active_trips');
+var tripPayments = require('../active_trip_payments');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var validate = require('./validate');
@@ -245,6 +246,94 @@ TripsController.prototype.updateTripStatus = function(request) {
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+          resultCodes.unknownError, 'unknown error ocurred');
+      log.log('Response', response);
+      return response;
+    });
+};
+
+TripsController.prototype.requestPayment = function(request) {
+  var log = logger.getSublog(request.id, null, 'tripthru', 'request-payment', 
+      request.status);
+  return users
+    .getByClientId(request.clientId)
+    .bind({})
+    .then(function(user){
+      var name = user ? user.fullname : 'unknown';
+      log.log('Payment request received from ' + name, request);
+      return trips.getById(request.id);
+    })
+    .then(function(trip){
+      if(!trip) {
+        throw new RequestError(resultCodes.notFound, 'trip not found');
+      }
+      this.tripPayment = TripThruApiFactory.createTripPaymentFromRequest(request, 
+          'request-payment', {trip: trip});
+      this.sendTo = trip.originatingPartner.id;
+      return tripPayments.add(this.tripPayment);
+    })
+    .then(function(res){
+      workers.newRequestPaymentJob(this.tripPayment.tripId, this.sendTo);
+      log.log('Created new request payment job');
+      var response = TripThruApiFactory.createResponseFromTripPayment(this.tripPayment, 'request-payment');
+      log.log('Response', response.result);
+      return response;
+    })
+    .catch(RequestError, function(err){
+      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
+          err.resultCode, err.error);
+      log.log('Response', response);
+      return response;
+    })
+    .error(function(err){
+      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
+          resultCodes.unknownError, 'unknown error ocurred');
+      log.log('Response', response);
+      return response;
+    });
+};
+
+TripsController.prototype.acceptPayment = function(request) {
+  var log = logger.getSublog(request.id, null, 'tripthru', 'accept-payment', 
+      request.status);
+  return users
+    .getByClientId(request.clientId)
+    .bind({})
+    .then(function(user){
+      var name = user ? user.fullname : 'unknown';
+      log.log('Accept payment request received from ' + name, request);
+      return trips.getById(request.id);
+    })
+    .then(function(trip){
+      if(!trip) {
+        throw new RequestError(resultCodes.notFound, 'trip not found');
+      }
+      this.sendTo = trip.servicingPartner.id;
+      return tripPayments.getByTripId(request.id);
+    })
+    .then(function(tripPayment){
+      if(!tripPayment) {
+        throw new RequestError(resultCodes.notFound, 'trip payment request not found');
+      }
+      this.tripPayment = TripThruApiFactory.createTripPaymentFromRequest(request, 
+          'accept-payment', {tripPayment: tripPayment});
+      return tripPayments.update(this.tripPayment);
+    })
+    .then(function(){
+      workers.newAcceptPaymentJob(this.tripPayment.tripId, this.sendTo);
+      log.log('Created new accept payment job');
+      var response = TripThruApiFactory.createResponseFromTripPayment(this.tripPayment, 'accept-payment');
+      log.log('Response', response.result);
+      return response;
+    })
+    .catch(RequestError, function(err){
+      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
+          err.resultCode, err.error);
+      log.log('Response', response);
+      return response;
+    })
+    .error(function(err){
+      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
       return response;

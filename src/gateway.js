@@ -8,7 +8,9 @@ var IGateway = new Interface('Gateway', ['getPartnerInfo',
                                          'updateTripStatus',
                                          'quoteTrip',
                                          'updateQuote',
-                                         'getQuote'
+                                         'getQuote',
+                                         'requestPayment',
+                                         'acceptPayment'
                                          ]);
 
 function Gateway(id, name) {
@@ -45,6 +47,14 @@ Gateway.prototype.updateQuote = function(request) {
 };
 
 Gateway.prototype.getQuote = function(request) {
+  throw new Error('Not implemented');
+};
+
+Gateway.prototype.requestPayment = function(request) {
+  throw new Error('Not implemented');
+};
+
+Gateway.prototype.acceptPayment = function(request) {
   throw new Error('Not implemented');
 };
 

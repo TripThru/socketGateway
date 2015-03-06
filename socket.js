@@ -60,6 +60,12 @@ io.sockets.on('connection', function (socket){
   socket.on('update-trip-status', function(req, cb){
     trips.updateTripStatus(req).then(cb);
   });
+  socket.on('request-payment', function(req, cb){
+    trips.requestPayment(req).then(cb);
+  });
+  socket.on('accept-payment', function(req, cb){
+    trips.acceptPayment(req).then(cb);
+  });
   
   //Quotes
   socket.on('quote-trip', function(req, cb){

@@ -1,5 +1,6 @@
 var queue = require('./job_queue');
 var trips = require('../active_trips');
+var tripPayments = require('../active_trip_payments');
 var quotes = require('../active_quotes');
 var users = require('../controller/users');
 var TripThruApiFactory = require('../tripthru_api_factory');
@@ -170,6 +171,86 @@ function forwardDispatchToPartner(trip, log) {
     });
 }
 
+function requestPayment(job, done) {
+  var tripId = job.tripId;
+  var sendTo = job.sendTo;
+  var log = logger.getSublog(tripId, 'tripthru', 'servicing', 'request-payment');
+  tripPayments
+    .getByTripId(tripId)
+    .then(function(tripPayment){
+      if(tripPayment) {
+        return forwardPaymentRequestToPartner(tripPayment, sendTo, log);
+      } else {
+        throw new Error('Trip payment not found');
+      }
+    })
+    .catch(gateway.ConnectionError, function(err){
+      log.log('ConnectionError request-payment ' + tripId + ' : ' + err.error);
+    })
+    .error(function(err){
+      log.log('Error request-payment ' + tripId + ' : ' + err);
+    })
+    .finally(done);
+}
+
+function forwardPaymentRequestToPartner(tripPayment, sendTo, log) {
+  var request = TripThruApiFactory.createRequestFromTripPayment(tripPayment, 'request-payment');
+  return users
+    .getByClientId(sendTo)
+    .then(function(user){
+      var name = user ? user.fullname : 'unknown'; 
+      log.log('Request payment to ' + name, request);
+      return gateway.requestPayment(sendTo, request);
+    })
+    .then(function(res){
+      log.log('Response', res);
+      if( res.result !== resultCodes.ok && res.result !== resultCodes.rejected) {
+        throw new gateway.ConnectionError(res.resultCode, res.error);
+      }
+      return res;
+    });
+}
+
+function acceptPayment(job, done) {
+  var tripId = job.tripId;
+  var sendTo = job.sendTo;
+  var log = logger.getSublog(tripId, 'tripthru', 'servicing', 'accept-payment');
+  tripPayments
+    .getByTripId(tripId)
+    .then(function(tripPayment){
+      if(tripPayment) {
+        return forwardAcceptPaymentToPartner(tripPayment, sendTo, log);
+      } else {
+        throw new Error('Trip payment not found');
+      }
+    })
+    .catch(gateway.ConnectionError, function(err){
+      log.log('ConnectionError accept-payment ' + tripId + ' : ' + err.error);
+    })
+    .error(function(err){
+      log.log('Error accept-payment ' + tripId + ' : ' + err);
+    })
+    .finally(done);
+}
+
+function forwardAcceptPaymentToPartner(tripPayment, sendTo, log) {
+  var request = TripThruApiFactory.createRequestFromTripPayment(tripPayment, 'accept-payment');
+  return users
+    .getByClientId(sendTo)
+    .then(function(user){
+      var name = user ? user.fullname : 'unknown'; 
+      log.log('Accept payment to ' + name, request);
+      return gateway.acceptPayment(sendTo, request);
+    })
+    .then(function(res){
+      log.log('Response', res);
+      if( res.result !== resultCodes.ok && res.result !== resultCodes.rejected) {
+        throw new gateway.ConnectionError(res.resultCode, res.error);
+      }
+      return res;
+    });
+}
+
 function TripsJobQueue() {
   
 }
@@ -181,15 +262,17 @@ module.exports = {
     queue.processJob('dispatch', dispatchTrip);
     queue.processJob('update-trip-status', updateTripStatus);
     queue.processJob('autodispatch-trip', autoDispatchTrip);
+    queue.processJob('request-payment', requestPayment);
+    queue.processJob('accept-payment', acceptPayment);
   },
   newDispatchJob: function(tripId) {
     var data = { tripId: tripId };
     queue.newJob('dispatch', data);
   },
-  newUpdateTripStatusJob: function(request, receiverId) {
+  newUpdateTripStatusJob: function(request, sendTo) {
     var data = {
         request: request,
-        sendTo: receiverId
+        sendTo: sendTo
     };
     queue.newJob('update-trip-status', data);
   },
@@ -200,5 +283,19 @@ module.exports = {
         servicingFleet: servicingFleet
     };
     queue.newJob('autodispatch-trip', data);
+  },
+  newRequestPaymentJob: function(tripId, sendTo) {
+    var data = { 
+        tripId: tripId,
+        sendTo: sendTo
+    };
+    queue.newJob('request-payment', data);
+  },
+  newAcceptPaymentJob: function(tripId, sendTo) {
+    var data = { 
+        tripId: tripId,
+        sendTo: sendTo
+    };
+    queue.newJob('accept-payment', data);
   }
 };

@@ -38,13 +38,15 @@ function apiLocation(location) {
 }
 
 function getISOStringFromMoment(moment) {
-  return moment.utc().toDate().toISOString();
+  return moment.utc().format().toString();
 }
 
 function getMomentFromISOString(dateString) {
-  return moment(dateString, moment.ISO_8601, true);
+  return moment.utc(dateString, moment.ISO_8601, true);
 }
 
+
+// TRIPS //
 function createDispatchRequest(trip, partner) {
   var r = {
       id: trip.id,
@@ -95,8 +97,8 @@ function createTripFromDispatchRequest(request) {
       dropoffLocation: request.dropoffLocation,
       status: 'new',
       state: 'new',
-      creation: moment(),
-      lastUpdate: moment()
+      creation: moment().utc(),
+      lastUpdate: moment().utc()
   };
   if(request.driver) trip.driver = idName(request.driver);
   if(request.vehicleType) trip.vehicleType = request.vehicleType;
@@ -125,7 +127,7 @@ function createTripFromUpdateTripStatusRequest(request, trip) {
         trip.driver.routeEnrouteLocation = request.driver.location;
       } else if(trip.status === 'pickedup') {
         trip.driver.routePickupLocation = request.driver.location;
-        trip.pickupTime = moment();
+        trip.pickupTime = moment().utc();
         trip.latenessMilliseconds = 
           moment.duration(trip.pickupTime.diff(trip.creation)).asMilliseconds();
         var minutes = (trip.latenessMilliseconds / 1000) / 60;
@@ -142,12 +144,12 @@ function createTripFromUpdateTripStatusRequest(request, trip) {
         }
       } else if(trip.status === 'complete') {
         trip.duration = 
-          moment.duration(moment().diff(trip.pickupTime)).asMinutes();
+          moment.duration(moment().utc().diff(trip.pickupTime)).asMinutes();
       }
     }
   }
   if(request.eta) trip.eta = getMomentFromISOString(request.eta);
-  trip.lastUpdate = moment();
+  trip.lastUpdate = moment().utc();
   return trip;
 }
 
@@ -194,6 +196,50 @@ function createGetTripStatusResponse(trip) {
     r.driver.routeDuration = trip.driver.routeDuration;
   }
   return r;
+}
+
+function createTripPaymentFromRequestPaymentRequest(request, trip) {
+  return {
+    tripId: trip.id,
+    tripDbId: trip.dbId,
+    requestedAt: moment().utc(),
+    amount: request.fare,
+    currencyCode: request.currencyCode,
+    confirmation: false,
+    tip: 0
+  };
+}
+
+function createTripPaymentFromAcceptPaymentRequest(request, tripPayment) {
+  tripPayment.tip = request.tip || 0;
+  tripPayment.confirmation = request.confirmation;
+  tripPayment.confirmedAt = moment().utc();
+  return tripPayment;
+}
+
+function createRequestPaymentRequestFromTripPayment(tripPayment) {
+  return {
+    id: tripPayment.tripId,
+    clientId: tripthruClientId,
+    fare: tripPayment.amount,
+    currencyCode: tripPayment.currencyCode
+  };
+}
+
+function createAcceptPaymentRequestFromTripPayment(tripPayment) {
+  return {
+    id: tripPayment.tripId,
+    confirmation: tripPayment.confirmation,
+    tip: tripPayment.tip || 0
+  };
+}
+
+function createAcceptPaymentResponseFromTripPayment(tripPayment) {
+  return successResponse();
+}
+
+function createRequestPaymentResponseFromTripPayment(tripPayment) {
+  return successResponse();
 }
 
 
@@ -254,6 +300,61 @@ function createTripFromResponse(response, type, args) {
   }
 }
 
+function createGetTripStatusResponseFromPartnerGetTripStatusResponse(response, trip) {
+  response.originatingPartner = trip.originatingPartner;
+  response.servicingPartner = trip.servicingPartner;
+  return response;
+}
+
+function createTripPaymentFromRequest(request, type, args) {
+  switch(type) {
+    case 'request-payment':
+      if(!args || !args.trip) {
+        throw new Error('Need trip object to create trip payment');
+      }
+      return createTripPaymentFromRequestPaymentRequest(request, args.trip);
+    case 'accept-payment':
+      if(!args || !args.tripPayment) {
+        throw new Error('Need trip payment object to update');
+      }
+      return createTripPaymentFromAcceptPaymentRequest(request, args.tripPayment);
+    default:
+      throw new Error('Invalid response type ' + type);
+  }
+}
+
+function createRequestFromTripPayment(tripPayment, type) {
+  if(!tripPayment) {
+    throw new Error('Need trip payment object to create request');
+  }
+  switch(type) {
+    case 'request-payment':
+      return createRequestPaymentRequestFromTripPayment(tripPayment);
+    case 'accept-payment':
+      return createAcceptPaymentRequestFromTripPayment(tripPayment);
+    default:
+      throw new Error('Invalid response type ' + type);
+  }
+}
+
+function createResponseFromTripPayment(tripPayment, type, message, errorCode) {
+  if(errorCode) {
+    return failResponse(message, errorCode);
+  }
+  if(!tripPayment) {
+    throw new Error('Need trip payment object to create request');
+  }
+  switch(type) {
+    case 'request-payment':
+      return createRequestPaymentResponseFromTripPayment(tripPayment);
+    case 'accept-payment':
+      return createAcceptPaymentResponseFromTripPayment(tripPayment);
+    default:
+      throw new Error('Invalid response type ' + type);
+  }
+}
+
+// Quotes //
 
 function createQuoteFromTrip(trip) {
   var quote = {
@@ -407,6 +508,7 @@ function createQuoteFromRequest(quote, type, args) {
   }
 }
 
+// Users //
 
 function createUserFromGetPartnerInfoRequest(request) {
   var r = {
@@ -465,12 +567,6 @@ function createResponseFromUser(user, type, message, errorCode) {
   }
 }
 
-function createGetTripStatusResponseFromPartnerGetTripStatusResponse(response, trip) {
-  response.originatingPartner = trip.originatingPartner;
-  response.servicingPartner = trip.servicingPartner;
-  return response;
-}
-
 module.exports.createSuccessResponse = successResponse;
 module.exports.createFaileResponse = failResponse;
 module.exports.createRequestFromTrip = createRequestFromTrip;
@@ -485,3 +581,6 @@ module.exports.createQuoteFromRequest = createQuoteFromRequest;
 module.exports.createUserFromRequest = createUserFromRequest;
 module.exports.createResponseFromUser = createResponseFromUser;
 module.exports.createQuoteFromTrip = createQuoteFromTrip;
+module.exports.createTripPaymentFromRequest = createTripPaymentFromRequest;
+module.exports.createRequestFromTripPayment = createRequestFromTripPayment;
+module.exports.createResponseFromTripPayment = createResponseFromTripPayment;

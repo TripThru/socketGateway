@@ -3,7 +3,7 @@ var users = require('../controller/users');
 var moment = require('moment');
 
 function getISOStringFromMoment(moment) {
-  return moment.utc().toDate().toISOString();
+  return moment.format().toString();
 }
 
 function toStoreTrip(apiTrip) {
@@ -23,7 +23,7 @@ function toStoreTrip(apiTrip) {
           lastUpdate: getISOStringFromMoment(apiTrip.lastUpdate),
           autoDispatch: apiTrip.autoDispatch,
           vehicleId: 1,
-          passengerId: 1
+          passengerName: apiTrip.passenger.name
       };
       if(apiTrip.price) t.price = apiTrip.price;
       if(apiTrip.dropoffTime) t.dropoffTime = getISOStringFromMoment(apiTrip.dropoffTime);
@@ -35,7 +35,7 @@ function toStoreTrip(apiTrip) {
       if(apiTrip.distance >= 0) t.distance = apiTrip.distance;
       if(apiTrip.driver) { 
         t.driver = apiTrip.driver; 
-        t.driver.id = 1;
+        t.driver.name = apiTrip.driver.name;
       }
 
       if(apiTrip.servicingPartner && apiTrip.servicingPartner.id) {
@@ -114,8 +114,14 @@ function TripsModel() {
 
 TripsModel.prototype.add = function(trip) {
   return toStoreTrip(trip)
+    .bind({})
     .then(function(t){ 
+      this.t = t;
       return store.createTrip(t);
+    })
+    .then(function(result){
+      this.t.dbId = result.insertId;
+      return this.t;
     });
 };
 

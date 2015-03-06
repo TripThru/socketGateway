@@ -75,6 +75,14 @@ PartnersGateway.prototype.setPartnerInfo = function(id, request) {
   return this.getPartner(id).setPartnerInfo(request);  
 };
 
+PartnersGateway.prototype.requestPayment = function(id, request) {
+  return this.getPartner(id).requestPayment(request);
+};
+
+PartnersGateway.prototype.acceptPayment = function(id, request) {
+  return this.getPartner(id).acceptPayment(request);
+};
+
 PartnersGateway.prototype.broadcastQuote = function(request, partners) {
   return new Promise(function(resolve, reject){ 
     for(var i = 0; i < partners.length; i++) {

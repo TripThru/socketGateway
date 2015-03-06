@@ -65,7 +65,7 @@ Store.prototype.createTrip = function(trip) {
     user_id: trip.userId,
     fleet_id: trip.fleetId, 
     vehicle_id: trip.vehicleId, 
-    passenger_id: trip.passengerId, 
+    passenger_name: trip.passengerName, 
     trip_id: trip.id,
     pickup_location_lat: trip.pickupLocation.lat, 
     pickup_location_lng: trip.pickupLocation.lng, 
@@ -108,20 +108,20 @@ Store.prototype.updateTrip = function(trip) {
     price: trip.price
   };
   if(trip.driver) {
-    fields.driver_id = trip.driver.id;
+    fields.driver_name = trip.driver.name;
   }
   var query = "UPDATE trips SET ? WHERE id = ?";
   var data = [fields, trip.dbId];
   queries.push({query: query, data: data});
 
   if(trip.driver && trip.driver.location) {
-      var locationUpdateQuery = "INSERT INTO trip_locations SET ? ";
-      var locationData = {
-        trip_id: trip.dbId,
-        lat: trip.driver.location.lat,
-        lng: trip.driver.location.lng
-      };
-      queries.push({query: locationUpdateQuery, data: locationData});
+    var locationUpdateQuery = "INSERT INTO trip_locations SET ? ";
+    var locationData = {
+      trip_id: trip.dbId,
+      lat: trip.driver.location.lat,
+      lng: trip.driver.location.lng
+    };
+    queries.push({query: locationUpdateQuery, data: locationData});
   }
   return execute_sequence(queries);
 };
@@ -135,6 +135,39 @@ Store.prototype.getTripById = function(id) {
   		            "FROM trips t, users u, fleets f " +
   		            "WHERE trip_id LIKE ?",
   		            [id]);
+};
+
+Store.prototype.createTripPayment = function(tripPayment) {
+  var query = "INSERT INTO trip_payment" +
+  		        " SET trip_id = ? ," +
+  		        "     user_id = (SELECT user_id FROM trips WHERE id = ?)," +  
+  		        "     currency_code_id = (SELECT id FROM currency_codes WHERE code like ?)," +
+  		        "     amount = ?," +
+  		        "     requested_at = ?";
+  var data = [tripPayment.tripDbId, 
+              tripPayment.tripDbId, 
+              tripPayment.currencyCode, 
+              tripPayment.amount, 
+              tripPayment.requestedAt];
+  return execute(query, data);
+};
+
+Store.prototype.updateTripPayment = function(tripPayment) {
+  var query = "UPDATE trip_payment SET ? WHERE trip_id = ?";
+  var data = {
+    confirmed: tripPayment.confirmation,
+    tip: tripPayment.tip,
+    confirmed_at: tripPayment.confirmedAt
+  };
+  return execute(query, [data, tripPayment.tripDbId]);
+};
+
+Store.prototype.getTripPaymentById = function(id) {
+  throw new Error('Not implemented');
+};
+
+Store.prototype.getTripPaymentByTripId = function(id) {
+  throw new Error('Not implemented');
 };
   
 Store.prototype.createQuote = function(quote) {
@@ -197,8 +230,6 @@ Store.prototype.getAllUsers = function() {
 };
   
 Store.prototype.clear = function() {
-  return execute_sequence([{query:"DELETE FROM trip_locations", data:[]},
-                           {query:"DELETE FROM trips", data:[]}]) ;
 };
 
 module.exports = new Store();
