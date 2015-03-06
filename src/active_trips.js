@@ -100,14 +100,14 @@ ActiveTrips.prototype.deleteDashboardTrip = function(trip) {
   }
 };
 
-function pushTrips(partnerId, triplist, tripsToPush) {
+function pushTrips(networkId, triplist, tripsToPush) {
   for(var id in tripsToPush) {
     var trip = tripsToPush[id];
     if( trip &&
-        !partnerId || 
-        partnerId === 'all' || 
-        trip.originatingPartner.id === partnerId || 
-        (trip.servicingPartner && trip.servicingPartner.id === partnerId)) {
+        !networkId || 
+        networkId === 'all' || 
+        trip.originatingNetwork.id === networkId || 
+        (trip.servicingNetwork && trip.servicingNetwork.id === networkId)) {
       
       triplist.push(trip);
     }
@@ -116,51 +116,51 @@ function pushTrips(partnerId, triplist, tripsToPush) {
 }
 
 // Smaller list used by the website dashboard
-ActiveTrips.prototype.getDashboardTrips = function(partnerId, status) {
+ActiveTrips.prototype.getDashboardTrips = function(networkId, status) {
   var trips = [];
   if(status === 'new' || status === 'all') {
-    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus['new']);
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus['new']);
   }
   if(status === 'queued' || status === 'all') {
-    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.queued);
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.queued);
   }
   if(status === 'dispatched' || status === 'all') {
-    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.dispatched);
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.dispatched);
   }
   if(status === 'enroute' || status === 'all') {
-    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.enroute);
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.enroute);
   }
   if(status === 'pickedup' || status === 'all') {
-    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.pickedup);
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.pickedup);
   }
   if(status === 'complete' || status === 'all') {
-    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.complete);
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.complete);
   }
   if(status === 'cancelled' || status === 'all') {
-    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.cancelled);
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.cancelled);
   }
   if(status === 'rejected' || status === 'all') {
-    pushTrips(partnerId, trips, this.dashboardTripsByIdByStatus.rejected);
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.rejected);
   }
   return trips;
 };
 
-ActiveTrips.prototype.getAll = function(partnerId) {
+ActiveTrips.prototype.getAll = function(networkId) {
   // No need to call toApiTrip on results for now since this is only used by
   // dashboard stats which doesn't use date properties
   return this
     .redisClient
     .getAll()
     .then(function(allTrips){
-      if(!partnerId || partnerId === 'all') {
+      if(!networkId || networkId === 'all') {
         return allTrips;
       } else {
         var trips = [];
         for(var i = 0; i < allTrips.length; i++) {
           var trip = allTrips[i];
           if( trip && 
-              trip.originatingPartner.id === partnerId || 
-              (trip.servicingPartner && trip.servicingPartner.id === partnerId)) {
+              trip.originatingNetwork.id === networkId || 
+              (trip.servicingNetwork && trip.servicingNetwork.id === networkId)) {
             trips.push(trip);
           }
         }

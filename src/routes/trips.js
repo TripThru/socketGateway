@@ -5,7 +5,7 @@ var resultCodes = codes.resultCodes;
 
 function callApiIfUserValid(token, request, fn) {
   var user = usersController.getByToken(token);
-  if(user && user.role === 'partner') {
+  if(user && user.role === 'network') {
     request.clientId = user.id;
     return fn(request);
   } else {

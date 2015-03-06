@@ -76,16 +76,16 @@ UsersController.prototype._add = function(user) {
   this.usersByToken[user.token] = user;
 };
 
-UsersController.prototype.getPartnerInfo = function(request) {
+UsersController.prototype.getNetworkInfo = function(request) {
   var log = logger.getSublog(request.id);
-  log.log('Get partner info ' + request.id + ' from ' + request.clientId, request);
-  var user = TripThruApiFactory.createUserFromRequest(request, 'get-partner-info');
+  log.log('Get network info ' + request.id + ' from ' + request.clientId, request);
+  var user = TripThruApiFactory.createUserFromRequest(request, 'get-network-info');
   return this
     ._getByClientId(user.clientId)
     .bind(this)
     .then(function(u){
       if(u) {
-        var response = TripThruApiFactory.createResponseFromUser(u, 'get-partner-info');
+        var response = TripThruApiFactory.createResponseFromUser(u, 'get-network-info');
         log.log('Response', response);
         return response;
       } else {
@@ -106,16 +106,16 @@ UsersController.prototype.getPartnerInfo = function(request) {
     });
 };
 
-UsersController.prototype.setPartnerInfo = function(request) {
+UsersController.prototype.setNetworkInfo = function(request) {
   var log = logger.getSublog(request.clientId);
-  log.log('Set partner info ' + request.clientId, request);
+  log.log('Set network info ' + request.clientId, request);
   return this
     ._getByClientId(request.clientId)
     .bind({})
     .then(function(u){
       if(u) {
         this.updatedUser = TripThruApiFactory.createUserFromRequest(request, 
-            'set-partner-info', {user: u});
+            'set-network-info', {user: u});
         return usersModel.update(this.updatedUser);
       } else {
         throw new RequestError(resultCodes.notFound, 'User ' + request.clientId + ' does not exist');
@@ -123,7 +123,7 @@ UsersController.prototype.setPartnerInfo = function(request) {
     })
     .then(function(){
       var response = 
-        TripThruApiFactory.createResponseFromUser(this.updatedUser, 'set-partner-info');
+        TripThruApiFactory.createResponseFromUser(this.updatedUser, 'set-network-info');
       log.log('Response', response);
       return response;
     })
@@ -159,15 +159,15 @@ UsersController.prototype.getAll = function() {
   });
 };
 
-UsersController.prototype.getPartnersThatServeLocation = function(location) {
+UsersController.prototype.getNetworksThatServeLocation = function(location) {
   var users = this.usersById;
   return new Promise(function(resolve, reject){
     var usersThatServeLocation = [];
     for(var id in users) {
       if(users.hasOwnProperty(id)) {
         var u = users[id];
-        for(var i = 0; i < u.fleets.length; i++) {
-          if(maptools.isInside(location, u.fleets[i].coverage)){
+        for(var i = 0; i < u.products.length; i++) {
+          if(maptools.isInside(location, u.products[i].coverage)){
             usersThatServeLocation.push(u);
           }
         }

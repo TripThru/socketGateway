@@ -4,7 +4,7 @@ var quotes = require('./src/controller/quotes');
 var users = require('./src/controller/users');
 var Gateway = require('./src/gateway').Gateway;
 var SocketGateway = require('./src/socket_gateway');
-var partnersGateway = require('./src/partners_gateway');
+var networksGateway = require('./src/networks_gateway');
 
 var activeSocketsByClientId = {};
 var activeClientIdsBySocket = {};
@@ -25,9 +25,9 @@ io.use(function(socket, next){
     users
       .getByToken(query.token)
       .then(function(user){
-        if (user && user.role === 'partner') {
+        if (user && user.role === 'network') {
           var socketGateway = new SocketGateway(user.clientId, socket);
-          partnersGateway.subscribePartner(socketGateway);
+          networksGateway.subscribeNetwork(socketGateway);
           activeSocketsByClientId[user.clientId] = socket;
           activeClientIdsBySocket[socket] = user.clientId;
           next();
@@ -79,18 +79,18 @@ io.sockets.on('connection', function (socket){
   });
   
   //Users
-  socket.on('get-partner-info', function(req ,cb){
-    users.getPartnerInfo(req).then(cb);
+  socket.on('get-network-info', function(req ,cb){
+    users.getNetworkInfo(req).then(cb);
   });
-  socket.on('set-partner-info', function(req, cb){
-    users.setPartnerInfo(req).then(cb);
+  socket.on('set-network-info', function(req, cb){
+    users.setNetworkInfo(req).then(cb);
   });
   
   socket.on('disconnect', function(){
     var id = activeClientIdsBySocket[socket];
     delete activeSocketsByClientId[id];
     delete activeClientIdsBySocket[socket];
-    partnersGateway.unsubscribePartner(id);
+    networksGateway.unsubscribeNetwork(id);
     console.log('Client disconnected', id);
   });
 });

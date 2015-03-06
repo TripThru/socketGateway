@@ -7,7 +7,7 @@ module.exports = {
       "description": "schema for a trip dispatch request",
       "type": "object",
       "properties": {
-        "partner": {
+        "network": {
           "type": "object",
           "properties": {
             "id": { "type": "string" },
@@ -15,7 +15,7 @@ module.exports = {
           },
           "required": [ "id" ]
         },
-        "fleet" : {
+        "product" : {
           "type": "object",
           "properties": {
             "id": { "type": "string" },
@@ -75,7 +75,7 @@ module.exports = {
       "description": "schema for a quote request",
       "type": "object",
       "properties": {
-        "partner": {
+        "network": {
           "type": "object",
           "properties": {
             "id": { "type": "string" },
@@ -83,7 +83,7 @@ module.exports = {
           },
           "required": [ "id" ]
         },
-        "fleet" : {
+        "product" : {
           "type": "object",
           "properties": {
             "id": { "type": "string" },

@@ -96,11 +96,11 @@ RestfulGateway.prototype.updateQuote = function(request) {
   return this.put('quote', request.id, request);
 };
 
-RestfulGateway.prototype.getPartnerInfo = function(request) {
+RestfulGateway.prototype.getNetworkInfo = function(request) {
   return this.get('network', request.id, request);
 };
 
-RestfulGateway.prototype.setPartnerInfo = function(request) {
+RestfulGateway.prototype.setNetworkInfo = function(request) {
   return this.post('network', request.id, request);
 };
 

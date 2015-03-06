@@ -8,13 +8,13 @@ function getISOStringFromMoment(moment) {
 
 function toStoreTrip(apiTrip) {
   return users
-    .getByClientId(apiTrip.originatingPartner.id)
+    .getByClientId(apiTrip.originatingNetwork.id)
     .then(function(user){
       var t = {
           id: apiTrip.id,
           dbId: apiTrip.dbId,
           userId: user.id,
-          fleetId: user.fleetsById[apiTrip.originatingFleet.id].id,
+          productId: user.productsById[apiTrip.originatingProduct.id].id,
           pickupLocation: apiTrip.pickupLocation,
           pickupTime: getISOStringFromMoment(apiTrip.pickupTime),
           dropoffLocation: apiTrip.dropoffLocation,
@@ -38,13 +38,13 @@ function toStoreTrip(apiTrip) {
         t.driver.name = apiTrip.driver.name;
       }
 
-      if(apiTrip.servicingPartner && apiTrip.servicingPartner.id) {
+      if(apiTrip.servicingNetwork && apiTrip.servicingNetwork.id) {
         return users
-          .getByClientId(apiTrip.servicingPartner.id)
+          .getByClientId(apiTrip.servicingNetwork.id)
           .then(function(user) {
             t.servicingNetworkId = user.id;
-            if(apiTrip.servicingFleet) {
-              t.servicingFleetId = user.fleetsById[apiTrip.servicingFleet.id].client_id;
+            if(apiTrip.servicingProduct) {
+              t.servicingProductId = user.productsById[apiTrip.servicingProduct.id].client_id;
             }
             return t;
           });
@@ -53,7 +53,7 @@ function toStoreTrip(apiTrip) {
       }
       //TODO: Transform all fields
       /*
-      if(storeTrip.fleet) t.fleet = storeTrip.fleet;
+      if(storeTrip.product) t.product = storeTrip.product;
       if(storeTrip.passenger) t.passenger = storeTrip.passenger;
       */
     });
@@ -66,13 +66,13 @@ function toApiTrip(storeTrip) {
       var t = {
           id: storeTrip.trip_id,
           dbId: storeTrip.id,
-          originatingPartner: { 
+          originatingNetwork: { 
             id: storeTrip.user_client_id, 
             name: storeTrip.user_name
           },
-          originatingFleet: {
-            id: storeTrip.fleet_client_id,
-            name: storeTrip.fleet_name
+          originatingProduct: {
+            id: storeTrip.product_client_id,
+            name: storeTrip.product_name
           },
           pickupLocation: {
             lat: storeTrip.pickup_location_lat,
@@ -94,9 +94,9 @@ function toApiTrip(storeTrip) {
       
       //TODO: Transform all fields
       /*
-      if(storeTrip.servicingPartner) t.servicingPartner = storeTrip.servicingPartner;
-      if(storeTrip.servicingFleet) t.servicingFleet = storeTrip.servicingFleet;
-      if(storeTrip.fleet) t.fleet = storeTrip.fleet;
+      if(storeTrip.servicingNetwork) t.servicingNetwork = storeTrip.servicingNetwork;
+      if(storeTrip.servicingProduct) t.servicingProduct = storeTrip.servicingProduct;
+      if(storeTrip.product) t.product = storeTrip.product;
       if(storeTrip.driver) t.driver = storeTrip.driver;
       if(storeTrip.passenger) t.passenger = storeTrip.passenger;
       if(storeTrip.latenessMilliseconds >= 0) t.latenessMilliseconds = storeTrip.latenessMilliseconds;

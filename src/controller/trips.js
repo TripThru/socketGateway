@@ -30,8 +30,8 @@ UnsuccessfulRequestError.prototype = Object.create(Error.prototype);
 UnsuccessfulRequestError.prototype.constructor = UnsuccessfulRequestError;
 
 function tripIsLocal(trip, request) {
-  return trip.servicingPartner && 
-    trip.originatingPartner.id === trip.servicingPartner.id;
+  return trip.servicingNetwork && 
+    trip.originatingNetwork.id === trip.servicingNetwork.id;
 }
 
 function isActiveStatus(status) {
@@ -40,8 +40,8 @@ function isActiveStatus(status) {
 }
 
 function shouldForwardUpdate(trip, currentStatus, newStatus) {
-  var shouldForward = trip.servicingPartner && 
-    trip.originatingPartner.id !== trip.servicingPartner.id;
+  var shouldForward = trip.servicingNetwork && 
+    trip.originatingNetwork.id !== trip.servicingNetwork.id;
   if(!isActiveStatus(currentStatus) && !isActiveStatus(newStatus)) {
     shouldForward = false;
   }
@@ -125,7 +125,7 @@ TripsController.prototype.getTrip = function(request) {
       if(trip) {
         var response = TripThruApiFactory.createResponseFromTrip(trip, 'get-trip');
         log.setOrigin(
-            trip.originatingPartner.id === request.clientId ? 'origin' : 'servicing');
+            trip.originatingNetwork.id === request.clientId ? 'origin' : 'servicing');
         log.log('Response', response);
         return response;
       } else {
@@ -161,16 +161,16 @@ TripsController.prototype.getTripStatus = function(request) {
       trip = t;
       if(!trip) {
         throw new RequestError(resultCodes.rejected, 'trip ' + request.id + ' not found');
-      } else if(!trip.servicingPartner) {
+      } else if(!trip.servicingNetwork) {
         return {result: resultCodes.notFound};
       } else { 
-        return this.gateway.getTripStatus(trip.servicingPartner.id, request);
+        return this.gateway.getTripStatus(trip.servicingNetwork.id, request);
       }
     })
     .then(function(response){
       if(response.result === resultCodes.ok) {
         var res = 
-          TripThruApiFactory.createGetTripStatusResponseFromPartnerGetTripStatusResponse(response, trip);
+          TripThruApiFactory.createGetTripStatusResponseFromNetworkGetTripStatusResponse(response, trip);
         //log.log('Response', res);
         return res;
       } else {
@@ -214,7 +214,7 @@ TripsController.prototype.updateTripStatus = function(request) {
     .then(function(t){
       if(t) {
         log.setOrigin(
-            t.originatingPartner.id === request.clientId ? 'origin' : 'servicing');
+            t.originatingNetwork.id === request.clientId ? 'origin' : 'servicing');
         this.oldStatus = t.status;
         this.trip = TripThruApiFactory.createTripFromRequest(request, 
             'update-trip-status', {trip: t});
@@ -225,8 +225,8 @@ TripsController.prototype.updateTripStatus = function(request) {
     })
     .then(function(){
       if(shouldForwardUpdate(this.trip, this.oldStatus, this.newStatus)) {
-        var sendTo = request.clientId === this.trip.originatingPartner.id ?
-            this.trip.servicingPartner.id : this.trip.originatingPartner.id;
+        var sendTo = request.clientId === this.trip.originatingNetwork.id ?
+            this.trip.servicingNetwork.id : this.trip.originatingNetwork.id;
         log.log('Trip has foreign dependency so creating update trip status job');
         workers.newUpdateTripStatusJob(request, sendTo);
       }
@@ -269,7 +269,7 @@ TripsController.prototype.requestPayment = function(request) {
       }
       this.tripPayment = TripThruApiFactory.createTripPaymentFromRequest(request, 
           'request-payment', {trip: trip});
-      this.sendTo = trip.originatingPartner.id;
+      this.sendTo = trip.originatingNetwork.id;
       return tripPayments.add(this.tripPayment);
     })
     .then(function(res){
@@ -308,7 +308,7 @@ TripsController.prototype.acceptPayment = function(request) {
       if(!trip) {
         throw new RequestError(resultCodes.notFound, 'trip not found');
       }
-      this.sendTo = trip.servicingPartner.id;
+      this.sendTo = trip.servicingNetwork.id;
       return tripPayments.getByTripId(request.id);
     })
     .then(function(tripPayment){
@@ -343,10 +343,10 @@ TripsController.prototype.acceptPayment = function(request) {
 TripsController.prototype.getTripStats = function(trip) {
   var log = logger.getSublog(trip.id, 'tripthru', 'servicing', 'get-trip-status');
   var request = TripThruApiFactory.createRequestFromTrip(trip, 'get-trip-status');
-  log.log('Get trip status sent to ' + trip.servicingPartner.name, request);
+  log.log('Get trip status sent to ' + trip.servicingNetwork.name, request);
   this
     .gateway
-    .getTripStatus(trip.servicingPartner.id, request)
+    .getTripStatus(trip.servicingNetwork.id, request)
     .then(function(response){
       trip = TripThruApiFactory.createTripFromResponse(response, 
           'get-trip-status', {trip: trip});

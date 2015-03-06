@@ -4,7 +4,7 @@ var resultCodes = codes.resultCodes;
 
 function callApiIfUserValid(token, request, fn) {
   var user = usersController.getByToken(req.query.token);
-  if(user && user.role === 'partner') {
+  if(user && user.role === 'network') {
     request.clientId = user.id;
     return fn(request);
   } else {
@@ -19,14 +19,14 @@ function UserRoutes() {
   
 }
 
-UserRoutes.prototype.setPartnerInfo = function(token, id, request) {
+UserRoutes.prototype.setNetworkInfo = function(token, id, request) {
   request.id = id;
-  return callApiIfUserValid(token, request, usersController.setPartnerInfo);
+  return callApiIfUserValid(token, request, usersController.setNetworkInfo);
 };
 
-UserRoutes.prototype.getPartnerInfo = function(token, id) {
+UserRoutes.prototype.getNetworkInfo = function(token, id) {
   var request = {id: id};
-  return callApiIfUserValid(token, request, usersController.getPartnerInfo);
+  return callApiIfUserValid(token, request, usersController.getNetworkInfo);
 };
 
 module.exports = new UserRoutes();

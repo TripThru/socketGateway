@@ -128,7 +128,7 @@ QuotesController.prototype.updateQuote = function(request) {
     .then(function(q){
       if(q) {
         this.quote = q;
-        var partnerQuote = TripThruApiFactory.createQuoteFromRequest(request, 
+        var networkQuote = TripThruApiFactory.createQuoteFromRequest(request, 
             'update', {quote: q});
         return quotes.update(this.quote);
       }

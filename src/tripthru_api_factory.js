@@ -47,7 +47,7 @@ function getMomentFromISOString(dateString) {
 
 
 // TRIPS //
-function createDispatchRequest(trip, partner) {
+function createDispatchRequest(trip, network) {
   var r = {
       id: trip.id,
       clientId: tripthruClientId,
@@ -56,11 +56,11 @@ function createDispatchRequest(trip, partner) {
       pickupTime: getISOStringFromMoment(trip.pickupTime),
       dropoffLocation: apiLocation(trip.dropoffLocation)
   };
-  if(trip.fleet) r.fleet = idName(trip.fleet);
+  if(trip.product) r.product = idName(trip.product);
   if(trip.driver) r.driver = idName(trip.driver);
   if(trip.vehicleType) r.vehicleType = trip.vehicleType;
-  if(trip.servicingPartner) r.partner = idName(trip.servicingPartner);
-  if(trip.servicingFleet) r.fleet = idName(trip.servicingFleet);
+  if(trip.servicingNetwork) r.network = idName(trip.servicingNetwork);
+  if(trip.servicingProduct) r.product = idName(trip.servicingProduct);
   return r;
 }
 
@@ -89,8 +89,8 @@ function createGetTripStatusRequest(trip) {
 function createTripFromDispatchRequest(request) {
   var trip = {
       id: request.id,
-      originatingPartner: idName({id: request.clientId, name: request.clientId}),
-      originatingFleet: idName(request.originatingFleet),
+      originatingNetwork: idName({id: request.clientId, name: request.clientId}),
+      originatingProduct: idName(request.originatingProduct),
       passenger: request.passenger,
       pickupLocation: request.pickupLocation,
       pickupTime: getMomentFromISOString(request.pickupTime),
@@ -102,9 +102,9 @@ function createTripFromDispatchRequest(request) {
   };
   if(request.driver) trip.driver = idName(request.driver);
   if(request.vehicleType) trip.vehicleType = request.vehicleType;
-  if(request.partner) {
-    trip.servicingPartner = idName(request.partner);
-    if(request.fleet) trip.servicingFleet = idName(request.fleet);
+  if(request.network) {
+    trip.servicingNetwork = idName(request.network);
+    if(request.product) trip.servicingProduct = idName(request.product);
     trip.autoDispatch = false;
   } else {
     trip.autoDispatch = true;
@@ -181,12 +181,12 @@ function createGetTripStatusResponse(trip) {
   r.dropoffLocation = apiLocation(trip.dropoffLocation);
   r.vehicleType = trip.vehicleType;
   r.status = trip.status;
-  r.originatingPartner = idName(trip.originatingPartner);
+  r.originatingNetwork = idName(trip.originatingNetwork);
   if(trip.pickupTime) r.pickupTime = getISOStringFromMoment(trip.pickupTime);
   if(trip.dropoffTime) r.dropoffTime = getISOStringFromMoment(trip.dropoffTime);
   if(trip.eta) r.eta = getISOStringFromMoment(trip.eta);
-  if(trip.servicingPartner) r.servicingPartner = idName(trip.servicingPartner);
-  if(trip.fleet) r.fleet = idName(trip.fleet);
+  if(trip.servicingNetwork) r.servicingNetwork = idName(trip.servicingNetwork);
+  if(trip.product) r.product = idName(trip.product);
   if(trip.price) r.price = trip.price;
   if(trip.distance) r.distance = trip.distance;
   if(trip.driver) {
@@ -300,9 +300,9 @@ function createTripFromResponse(response, type, args) {
   }
 }
 
-function createGetTripStatusResponseFromPartnerGetTripStatusResponse(response, trip) {
-  response.originatingPartner = trip.originatingPartner;
-  response.servicingPartner = trip.servicingPartner;
+function createGetTripStatusResponseFromNetworkGetTripStatusResponse(response, trip) {
+  response.originatingNetwork = trip.originatingNetwork;
+  response.servicingNetwork = trip.servicingNetwork;
   return response;
 }
 
@@ -360,7 +360,7 @@ function createQuoteFromTrip(trip) {
   var quote = {
     id: trip.id,
     request: {
-        clientId: trip.originatingPartner.id,
+        clientId: trip.originatingNetwork.id,
         id: trip.id,
         pickupLocation: apiLocation(trip.pickupLocation),
         pickupTime: trip.pickupTime,
@@ -395,8 +395,8 @@ function createQuoteFromUpdateQuoteRequest(request, quote) {
     for(var i = 0; i < request.quotes.length; i++) {
       var q = request.quotes[i];
       var quoteUpdate = {
-          partner: idName(q.partner),
-          fleet: idName(q.fleet),
+          network: idName(q.network),
+          product: idName(q.product),
           eta: getMomentFromISOString(q.eta),
           vehicleType: q.vehicleType,
           price: q.price,
@@ -431,8 +431,8 @@ function createGetQuoteResponseFromQuote(quote) {
     var q = quote.receivedQuotes[i];
     if(q) {
       var qt = {
-        partner: idName(q.partner),
-        fleet: idName(q.fleet),
+        network: idName(q.network),
+        product: idName(q.product),
         eta: getISOStringFromMoment(q.eta),
         vehicleType: q.vehicleType,
         price: q.price,
@@ -510,44 +510,44 @@ function createQuoteFromRequest(quote, type, args) {
 
 // Users //
 
-function createUserFromGetPartnerInfoRequest(request) {
+function createUserFromGetNetworkInfoRequest(request) {
   var r = {
       clientId: request.clientId
   };
   return r;
 }
 
-function createUserFromSetPartnerInfoRequest(request, user) {
-  user.fleets = request.fleets;
-  for(var i = 0; i < user.fleets.length; i++) {
-    user.fleets[i].fleet_id = user.fleets[i].id;
+function createUserFromSetNetworkInfoRequest(request, user) {
+  user.products = request.products;
+  for(var i = 0; i < user.products.length; i++) {
+    user.products[i].product_id = user.products[i].id;
   }
   return user;
 }
 
-function createGetPartnerInfoResponseFromUser(user) {
+function createGetNetworkInfoResponseFromUser(user) {
   var r = {
-    fleets: user.fleets
+    products: user.products
   };
-  for(var i = 0; i < r.fleets.length; i++) {
-    r.fleets[i].id = r.fleets[i].fleet_id;
+  for(var i = 0; i < r.products.length; i++) {
+    r.products[i].id = r.products[i].product_id;
   }
   return r;
 }
 
-function createSetPartnerInfoResponseFromUser(user) {
+function createSetNetworkInfoResponseFromUser(user) {
   return successResponse();
 }
 
 function createUserFromRequest(user, type, args) {
   switch(type) {
-    case 'get-partner-info':
-      return createUserFromGetPartnerInfoRequest(user);
-    case 'set-partner-info':
+    case 'get-network-info':
+      return createUserFromGetNetworkInfoRequest(user);
+    case 'set-network-info':
       if(!args || !args.user) {
         throw new Error('Need user object to update');
       }
-      return createUserFromSetPartnerInfoRequest(user, args.user);
+      return createUserFromSetNetworkInfoRequest(user, args.user);
     default:
       throw new Error('Invalid request type ' + type);
   }
@@ -558,10 +558,10 @@ function createResponseFromUser(user, type, message, errorCode) {
     return failResponse(message, errorCode);
   }
   switch(type) {
-    case 'get-partner-info':
-      return createGetPartnerInfoResponseFromUser(user);
-    case 'set-partner-info':
-      return createSetPartnerInfoResponseFromUser(user);
+    case 'get-network-info':
+      return createGetNetworkInfoResponseFromUser(user);
+    case 'set-network-info':
+      return createSetNetworkInfoResponseFromUser(user);
     default:
       throw new Error('Invalid response type ' + type);
   }
@@ -573,8 +573,8 @@ module.exports.createRequestFromTrip = createRequestFromTrip;
 module.exports.createResponseFromTrip = createResponseFromTrip;
 module.exports.createTripFromRequest = createTripFromRequest;
 module.exports.createTripFromResponse = createTripFromResponse;
-module.exports.createGetTripStatusResponseFromPartnerGetTripStatusResponse = 
-  createGetTripStatusResponseFromPartnerGetTripStatusResponse;
+module.exports.createGetTripStatusResponseFromNetworkGetTripStatusResponse = 
+  createGetTripStatusResponseFromNetworkGetTripStatusResponse;
 module.exports.createRequestFromQuote = createRequestFromQuote;
 module.exports.createResponseFromQuote = createResponseFromQuote;
 module.exports.createQuoteFromRequest = createQuoteFromRequest;

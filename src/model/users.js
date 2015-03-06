@@ -16,15 +16,15 @@ function toApiUser(storeUser) {
     endpointType: storeUser[0].endpoint_type,
     callbackUrl: storeUser[0].callback_url,
     callbackToken: storeUser[0].callback_token,
-    fleets: [],
-    fleetsById: {}
+    products: [],
+    productsById: {}
   };
   for(var i = 0; i < storeUser.length; i++) {
     var su = storeUser[i];
-    var fleet = {
-      id: su.fleet_db_id,
-      clientId: su.fleet_client_id,
-      name: su.fleet_name,
+    var product = {
+      id: su.product_db_id,
+      clientId: su.product_client_id,
+      name: su.product_name,
       coverage: {
         radius: su.coverage_radius,
         center: {
@@ -33,8 +33,8 @@ function toApiUser(storeUser) {
         }
       }
     };
-    user.fleets.push(fleet);
-    user.fleetsById[fleet.clientId] = fleet;
+    user.products.push(product);
+    user.productsById[product.clientId] = product;
   }
   return user;
 }

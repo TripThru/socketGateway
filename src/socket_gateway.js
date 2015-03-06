@@ -44,12 +44,12 @@ SocketGateway.prototype.updateQuote = function(request) {
   return this.emit('update-quote', request);
 };
 
-SocketGateway.prototype.getPartnerInfo = function(request) {
-  return this.emit('get-partner-info', request);
+SocketGateway.prototype.getNetworkInfo = function(request) {
+  return this.emit('get-network-info', request);
 };
 
-SocketGateway.prototype.setPartnerInfo = function(request) {
-  return this.emit('set-partner-info', request);
+SocketGateway.prototype.setNetworkInfo = function(request) {
+  return this.emit('set-network-info', request);
 };
 
 SocketGateway.prototype.requestPayment = function(request) {

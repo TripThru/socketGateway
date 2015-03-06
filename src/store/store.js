@@ -63,7 +63,7 @@ Store.prototype.createTrip = function(trip) {
   var query = "INSERT INTO trips SET ?";
   var fields = {
     user_id: trip.userId,
-    fleet_id: trip.fleetId, 
+    product_id: trip.productId, 
     vehicle_id: trip.vehicleId, 
     passenger_name: trip.passengerName, 
     trip_id: trip.id,
@@ -77,7 +77,7 @@ Store.prototype.createTrip = function(trip) {
     autodispatch: trip.autoDispatch, 
     created_at: trip.creation,
     servicing_network_id: trip.servicingNetworkId, 
-    servicing_fleet_id: trip.servicingFleetId, 
+    servicing_product_id: trip.servicingProductId, 
     dropoff_time: trip.dropoffTime,
     price: trip.price, 
     lateness_milliseconds: trip.latenessMilliseconds, 
@@ -103,7 +103,7 @@ Store.prototype.updateTrip = function(trip) {
     distance: trip.distance,
     eta: trip.eta,
     servicing_network_id: trip.servicingNetworkId,
-    servicing_fleet_id: trip.servicingFleetId,
+    servicing_product_id: trip.servicingProductId,
     dropoff_time: trip.dropoffTime,
     price: trip.price
   };
@@ -130,9 +130,9 @@ Store.prototype.getTripById = function(id) {
   return execute( "SELECT t.*, " +
   		            "       u.client_id as user_client_id, " +
   		            "       u.full_name as user_name,  " +
-  		            "       f.fleet_id as fleet_id, " +
-  		            "       f.name as fleet_name " +
-  		            "FROM trips t, users u, fleets f " +
+  		            "       f.product_id as product_id, " +
+  		            "       f.name as product_name " +
+  		            "FROM trips t, users u, products f " +
   		            "WHERE trip_id LIKE ?",
   		            [id]);
 };
@@ -187,16 +187,16 @@ Store.prototype.updateUser = function(user) {
     .resolve(user)
     .then(function(user){
       var queries = [];
-      for(var i = 0; i < user.fleets.length; i++) {
-        var f = user.fleets[i];
-        var query = "INSERT INTO fleets " +
+      for(var i = 0; i < user.products.length; i++) {
+        var f = user.products[i];
+        var query = "INSERT INTO products " +
                     "  (user_id, client_id, name, coverage_radius, coverage_lat, coverage_lng) " +
                     "VALUES (?, ?, ?, ?, ?, ?) " +
                     "ON DUPLICATE KEY UPDATE " +
                     "  coverage_radius = VALUES(coverage_radius), " +
                     "  coverage_lat = VALUES(coverage_lat), " +
                     "  coverage_lng = VALUES(coverage_lng)";
-        var data = [user.id, f.fleet_id, f.name, f.coverage.radius, f.coverage.center.lat, f.coverage.center.lng];
+        var data = [user.id, f.product_id, f.name, f.coverage.radius, f.coverage.center.lat, f.coverage.center.lng];
         queries.push({query: query, data: data});
       }
       return execute_sequence(queries);
@@ -209,12 +209,12 @@ function getUserQuery() {
           "  u.id as user_db_id, " +
           "  u.client_id as user_client_id, " +
           "  u.name as user_name, " +
-          "  f.id as fleet_db_id, " + 
-          "  f.client_id as fleet_client_id, " +
-          "  f.name as fleet_name, " +
+          "  f.id as product_db_id, " + 
+          "  f.client_id as product_client_id, " +
+          "  f.name as product_name, " +
           "  f.* " +
           "FROM users u " +
-          "LEFT JOIN fleets f ON u.id = f.user_id ";
+          "LEFT JOIN products f ON u.id = f.user_id ";
 } 
     
 Store.prototype.getUserByClientId = function(client_id) {

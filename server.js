@@ -3,7 +3,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var config = require('./config');
 var socket = require('./socket');
-var partnersGateway = require('./src/partners_gateway');
+var networksGateway = require('./src/networks_gateway');
 var store = require('./src/store/store');
 var tripsController = require('./src/controller/trips');
 var quotesController = require('./src/controller/quotes');
@@ -27,11 +27,11 @@ jobQueue.clear();
 store.clear();
 
 //Init and inject dependencies to avoid circular dependencies
-tripsController.init(partnersGateway);
-quotesController.init(partnersGateway);
-usersController.init(partnersGateway);
-tripsJobQueue.init(partnersGateway, quotesJobQueue);
-quotesJobQueue.init(partnersGateway, tripsJobQueue);
+tripsController.init(networksGateway);
+quotesController.init(networksGateway);
+usersController.init(networksGateway);
+tripsJobQueue.init(networksGateway, quotesJobQueue);
+quotesJobQueue.init(networksGateway, tripsJobQueue);
 
 var app = express();
 
@@ -52,14 +52,14 @@ app.all('*', function(req, res, next){
 // API routes
 app.post('/network/:id', function(req, res){
   userRoutes
-    .setPartnerInfo(req.query.token, req.params.id, req)
+    .setNetworkInfo(req.query.token, req.params.id, req)
     .then(function(response){
       res.json(response);
     });
 });
 app.get('/network/:id', function(req, res){
   userRoutes
-    .getPartnerInfo(req.query.token, req.params.id)
+    .getNetworkInfo(req.query.token, req.params.id)
     .then(function(response){
       res.json(response);
     });

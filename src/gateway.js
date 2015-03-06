@@ -1,7 +1,7 @@
 var Interface = require('./interface').Interface;
 var logger = require('./logger');
 
-var IGateway = new Interface('Gateway', ['getPartnerInfo',
+var IGateway = new Interface('Gateway', ['getNetworkInfo',
                                          'dispatchTrip',
                                          'getTrip',
                                          'getTripStatus',
@@ -18,7 +18,7 @@ function Gateway(id, name) {
 	this.name = name;
 }
 
-Gateway.prototype.getPartnerInfo = function(request) {
+Gateway.prototype.getNetworkInfo = function(request) {
   throw new Error('Not implemented');
 };
 
