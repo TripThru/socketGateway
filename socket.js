@@ -68,14 +68,8 @@ io.sockets.on('connection', function (socket){
   });
   
   //Quotes
-  socket.on('quote-trip', function(req, cb){
-    quotes.createQuote(req).then(cb);
-  });
   socket.on('get-quote', function(req, cb){
     quotes.getQuote(req).then(cb);
-  });
-  socket.on('update-quote', function(req, cb){
-    quotes.updateQuote(req).then(cb);
   });
   
   //Users
@@ -85,6 +79,9 @@ io.sockets.on('connection', function (socket){
   socket.on('set-network-info', function(req, cb){
     users.setNetworkInfo(req).then(cb);
   });
+  socket.on('get-drivers-nearby', function(req, cb) {
+    users.getDriversNearby(req).then(cb);
+  })
   
   socket.on('disconnect', function(){
     var id = activeClientIdsBySocket[socket];
@@ -96,7 +93,7 @@ io.sockets.on('connection', function (socket){
 });
 
 function appendClientId(socket, request) {
-  request.clientId = activeClientIdsBySocket[socket];
+  request.client_id = activeClientIdsBySocket[socket];
   return request;
 }
 

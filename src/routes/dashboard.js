@@ -20,11 +20,11 @@ Dashboard.prototype.getStats = function(token) {
           .getAll(networkId)
           .then(function(trips){
             var response = getStatsFromTripList(trips);
-            response.result = resultCodes.ok;
+            response.result_code = resultCodes.ok;
             return response;
           });
       } else {
-        return { result: resultCodes.notFound };
+        return { result_code: resultCodes.notFound };
       }
     });
 };
@@ -40,10 +40,10 @@ Dashboard.prototype.getTripsList = function(token, status) {
         var trips = activeTrips.getDashboardTrips(networkId, status);
         response = {
             trips: trips,
-            result: resultCodes.ok
+            result_code: resultCodes.ok
         };
       } else {
-        response = { result: resultCodes.notFound };
+        response = { result_code: resultCodes.notFound };
       }
       return response;
     });
@@ -59,7 +59,7 @@ Dashboard.prototype.getTripRoute = function(token, id) {
           .getById(id)
           .then(function(trip){
             var response = {
-                result: resultCodes.ok
+                result_code: resultCodes.ok
               };
             if(trip.driver) {
               response.routeEnrouteLocation = trip.driver.routeEnrouteLocation;
@@ -68,7 +68,7 @@ Dashboard.prototype.getTripRoute = function(token, id) {
             return response;
           });
       } else {
-        return { result: resultCodes.notFound };
+        return { result_code: resultCodes.notFound };
       }
     });
 };
@@ -80,11 +80,11 @@ Dashboard.prototype.getTripLogs = function(token, id) {
       var response;
       if(user) {
         response = {
-          result: resultCodes.ok,
+          result_code: resultCodes.ok,
           logs: logger.getLogsById(id)
         };
       } else {
-        response = { result: resultCodes.notFound };
+        response = { result_code: resultCodes.notFound };
       }
       return response;
     });
@@ -94,10 +94,10 @@ function getStatsFromTripList(trips) {
   var stats = {
     activeTrips: trips.length,
     queued: 0,
-    dispatched: 0,
-    enroute: 0,
-    pickedup: 0,
-    complete: 0,
+    accepted: 0,
+    en_route: 0,
+    picked_up: 0,
+    completed: 0,
     cancelled: 0,
     rejected: 0,
     serviceLevels: [0, 0, 0, 0, 0]
@@ -110,14 +110,14 @@ function getStatsFromTripList(trips) {
     var trip = trips[i];
     if(trip) {
       stats[trip.status]++;
-      if(trip.status === 'complete' || trip.status === 'pickedup') {
+      if(trip.status === 'completed' || trip.status === 'picked_up') {
         stats.serviceLevels[trip.serviceLevel]++;
       }
-      if(trip.status === 'complete') {
+      if(trip.status === 'completed') {
         durations.push(trip.duration);
         if(trip.distance >= 0) {
           // Sometimes we can reach this before updating the trip info after
-          // calling get-trip-status on servicing network
+          // calling get-trip on servicing network
           distances.push(trip.distance);
         }
       }

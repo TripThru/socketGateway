@@ -15,7 +15,6 @@ function toApiUser(storeUser) {
     role: storeUser[0].role,
     endpointType: storeUser[0].endpoint_type,
     callbackUrl: storeUser[0].callback_url,
-    callbackToken: storeUser[0].callback_token,
     products: [],
     productsById: {}
   };
@@ -25,6 +24,13 @@ function toApiUser(storeUser) {
       id: su.product_db_id,
       clientId: su.product_client_id,
       name: su.product_name,
+      imageUrl: su.image_url,
+      capacity: su.capacity,
+      acceptsPrescheduled: su.accepts_prescheduled,
+      acceptsOndemand: su.accepts_ondemand,
+      acceptsCashPayment: su.accepts_cash_payment,
+      acceptsAccountPayment: su.accepts_account_payment,
+      acceptsCreditcardPayment: su.accepts_creditcard_payment,
       coverage: {
         radius: su.coverage_radius,
         center: {

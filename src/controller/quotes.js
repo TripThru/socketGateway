@@ -6,26 +6,13 @@ var moment = require('moment');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var validate = require('./validate');
-var workers = require('../workers/quotes');
 var logger = require('../logger');
 var quotes = require('../active_quotes');
 var users = require('./users');
-
-function RequestError(resultCode, error) {
-  this.resultCode = resultCode;
-  this.error = error;
-  Error.captureStackTrace(this, RequestError);
-}
-RequestError.prototype = Object.create(Error.prototype);
-RequestError.prototype.constructor = RequestError;
-
-function UnsuccessfulRequestError(resultCode, error) {
-  this.resultCode = resultCode;
-  this.error = error;
-  Error.captureStackTrace(this, UnsuccessfulRequestError);
-}
-UnsuccessfulRequestError.prototype = Object.create(Error.prototype);
-UnsuccessfulRequestError.prototype.constructor = UnsuccessfulRequestError;
+var activeQuotes = require('../active_quotes');
+var InvalidRequestError = require('../errors').InvalidRequestError;
+var UnsuccessfulRequestError = require('../errors').UnsuccessfulRequestError;
+var missedBookingPeriod = moment.duration(30, 'minutes');
 
 function QuotesController() {
   this.gateway = null;
@@ -36,132 +23,122 @@ QuotesController.prototype.init = function(gatewayClient) {
   this.gateway = gatewayClient;
 };
 
-QuotesController.prototype.createQuote =  function(request) {
+QuotesController.prototype.getQuote =  function(request) {
   var log = logger.getSublog(request.id, 'origin', 'tripthru', 'quote');
-  var validation = validate.quoteRequest(request);
-  if(!validation.valid) {
-    log.log('Invalid quote request from ' + request.clientId, request);
-    var response = TripThruApiFactory.createResponseFromQuote(null, null,
-        resultCodes.invalidParameters, validation.error.message);
-    log.log('Response', response);
-    return Promise.resolve(response);
-  } else {
-    var quote = TripThruApiFactory.createQuoteFromRequest(request, 'quote');
-    return users
-      .getByClientId(request.clientId)
-      .then(function(user){
-        var name = user ? user.fullname : 'unknown';
-        log.log('Quote request from ' + name, request);
-        return quotes.getById(quote.id);
-      })
-      .then(function(res){
-        if(!res) {
-          return quotes.add(quote);
-        }
-        throw new RequestError(resultCodes.rejected, 'quote already exists');
-      })
-      .then(function(res){
-        log.log('Creating quote job');
-        workers.newQuoteJob(quote.id);
-        var response = TripThruApiFactory.createResponseFromQuote(quote, 'quote');
-        log.log('Response', response);
-        return response;
-      })
-      .catch(RequestError, function(err){
-        var response = TripThruApiFactory.createResponseFromQuote(null, null, 
-            err.resultCode, err.error);
-        log.log('Response', response);
-        return response;
-      })
-      .error(function(err){
-        var response = TripThruApiFactory.createResponseFromQuote(null, null, 
-            resultCodes.unknownError, 'unknown error ocurred');
-        log.log('Response', response);
-        return response;
-      });
-  }
-};
-
-QuotesController.prototype.getQuote = function(request) {
-  var log = logger.getSublog(request.id, 'origin', 'tripthru', 'get-quote');
-  return  users
-    .getByClientId(request.clientId)
+  var self = this;
+  return validate
+    .getQuoteRequest(request)
+    .bind({})
+    .then(function(validation) {
+      if(validation.valid) {
+        this.quote = TripThruApiFactory.createQuoteFromRequest(request, 'get');
+        return users.getByClientId(request.client_id);
+      } else {
+        log.log('Invalid quote request from ' + request.client_id, request);
+        throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
+      }
+    })
     .then(function(user){
       var name = user ? user.fullname : 'unknown';
-      log.log('Get quote request from ' + name, request);
-      return quotes.getById(request.id);
+      log.log('Quote request from ' + name, request);
+      return quotes.getById(this.quote.id);
     })
-    .then(function(quote){
-      if(quote) {
-        var response = TripThruApiFactory.createResponseFromQuote(quote, 'get');
-        log.log('Response', response);
-        return response;
-      } else {
-        throw new RequestError(resultCodes.rejected, 'quote not found');
+    .then(function(res){
+      if(!res) {
+        return quotes.add(this.quote);
       }
-    })
-    .catch(RequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromQuote(null, null, 
-          err.resultCode, err.error);
-      log.log('Response', response);
-      return response;
-    })
-    .error(function(err){
-      var response = TripThruApiFactory.createResponseFromQuote(null, null, 
-          resultCodes.unknownError, 'unknown error ocurred');
-      log.log('Response', response);
-      return response;
-    });
-};
-
-QuotesController.prototype.updateQuote = function(request) {
-  //var log = logger.getSublog(request.id, 'servicing', 'tripthru', 'update-quote');
-  //log.log('Update quote from ' + request.clientId, request);
-  return  users
-    .getByClientId(request.clientId)
-    .bind({})
-    .then(function(user){
-      //var name = user ? user.fullname : 'unknown';
-      //log.log('Update quote request from ' + name, request);
-      return quotes.getById(request.id);
-    })
-    .then(function(q){
-      if(q) {
-        this.quote = q;
-        var networkQuote = TripThruApiFactory.createQuoteFromRequest(request, 
-            'update', {quote: q});
-        return quotes.update(this.quote);
-      }
-      throw new RequestError(resultCodes.rejected, 'quote not found');
+      throw new InvalidRequestError(resultCodes.rejected, 'quote already exists');
     })
     .then(function(){
-      var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'update');
-      //log.log('Response', response);
+      return users.getNetworksThatServeLocation(this.quote.request.pickup_location);
+    })
+    .then(function(networksThatServeLocation){
+      var requestingId = this.quote.clientId;
+      var networks = networksThatServeLocation.filter(function(network){
+        return network.clientId !== requestingId;
+      });
+      log.log('Broadcasting quote', this.quote.request);
+      return self.gateway.broadcastQuote(this.quote.request, networks);
+    })
+    .then(function(res){
+      if(res.length <= 0) {
+        throw new UnsuccessfulRequestError(resultCodes.rejected, 'No quotes found');
+      }
+      this.quote.receivedQuotes = res;
+      res.forEach(function(r){ 
+        activeQuotes.add(r.id, r);
+      });
+      for(var i = 0; i < this.quote.receivedQuotes.length; i++) {
+        var q = this.quote.receivedQuotes[i];
+        log.log('Quote received from ' + q.partner.id, q); 
+      }
+      var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'quote');
+      log.log('Response', response);
       return response;
     })
-    .catch(RequestError, function(err){
+    .catch(InvalidRequestError, UnsuccessfulRequestError, function(err){
       var response = TripThruApiFactory.createResponseFromQuote(null, null, 
           err.resultCode, err.error);
-      //log.log('Response', response);
+      log.log('Response', response);
       return response;
     })
     .error(function(err){
       var response = TripThruApiFactory.createResponseFromQuote(null, null, 
           resultCodes.unknownError, 'unknown error ocurred');
-      //log.log('Response', response);
+      log.log('Response', response);
       return response;
     });
 };
 
-
-
-QuotesController.prototype.createAutoDispatchQuote = function(trip) {
+QuotesController.prototype.getBestQuote = function(trip) {
+  var log = logger.getSublog(trip.id, 'tripthru', 'servicing', 'quote');
   var quote = TripThruApiFactory.createQuoteFromTrip(trip);
-  return quotes
-    .add(quote)
-    .then(function(){
-      workers.newAutoDispatchJob(quote.id);
+  var self = this;
+  return users
+    .getNetworksThatServeLocation(quote.request.pickup_location)
+    .then(function(networksThatServeLocation){
+      var requestingId = quote.clientId;
+      var networks = networksThatServeLocation.filter(function(network){
+        return network.clientId !== requestingId;
+      });
+      return self.gateway.broadcastQuote(quote.request, networks);
+    })
+    .then(function(quotes){
+      var bestQuote = getBestQuoteFromQuoteBroadcastResult(trip.pickupTime, quotes);
+      var network = bestQuote !== null ? bestQuote.network : null;
+      var product = bestQuote !== null ? bestQuote.product : null;
+      var eta = bestQuote !== null ? moment(bestQuote.eta).utc().toDate().toISOString() : null;
+      var details = bestQuote !== null ? (network.name + ', ETA: ' + eta) : 'None';
+      
+      log.log('Finding best quote: ' + details, quote.request);
+      log.log('Broadcasting quote');
+      for(var i = 0; i < quotes.length; i++) {
+        var q = quotes[i];
+        log.log('Quote received from ' + q.network.name, q); 
+      }
+      if(bestQuote) {
+        log.log('Best quote found from ' + network.name, bestQuote);
+      } else {
+        log.log('No best quote found');
+      }
+      log.log('');
+      return bestQuote;
     });
 };
+
+function getBestQuoteFromQuoteBroadcastResult(pickupTime, quotes) {
+  var bestQuote = null;
+  var bestEta = moment(pickupTime).add(missedBookingPeriod);
+  
+  for(var i = 0; i < quotes.length; i++) {
+    var quote = quotes[i];
+    var eta = moment(quote.eta) || moment(bestEta).subtract(moment.duration(1, 'minutes'));
+    if(eta.isBefore(bestEta)) {
+      bestEta = eta;
+      bestQuote = quote;
+    }
+  }
+  return bestQuote;
+}
 
 module.exports = new QuotesController();

@@ -1,11 +1,10 @@
 var resultCodes = {
-  ok: 100,
-  methodNotSupported: 200,
-  rejected: 300,
-  unknownError: 400,
-  invalidParameters: 500,
-  notFound: 600,
-  authenticationError: 700
+  ok: 200,
+  invalidParameters: 422,
+  authenticationError: 401,
+  notFound: 404,
+  rejected: 430,
+  unknownError: 500
 };
 
 module.exports.resultCodes = resultCodes;

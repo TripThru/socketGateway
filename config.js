@@ -1,10 +1,10 @@
 module.exports = {
   port: 3300,
   db: {
-    host: 'localhost', 
+    host: '107.170.235.36', 
     database: 'tripthru',
-    user:'vagrant', 
-    password:'vagrant'
+    user:'tripuser', 
+    password:'Tr1PServ1Ce@MySqL'
   },
   kue: {
     prefix: 'q',

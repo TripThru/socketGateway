@@ -11,15 +11,15 @@ var tripthruClientId = 'tripthru';
 
 function successResponse() {
   return {
-    result: codes.resultCodes.ok,
-    message: 'ok'
+    result_code: codes.resultCodes.ok,
+    result: 'OK'
   };
 }
 
 function failResponse(message, errorCode) {
   return {
-    result: errorCode,
-    message: message
+    result_code: errorCode,
+    result: message
   };
 }
 
@@ -33,7 +33,8 @@ function idName(object) {
 function apiLocation(location) {
   return {
     lat: location.lat,
-    lng: location.lng
+    lng: location.lng,
+    description: location.description || null
   };
 }
 
@@ -46,87 +47,117 @@ function getMomentFromISOString(dateString) {
 }
 
 
-// TRIPS //
-function createDispatchRequest(trip, network) {
+// Trips //
+function createDispatchRequest(trip, quoteId) {
   var r = {
-      id: trip.id,
-      clientId: tripthruClientId,
-      passenger: idName(trip.passenger),
-      pickupLocation: apiLocation(trip.pickupLocation),
-      pickupTime: getISOStringFromMoment(trip.pickupTime),
-      dropoffLocation: apiLocation(trip.dropoffLocation)
+    id: trip.id,
+    client_id: tripthruClientId,
+    pickup_location: apiLocation(trip.pickupLocation),
+    pickup_time: getISOStringFromMoment(trip.pickupTime),
+    dropoff_location: apiLocation(trip.dropoffLocation),
+    passengers: trip.passengers,
+    luggage: trip.luggage,
+    payment_method_code: trip.paymentMethod
   };
-  if(trip.product) r.product = idName(trip.product);
-  if(trip.driver) r.driver = idName(trip.driver);
-  if(trip.vehicleType) r.vehicleType = trip.vehicleType;
-  if(trip.servicingNetwork) r.network = idName(trip.servicingNetwork);
-  if(trip.servicingProduct) r.product = idName(trip.servicingProduct);
+  r.customer = idName(trip.customer);
+  if(trip.customer.localId) r.customer.local_id = trip.customer.localId;
+  if(trip.customer.phoneNumber) r.customer.phone_number = trip.phoneNumber;
+  if(quoteId) r.quoteId = quoteId;
+  if(trip.servicingNetwork) {
+    r.network_id = trip.servicingNetwork.id;
+  }
+  if(trip.servicingProduct) {
+    r.product_id = trip.servicingProduct.id;
+  }
+  if(trip.guaranteedTip) {
+    r.tip = {
+      amount: trip.guaranteedTip.amount,
+      currency_code: trip.guaranteedTip.currencyCode
+    };
+  }
   return r;
 }
 
 function createUpdateTripStatusRequest(trip) {
   var r = {
-      id: trip.id,
-      clientId: tripthruClientId,
-      status: trip.status
+    id: trip.id,
+    client_id: tripthruClientId,
+    status: trip.status
   };
   if(trip.driver) {
     r.driver = idName(trip.driver);
     r.driver.location = apiLocation(trip.driver.location);
+    r.driver.local_id = trip.driver.localId;
+    r.driver.native_language_id = trip.driver.nativeLanguageId;
   }
-  if(trip.eta) r.eta = getISOStringFromMoment(trip.eta);
+  if(trip.eta) {
+    r.eta = getISOStringFromMoment(trip.eta);
+  }
+  if(trip.product) {
+    r.product = idName(trip.product);
+    r.product.image_url = trip.product.imageUrl;
+  }
   return r;
 }
 
 function createGetTripStatusRequest(trip) {
   var r = {
-      id: trip.id,
-      clientId: tripthruClientId,
+    id: trip.id,
+    client_id: tripthruClientId,
   };
   return r;
 }
 
 function createTripFromDispatchRequest(request) {
   var trip = {
-      id: request.id,
-      originatingNetwork: idName({id: request.clientId, name: request.clientId}),
-      originatingProduct: idName(request.originatingProduct),
-      passenger: request.passenger,
-      pickupLocation: request.pickupLocation,
-      pickupTime: getMomentFromISOString(request.pickupTime),
-      dropoffLocation: request.dropoffLocation,
-      status: 'new',
-      state: 'new',
-      creation: moment().utc(),
-      lastUpdate: moment().utc()
+    id: request.id,
+    originatingNetwork: idName({id: request.client_id, name: request.client_id}),
+    pickupLocation: apiLocation(request.pickup_location),
+    pickupTime: getMomentFromISOString(request.pickup_time),
+    dropoffLocation: apiLocation(request.dropoff_location),
+    paymentMethod: request.payment_method_code,
+    status: 'new',
+    creation: moment().utc(),
+    lastUpdate: moment().utc()
   };
-  if(request.driver) trip.driver = idName(request.driver);
-  if(request.vehicleType) trip.vehicleType = request.vehicleType;
-  if(request.network) {
-    trip.servicingNetwork = idName(request.network);
-    if(request.product) trip.servicingProduct = idName(request.product);
+  trip.customer = idName(request.customer);
+  trip.customer.localId = request.customer.local_id;
+  trip.customer.phoneNumber = request.customer.phone_number;
+  if(request.network_id) {
+    trip.servicingNetwork = idName({ id: request.network_id });
+    if(request.product_id) {
+      trip.servicingProduct = idName({ id : request.product_id });
+    }
     trip.autoDispatch = false;
   } else {
     trip.autoDispatch = true;
+  }
+  if(request.tip) {
+    trip.guaranteedTip = {
+      amount: request.tip.amount,
+      currencyCode: request.tip.currency_code
+    };
   }
   return trip;
 }
 
 function createTripFromUpdateTripStatusRequest(request, trip) {
   trip.status = request.status;
+  trip.lastUpdate = moment().utc();
+  if(request.eta) {
+    trip.eta = getMomentFromISOString(request.eta);
+  }
+  if(request.product) {
+    trip.servicingProduct = idName(request.product);
+    trip.servicingProduct.imageUrl = request.product.image_url;
+  }
   if(request.driver) { 
     if(!trip.driver) {
       trip.driver = idName(request.driver);
     }
     if(request.driver.location) {
       trip.driver.location = apiLocation(request.driver.location);
-      if(!trip.driver.initialLocation) {
-        trip.driver.initialLocation = request.driver.location;
-      }
-      if(trip.status === 'enroute') {
-        trip.driver.routeEnrouteLocation = request.driver.location;
-      } else if(trip.status === 'pickedup') {
-        trip.driver.routePickupLocation = request.driver.location;
+      if(trip.status === 'picked_up') {
         trip.pickupTime = moment().utc();
         trip.latenessMilliseconds = 
           moment.duration(trip.pickupTime.diff(trip.creation)).asMilliseconds();
@@ -142,14 +173,12 @@ function createTripFromUpdateTripStatusRequest(request, trip) {
         } else if(minutes > 15) {
           trip.serviceLevel = 4;
         }
-      } else if(trip.status === 'complete') {
+      } else if(trip.status === 'completed') {
         trip.duration = 
           moment.duration(moment().utc().diff(trip.pickupTime)).asMinutes();
       }
     }
   }
-  if(request.eta) trip.eta = getMomentFromISOString(request.eta);
-  trip.lastUpdate = moment().utc();
   return trip;
 }
 
@@ -162,7 +191,7 @@ function createTripFromGetTripStatusRequest(request) {
 
 function createTripFromGetTripStatusResponse(response, trip) {
   if(response.distance) trip.distance = response.distance;
-  if(response.price) trip.price = response.price;
+  if(response.fare) trip.fare = response.fare;
   return trip;
 }
 
@@ -176,24 +205,19 @@ function createUpdateTripStatusResponse(trip) {
 
 function createGetTripStatusResponse(trip) {
   var r = successResponse();
-  r.passenger = idName(trip.passenger);
-  r.pickupLocation = apiLocation(trip.pickupLocation);
-  r.dropoffLocation = apiLocation(trip.dropoffLocation);
-  r.vehicleType = trip.vehicleType;
   r.status = trip.status;
-  r.originatingNetwork = idName(trip.originatingNetwork);
-  if(trip.pickupTime) r.pickupTime = getISOStringFromMoment(trip.pickupTime);
-  if(trip.dropoffTime) r.dropoffTime = getISOStringFromMoment(trip.dropoffTime);
-  if(trip.eta) r.eta = getISOStringFromMoment(trip.eta);
-  if(trip.servicingNetwork) r.servicingNetwork = idName(trip.servicingNetwork);
-  if(trip.product) r.product = idName(trip.product);
-  if(trip.price) r.price = trip.price;
-  if(trip.distance) r.distance = trip.distance;
+  if(trip.eta) { 
+    r.eta = getISOStringFromMoment(trip.eta);
+  }
+  if(trip.product) {
+    r.product = idName(trip.servicingProduct);
+    r.product.image_url = trip.servicingProduct.imageUrl;
+  }
   if(trip.driver) {
     r.driver = idName(trip.driver);
+    r.driver.local_id = trip.driver.localId;
+    r.driver.native_language_id = trip.driver.nativeLanguageId;
     r.driver.location = apiLocation(trip.driver.location);
-    r.driver.initialLocation = apiLocation(trip.driver.initialLocation);
-    r.driver.routeDuration = trip.driver.routeDuration;
   }
   return r;
 }
@@ -204,7 +228,7 @@ function createTripPaymentFromRequestPaymentRequest(request, trip) {
     tripDbId: trip.dbId,
     requestedAt: moment().utc(),
     amount: request.fare,
-    currencyCode: request.currencyCode,
+    currencyCode: request.currency_code,
     confirmation: false,
     tip: 0
   };
@@ -220,9 +244,9 @@ function createTripPaymentFromAcceptPaymentRequest(request, tripPayment) {
 function createRequestPaymentRequestFromTripPayment(tripPayment) {
   return {
     id: tripPayment.tripId,
-    clientId: tripthruClientId,
+    client_id: tripthruClientId,
     fare: tripPayment.amount,
-    currencyCode: tripPayment.currencyCode
+    currency_code: tripPayment.currencyCode
   };
 }
 
@@ -246,7 +270,8 @@ function createRequestPaymentResponseFromTripPayment(tripPayment) {
 function createRequestFromTrip(trip, type, args) {
   switch(type) {
     case 'dispatch':
-      return createDispatchRequest(trip);
+      var quoteId = args ? args.quoteId : null;
+      return createDispatchRequest(trip, quoteId);
     case 'update-trip-status':
       return createUpdateTripStatusRequest(trip, args);
     case 'get-trip-status':
@@ -290,7 +315,7 @@ function createTripFromRequest(trip, type, args) {
 
 function createTripFromResponse(response, type, args) {
   switch(type) {
-    case 'get-trip-status':
+    case 'get-trip':
       if(!args || !args.trip) {
         throw new Error('Need trip object');
       }
@@ -359,116 +384,45 @@ function createResponseFromTripPayment(tripPayment, type, message, errorCode) {
 function createQuoteFromTrip(trip) {
   var quote = {
     id: trip.id,
+    clientId: trip.originatingNetwork.id,
     request: {
-        clientId: trip.originatingNetwork.id,
         id: trip.id,
-        pickupLocation: apiLocation(trip.pickupLocation),
-        pickupTime: trip.pickupTime,
-        passenger: idName(trip.passenger),
-        dropoffLocation: apiLocation(trip.dropoffLocation),
-        vehicleType: trip.vehicleType
+        pickup_location: apiLocation(trip.pickupLocation),
+        pickup_time: trip.pickupTime,
+        dropoff_location: apiLocation(trip.dropoffLocation),
+        customer_id: trip.customer.id || null,
+        product_id: null,
+        passengers: trip.passengers,
+        luggage: trip.luggage,
+        payment_method_code: trip.paymentMethod
     },
     receivedQuotes: []
   };
   return quote;
-}
-
-function createQuoteFromQuoteRequest(request) {
-  var quote = {
-    id: request.id,
-    request: {
-        clientId: request.clientId,
-        id: request.id,
-        pickupLocation: apiLocation(request.pickupLocation),
-        pickupTime: getMomentFromISOString(request.pickupTime),
-        passenger: idName(request.passenger),
-        dropoffLocation: apiLocation(request.dropoffLocation),
-        vehicleType: request.vehicleType
-    },
-    receivedQuotes: []
-  };
-  return quote;
-}
-
-function createQuoteFromUpdateQuoteRequest(request, quote) {
-  if(request.quotes.length > 0) {
-    for(var i = 0; i < request.quotes.length; i++) {
-      var q = request.quotes[i];
-      var quoteUpdate = {
-          network: idName(q.network),
-          product: idName(q.product),
-          eta: getMomentFromISOString(q.eta),
-          vehicleType: q.vehicleType,
-          price: q.price,
-          distance: q.distance
-      };
-      if(q.duration) quoteUpdate.duration = moment.duration(q.duration, 'seconds');
-      if(q.driver) quoteUpdate.driver = idName(q.driver);
-      quote.receivedQuotes.push(quoteUpdate);
-    }
-  }
-  return quote;
-}
-
-function createQuoteFromGetQuoteRequest(request) {
-  var r = {
-      id: request.id
-  };
-  return r;
-}
-
-function createQuoteResponseFromQuote(request) {
-  return successResponse();
-}
-
-function createGetQuoteResponseFromQuote(quote) {
-  var r = {
-    id: quote.id,
-    clientId: tripthruClientId,
-    quotes: []
-  };
-  for(var i = 0; i < quote.receivedQuotes.length; i++) {
-    var q = quote.receivedQuotes[i];
-    if(q) {
-      var qt = {
-        network: idName(q.network),
-        product: idName(q.product),
-        eta: getISOStringFromMoment(q.eta),
-        vehicleType: q.vehicleType,
-        price: q.price,
-        distance: q.distance
-      };
-      if(q.driver) qt.driver = idName(q.driver);
-      if(q.passenger) qt.passenger = idName(q.passenger);
-      if(q.duration) qt.duration = q.duration.asSeconds();
-      r.quotes.push(qt);
-    }
-  }
-  return r;
-}
-
-function createUpdateQuoteResponseFromQuote(quote) {
-  return successResponse();
-}
-
-function createQuoteRequestFromQuote(quote) {
-  throw new Error('Not implemented');
-}
-
-function createUpdateQuoteRequestFromQuote(quote) {
-  return createGetQuoteResponseFromQuote(quote);
 }
 
 function createGetQuoteRequestFromQuote(quote) {
-  throw new Error('Not implemented');
+  return quote.request;
+}
+
+function createQuoteFromGetQuoteRequest(request) {
+  var quote = {
+    id: request.id,
+    clientId: request.client_id,
+    request: request,
+    receivedQuotes: []
+  };
+  return quote;
+}
+
+function createGetQuoteResponseFromQuote(quote) {
+  var r = successResponse();
+  r.quotes = quote.receivedQuotes;
+  return r;
 }
 
 function createRequestFromQuote(quote, type, args) {
   switch(type) {
-    case 'quote':
-      return createQuoteRequestFromQuote(quote);
-    case 'update':
-      return createUpdateQuoteRequestFromQuote(quote);
     case 'get':
       return createGetQuoteRequestFromQuote(quote);
     default:
@@ -481,10 +435,6 @@ function createResponseFromQuote(quote, type, message, errorCode) {
     return failResponse(message, errorCode);
   }
   switch(type) {
-    case 'quote':
-      return createQuoteResponseFromQuote(quote);
-    case 'update':
-      return createUpdateQuoteResponseFromQuote(quote);
     case 'get':
       return createGetQuoteResponseFromQuote(quote);
     default:
@@ -494,13 +444,6 @@ function createResponseFromQuote(quote, type, message, errorCode) {
 
 function createQuoteFromRequest(quote, type, args) {
   switch(type) {
-    case 'quote':
-      return createQuoteFromQuoteRequest(quote);
-    case 'update':
-      if(!args || !args.quote) {
-        throw new Error('Need quote object to update');
-      }
-      return createQuoteFromUpdateQuoteRequest(quote, args.quote);
     case 'get':
       return createQuoteFromGetQuoteRequest(quote);
     default:
@@ -512,25 +455,51 @@ function createQuoteFromRequest(quote, type, args) {
 
 function createUserFromGetNetworkInfoRequest(request) {
   var r = {
-      clientId: request.clientId
+    clientId: request.clientId
   };
   return r;
 }
 
 function createUserFromSetNetworkInfoRequest(request, user) {
-  user.products = request.products;
-  for(var i = 0; i < user.products.length; i++) {
-    user.products[i].product_id = user.products[i].id;
+  user.products = [];
+  user.name = request.name;
+  user.callbackUrl = request.callback_url;
+  for(var i = 0; i < request.products.length; i++) {
+    var product = request.products[i];
+    user.products.push({
+      id: product.id,
+      name: product.name,
+      imageUrl: product.image_url,
+      capacity: product.capacity,
+      acceptsPrescheduled: product.accepts_prescheduled,
+      acceptsOndemand: product.accepts_ondemand,
+      acceptsCashPayment: product.accepts_cash_payment,
+      acceptsAccountPayment: product.accepts_account_payment,
+      acceptsCreditcardPayment: product.accepts_creditcard_payment,
+      coverage: product.coverage
+    });
   }
   return user;
 }
 
 function createGetNetworkInfoResponseFromUser(user) {
   var r = {
+    name: user.name,
     products: user.products
   };
   for(var i = 0; i < r.products.length; i++) {
-    r.products[i].id = r.products[i].product_id;
+    var product = r.products[i];
+    r.products.push({
+      id: product.product_id,
+      name: product.name,
+      image_url: product.imageUrl,
+      accepts_prescheduled: product.acceptsPrescheduled,
+      accepts_ondemand: product.acceptsOndemand,
+      accepts_cash_payment: product.acceptsCashPayment,
+      accepts_account_payment: product.acceptsAccountPayment,
+      accepts_creditcard_payment: product.acceptsCreditcardPayment,
+      coverage: product.coverage
+    });
   }
   return r;
 }

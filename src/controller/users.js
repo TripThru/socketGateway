@@ -7,15 +7,10 @@ var usersModel = require('../model/users');
 var maptools = require('../map_tools').MapTools;
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
+var validate = require('./validate');
 var logger = require('../logger');
-
-function RequestError(resultCode, error) {
-  this.resultCode = resultCode;
-  this.error = error;
-  Error.captureStackTrace(this, RequestError);
-}
-RequestError.prototype = Object.create(Error.prototype);
-RequestError.prototype.constructor = RequestError;
+var InvalidRequestError = require('../errors').InvalidRequestError;
+var UnsuccessfulRequestError = require('../errors').UnsuccessfulRequestError;
 
 function UsersController() {
   this.gateway = null;
@@ -78,21 +73,30 @@ UsersController.prototype._add = function(user) {
 
 UsersController.prototype.getNetworkInfo = function(request) {
   var log = logger.getSublog(request.id);
-  log.log('Get network info ' + request.id + ' from ' + request.clientId, request);
-  var user = TripThruApiFactory.createUserFromRequest(request, 'get-network-info');
-  return this
-    ._getByClientId(user.clientId)
+  var self = this;
+  return validate
+    .getNetworkInfoRequest(request)
     .bind(this)
+    .then(function(validation){
+      if(validation.valid) {
+        return self._getByClientId(request.client_id);
+      } else {
+        log.log('Invalid get network info received from ' + request.client_id, request);
+        throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
+      }
+    })
     .then(function(u){
+      var name = u ? u.fullname : 'unknown';
+      log.log('Get network info received from ' + name, request);
       if(u) {
         var response = TripThruApiFactory.createResponseFromUser(u, 'get-network-info');
         log.log('Response', response);
         return response;
       } else {
-        throw new RequestError(resultCodes.notFound, 'User ' + request.id + ' does not exist');
+        throw new InvalidRequestError(resultCodes.notFound, 'User ' + request.id + ' does not exist');
       }
     })
-    .catch(RequestError, function(err){
+    .catch(InvalidRequestError, function(err){
       var response = TripThruApiFactory.createResponseFromUser(null, null, 
           err.resultCode, err.error);
       log.log('Response', response);
@@ -107,18 +111,27 @@ UsersController.prototype.getNetworkInfo = function(request) {
 };
 
 UsersController.prototype.setNetworkInfo = function(request) {
-  var log = logger.getSublog(request.clientId);
-  log.log('Set network info ' + request.clientId, request);
-  return this
-    ._getByClientId(request.clientId)
+  var log = logger.getSublog(request.client_id);
+  log.log('Set network info ' + request.client_id, request);
+  var self = this;
+  return validate
+    .setNetworkInfoRequest(request)
     .bind({})
+    .then(function(validation){
+      if(validation.valid) {
+        return self._getByClientId(request.client_id);
+      } else {
+        log.log('Invalid set network info received from ' + request.client_id, request);
+        throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
+      }
+    })
     .then(function(u){
       if(u) {
         this.updatedUser = TripThruApiFactory.createUserFromRequest(request, 
             'set-network-info', {user: u});
         return usersModel.update(this.updatedUser);
       } else {
-        throw new RequestError(resultCodes.notFound, 'User ' + request.clientId + ' does not exist');
+        throw new InvalidRequestError(resultCodes.notFound, 'User ' + request.client_id + ' does not exist');
       }
     })
     .then(function(){
@@ -127,7 +140,7 @@ UsersController.prototype.setNetworkInfo = function(request) {
       log.log('Response', response);
       return response;
     })
-    .catch(RequestError, function(err){
+    .catch(InvalidRequestError, function(err){
       var response = TripThruApiFactory.createResponseFromUser(null, null, 
           err.resultCode, err.error);
       log.log('Response', response);
@@ -139,6 +152,10 @@ UsersController.prototype.setNetworkInfo = function(request) {
       log.log('Response', response);
       return response;
     });
+};
+
+UsersController.prototype.getDriversNearby = function(request) {
+  throw new Error('Not implemented');
 };
 
 UsersController.prototype.getByToken = function(token) {

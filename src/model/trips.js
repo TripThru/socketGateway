@@ -14,7 +14,7 @@ function toStoreTrip(apiTrip) {
           id: apiTrip.id,
           dbId: apiTrip.dbId,
           userId: user.id,
-          productId: user.productsById[apiTrip.originatingProduct.id].id,
+          //productId: user.productsById[apiTrip.originatingProduct.id].id,
           pickupLocation: apiTrip.pickupLocation,
           pickupTime: getISOStringFromMoment(apiTrip.pickupTime),
           dropoffLocation: apiTrip.dropoffLocation,
@@ -22,10 +22,9 @@ function toStoreTrip(apiTrip) {
           creation: getISOStringFromMoment(apiTrip.creation),
           lastUpdate: getISOStringFromMoment(apiTrip.lastUpdate),
           autoDispatch: apiTrip.autoDispatch,
-          vehicleId: 1,
-          passengerName: apiTrip.passenger.name
+          paymentMethod: apiTrip.paymentMethod
       };
-      if(apiTrip.price) t.price = apiTrip.price;
+      if(apiTrip.fare) t.fare = apiTrip.fare;
       if(apiTrip.dropoffTime) t.dropoffTime = getISOStringFromMoment(apiTrip.dropoffTime);
       if(apiTrip.eta) t.eta = getISOStringFromMoment(apiTrip.eta);
       if(apiTrip.latenessMilliseconds >= 0) t.latenessMilliseconds = apiTrip.latenessMilliseconds;
@@ -33,11 +32,23 @@ function toStoreTrip(apiTrip) {
       if(apiTrip.serviceLevel >= 0) t.serviceLevel = apiTrip.serviceLevel;
       if(apiTrip.duration >= 0) t.duration = apiTrip.duration;
       if(apiTrip.distance >= 0) t.distance = apiTrip.distance;
-      if(apiTrip.driver) { 
-        t.driver = apiTrip.driver; 
-        t.driver.name = apiTrip.driver.name;
+      if(apiTrip.passengers >= 0) t.passengers = apiTrip.passengers;
+      if(apiTrip.luggage >= 0) t.passengers = apiTrip.luggage;
+      if(apiTrip.customer) {
+        t.customer = {};
+        t.customer.id = apiTrip.customer.id;
+        t.customer.name = apiTrip.customer.name;
+        t.customer.localId = apiTrip.customer.localId;
+        t.customer.phoneNumber = apiTrip.customer.phoneNumber;
       }
-
+      if(apiTrip.driver) { 
+        t.driver = {}; 
+        t.driver.id = apiTrip.driver.id;
+        t.driver.name = apiTrip.driver.name;
+        t.driver.localId = apiTrip.driver.localId;
+        t.driver.nativeLanguageId = apiTrip.driver.nativeLanguageId;
+        t.driver.location = apiTrip.driver.location;
+      }
       if(apiTrip.servicingNetwork && apiTrip.servicingNetwork.id) {
         return users
           .getByClientId(apiTrip.servicingNetwork.id)
@@ -86,9 +97,32 @@ function toApiTrip(storeTrip) {
           status: storeTrip.status,
           creation: moment(storeTrip.created_at),
           lastUpdate: moment(storeTrip.last_update),
-          autoDispatch: storeTrip.autodispatch === "true"
+          autoDispatch: storeTrip.autodispatch === "true",
+          paymentMethod: storeTrip.payment_method
       };
-      if(storeTrip.price) t.price = storeTrip.price;
+      if(storeTrip.guaranteed_tip_amount) {
+        t.guaranteedTip = {
+          amount: storeTrip.guaranteed_tip_amount,
+          currencyCode: storeTrip.guaranteed_tip_currency_code
+        };
+      }
+      if(storeTrip.customer_name) {
+        t.customer = {};
+        t.customer.id = storeTrip.customer.id;
+        t.customer.name = storeTrip.customer.name;
+        t.customer.localId = storeTrip.customer.local_id;
+        t.customer.phoneNumber = storeTrip.customer.phone_number;
+      }
+      if(storeTrip.driver_name) { 
+        t.driver = {}; 
+        t.driver.id = storeTrip.driver_id;
+        t.driver.name = storeTrip.driver_name;
+        t.driver.localId = storeTrip.driver_local_id;
+        t.driver.nativeLanguageId = storeTrip.driver_native_language_id;
+      }
+      if(storeTrip.passengers) t.passengers = storeTrip.passengers;
+      if(storeTrip.luggage) t.luggage = storeTrip.luggage;
+      if(storeTrip.fare) t.fare = storeTrip.fare;
       if(storeTrip.dropoff_time) t.dropoffTime = moment(storeTrip.dropoff_time);
       if(storeTrip.eta) t.eta = moment(storeTrip.eta);
       

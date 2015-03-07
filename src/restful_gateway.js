@@ -13,7 +13,9 @@ function RestfulGateway(id, rootUrl, token) {
 
 RestfulGateway.prototype.get = function(path, id, req) {
   return new Promise(function(resolve, reject){
-    path += '/' + id;
+    if(id) {
+      path += '/' + id;
+    }
     request({
       uri: this.rootUrl + '/' + path + '?token=' + this.token,
       method: 'GET',
@@ -32,7 +34,9 @@ RestfulGateway.prototype.get = function(path, id, req) {
 
 RestfulGateway.prototype.post = function(path, id, req) {
   return new Promise(function(resolve, reject){
-    path += '/' + id;
+    if(id) {
+      path += '/' + id;
+    }
     request({
       uri: this.rootUrl + '/' + path + '?token=' + this.token,
       method: 'POST',
@@ -110,6 +114,14 @@ RestfulGateway.prototype.requestPayment = function(request) {
 
 RestfulGateway.prototype.acceptPayment = function(request) {
   return this.put('payment', request.id, request);
+};
+
+RestfulGateway.prototype.getDriversNearby = function(request) {
+  return this.get('drivers', null, request);
+};
+
+RestfulGateway.prototype.getTrip = function(request) {
+  return this.get('trip', request.id, request);
 };
 
 module.exports = RestfulGateway;

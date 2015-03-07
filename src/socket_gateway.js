@@ -32,16 +32,8 @@ SocketGateway.prototype.updateTripStatus = function(request) {
   return this.emit('update-trip-status', request);
 };
 
-SocketGateway.prototype.quoteTrip = function(request) {
-  return this.emit('quote-trip', request);
-};
-
 SocketGateway.prototype.getQuote = function(request) {
   return this.emit('get-quote', request);
-};
-
-SocketGateway.prototype.updateQuote = function(request) {
-  return this.emit('update-quote', request);
 };
 
 SocketGateway.prototype.getNetworkInfo = function(request) {
@@ -58,6 +50,14 @@ SocketGateway.prototype.requestPayment = function(request) {
 
 SocketGateway.prototype.acceptPayment = function(request) {
   return this.emit('accept-payment', request);
+};
+
+SocketGateway.prototype.getDriversNearby = function(request) {
+  return this.emit('get-drivers-nearby', request);
+};
+
+SocketGateway.prototype.getTrip = function(request) {
+  return this.emit('get-trip', request);
 };
 
 module.exports = SocketGateway;

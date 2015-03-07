@@ -10,19 +10,17 @@ var quotesController = require('./src/controller/quotes');
 var usersController = require('./src/controller/users');
 var jobQueue = require('./src/workers/job_queue');
 var tripsJobQueue = require('./src/workers/trips');
-var quotesJobQueue = require('./src/workers/quotes');
 var dashboard = require('./src/routes/dashboard');
 var activeTrips = require('./src/active_trips');
-var activeQuotes = require('./src/active_quotes');
 var activeTripPayments = require('./src/active_trip_payments');
+var activeQuotes = require('./src/active_quotes');
 var tripRoutes = require('./src/routes/trips');
 var quoteRoutes = require('./src/routes/quotes');
 var userRoutes = require('./src/routes/users');
 
 activeQuotes.clear();
-activeTrips.clear();
 activeTripPayments.clear();
-
+activeTrips.clear();
 jobQueue.clear();
 store.clear();
 
@@ -30,8 +28,7 @@ store.clear();
 tripsController.init(networksGateway);
 quotesController.init(networksGateway);
 usersController.init(networksGateway);
-tripsJobQueue.init(networksGateway, quotesJobQueue);
-quotesJobQueue.init(networksGateway, tripsJobQueue);
+tripsJobQueue.init(networksGateway);
 
 var app = express();
 
@@ -64,16 +61,9 @@ app.get('/network/:id', function(req, res){
       res.json(response);
     });
 });
-app.post('/quote/:id', function(req, res){
-  quoteRoutes
-    .quoteTrip(req.query.token, req.params.id, req)
-    .then(function(response){
-      res.json(response);
-    });
-});
-app.put('/quote/:id', function(req, res){
-  quoteRoutes
-    .updateQuote(req.query.token, req.params.id, req)
+app.get('/drivers', function(req, res){
+  userRoutes
+    .getDriversNearby(req.query.token)
     .then(function(response){
       res.json(response);
     });

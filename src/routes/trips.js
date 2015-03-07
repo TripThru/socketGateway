@@ -6,7 +6,7 @@ var resultCodes = codes.resultCodes;
 function callApiIfUserValid(token, request, fn) {
   var user = usersController.getByToken(token);
   if(user && user.role === 'network') {
-    request.clientId = user.id;
+    request.client_id = user.clientId;
     return fn(request);
   } else {
     return Promise.resolve({ 
@@ -31,19 +31,22 @@ TripRoutes.prototype.updateTripStatus = function(token, id, request) {
 };
 
 TripRoutes.prototype.getTripStatus = function(token, id) {
-  var user = usersController.getByToken(token);
-  if(user) {
-    var request = {
-      clientId: user.id,
-      id: id
-    };
-    return tripsController.getTripStatus(request);
-  } else {
-    return Promise.resolve({ 
-      result: 'Authentication error', 
-      resultCode: resultCodes.authenticationError
+  return usersController
+    .getByToken(token)
+    .then(function(user){
+      if(user) {
+        var request = {
+          client_id: user.clientId,
+          id: id
+        };
+        return tripsController.getTripStatus(request);
+      } else {
+        return { 
+          result: 'Authentication error', 
+          result_code: resultCodes.authenticationError
+        };
+      }
     });
-  }
 };
 
 module.exports = new TripRoutes();

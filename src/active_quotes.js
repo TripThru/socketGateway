@@ -8,18 +8,12 @@ function ActiveQuotes() {
 }
 
 ActiveQuotes.prototype.add = function(quote) {
-  return this.redisClient.add(quote.id, quote);
-};
-
-ActiveQuotes.prototype.update = function(quote) { 
   return this
     .redisClient
-    .update(quote.id, quote)
+    .add(quote.id, quote)
     .bind(this)
     .then(function(reply){
-      if(isNonActiveState(quote.status)) {
-        this.deactivate(quote);
-      }
+      this.deactivate(quote);
     });
 };
 
@@ -45,17 +39,7 @@ ActiveQuotes.prototype.clear = function() {
   this.redisClient.clear();
 };
 
-var isNonActiveState = function(state) {
-  return state === 'complete';
-};
-
 var toApiQuote = function(redisQuote) {
-  redisQuote.request.pickupTime = moment(redisQuote.request.pickupTime);
-  for(var i = 0; i < redisQuote.receivedQuotes.length; i++) {
-    var q = redisQuote.receivedQuotes[i];
-    q.eta = moment(q.eta);
-    if(q.duration) q.duration = moment.duration(q.duration, 'seconds');
-  }
   return redisQuote;
 };
 

@@ -4,6 +4,9 @@ var IGateway = require('./gateway').IGateway;
 var Interface = require('./interface').Interface;
 var RestfulGateway = require('./restful_gateway');
 var users = require('./controller/users');
+var codes = require('./codes');
+var resultCodes = codes.resultCodes;
+var UnsuccessfulRequestError = require('./errors').UnsuccessfulRequestError;
 
 function NetworksGateway() {
   this.networksById = {};
@@ -13,7 +16,7 @@ function NetworksGateway() {
     .then(function(allUsers){
       allUsers.forEach(function(user){
         if(user.role === 'network' && user.endpointType === 'restful') {
-          var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.callbackUrlToken);
+          var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.token);
           this.networksById[user.clientId] = gateway;
         }
       }.bind(this));
@@ -55,16 +58,8 @@ NetworksGateway.prototype.updateTripStatus = function(id, request) {
   return this.getNetwork(id).updateTripStatus(request); 
 };
 
-NetworksGateway.prototype.quoteTrip = function(id, request) {
-  return this.getNetwork(id).quoteTrip(request);  
-};
-
 NetworksGateway.prototype.getQuote = function(id, request) {
   return this.getNetwork(id).getQuote(request);
-};
-
-NetworksGateway.prototype.updateQuote = function(id, request) {
-  return this.getNetwork(id).updateQuote(request);  
 };
 
 NetworksGateway.prototype.getNetworkInfo = function(id, request) {
@@ -83,16 +78,32 @@ NetworksGateway.prototype.acceptPayment = function(id, request) {
   return this.getNetwork(id).acceptPayment(request);
 };
 
+NetworksGateway.prototype.getDriversNearby = function(id, request) {
+  return this.getNetwork(id).getDriversNearby(request);
+};
+
+NetworksGateway.prototype.getTrip = function(id, request) {
+  return this.getNetwork(id).getTrip(request);
+};
+
 NetworksGateway.prototype.broadcastQuote = function(request, networks) {
-  return new Promise(function(resolve, reject){ 
-    for(var i = 0; i < networks.length; i++) {
-      var id = networks[i].clientId;
-      if(id !== request.clientId && this.networksById.hasOwnProperty(id)) {
-        this.quoteTrip(id, request);
-      }
-    }
-    resolve();
+  var getQuotePromises = networks.map(function(network){
+    return this.getQuote(network.clientId, request);
   }.bind(this));
+  return Promise
+    .settle(getQuotePromises)
+    .then(function(results){
+      var quotes = [];
+      for(var i = 0; i < results.length; i++) {
+        if(results[i].isFulfilled()) {
+          var value = results[i].value();
+          if(value.result_code === resultCodes.ok && value.quotes.length > 0) {
+            quotes = quotes.concat(value.quotes);
+          }
+        }
+      }
+      return quotes;
+    });
 };
 
 function ConnectionError(resultCode, error) {

@@ -7,10 +7,10 @@ function ActiveTrips() {
   this.tripRemovalSpan = moment.duration(5, 'minutes');
   this.dashboardTripsByIdByStatus = {
       queued: {},
-      dispatched: {},
-      enroute: {},
-      pickedup: {},
-      complete: {},
+      accepted: {},
+      en_route: {},
+      picked_up: {},
+      completed: {},
       cancelled: {},
       rejected: {}
   };
@@ -124,17 +124,17 @@ ActiveTrips.prototype.getDashboardTrips = function(networkId, status) {
   if(status === 'queued' || status === 'all') {
     pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.queued);
   }
-  if(status === 'dispatched' || status === 'all') {
-    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.dispatched);
+  if(status === 'accepted' || status === 'all') {
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.accepted);
   }
-  if(status === 'enroute' || status === 'all') {
-    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.enroute);
+  if(status === 'en_route' || status === 'all') {
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.en_route);
   }
-  if(status === 'pickedup' || status === 'all') {
-    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.pickedup);
+  if(status === 'picked_up' || status === 'all') {
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.picked_up);
   }
-  if(status === 'complete' || status === 'all') {
-    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.complete);
+  if(status === 'completed' || status === 'all') {
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.completed);
   }
   if(status === 'cancelled' || status === 'all') {
     pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.cancelled);
@@ -172,7 +172,7 @@ ActiveTrips.prototype.getAll = function(networkId) {
 // Dashboard utility functions -- end
 
 var isNonActiveStatus = function(status) {
-  return status === 'complete' || status === 'rejected' || status === 'cancelled';
+  return status === 'completed' || status === 'rejected' || status === 'cancelled';
 };
 
 var toApiTrip = function(redisTrip) {

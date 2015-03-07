@@ -4,9 +4,9 @@ var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 
 function callApiIfUserValid(token, request, fn) {
-  var user = usersController.getByToken(req.query.token);
+  var user = usersController.getByToken(request.query.token);
   if(user && user.role === 'partner') {
-    request.clientId = user.clientId;
+    request.client_id = user.clientId;
     return fn(request);
   } else {
     return Promise.resolve({ 
@@ -19,16 +19,6 @@ function callApiIfUserValid(token, request, fn) {
 function QuoteRoutes() {
   
 }
-
-QuoteRoutes.prototype.quoteQuote = function(token, id, request) {
-  request.id = id;
-  return callApiIfUserValid(token, request, quotesController.quoteTrip);
-};
-
-QuoteRoutes.prototype.updateQuote = function(token, id, request) {
-  request.id = id;
-  return callApiIfUserValid(token, request, quotesController.updateQuote);
-};
 
 QuoteRoutes.prototype.getQuote = function(token, id) {
   var request = {id: id};

@@ -3,9 +3,9 @@ var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 
 function callApiIfUserValid(token, request, fn) {
-  var user = usersController.getByToken(req.query.token);
+  var user = usersController.getByToken(request.query.token);
   if(user && user.role === 'network') {
-    request.clientId = user.id;
+    request.client_id = user.clientId;
     return fn(request);
   } else {
     return Promise.resolve({ 
@@ -27,6 +27,10 @@ UserRoutes.prototype.setNetworkInfo = function(token, id, request) {
 UserRoutes.prototype.getNetworkInfo = function(token, id) {
   var request = {id: id};
   return callApiIfUserValid(token, request, usersController.getNetworkInfo);
+};
+
+UserRoutes.prototype.getDriversNearby = function(token) {
+  return callApiIfUserValid(token, null, usersController.getNetworkInfo);
 };
 
 module.exports = new UserRoutes();
