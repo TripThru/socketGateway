@@ -16,7 +16,7 @@ function successResponse() {
   };
 }
 
-function failResponse(message, errorCode) {
+function failResponse(errorCode, message) {
   return {
     result_code: errorCode,
     result: message
@@ -282,9 +282,9 @@ function createRequestFromTrip(trip, type, args) {
   }
 }
 
-function createResponseFromTrip(trip, type, message, errorCode) {
+function createResponseFromTrip(trip, type, errorCode, message) {
   if(errorCode) {
-    return failResponse(message, errorCode);
+    return failResponse(errorCode, message);
   }
   switch(type) {
     case 'dispatch':
@@ -363,9 +363,9 @@ function createRequestFromTripPayment(tripPayment, type) {
   }
 }
 
-function createResponseFromTripPayment(tripPayment, type, message, errorCode) {
+function createResponseFromTripPayment(tripPayment, type, errorCode, message) {
   if(errorCode) {
-    return failResponse(message, errorCode);
+    return failResponse(errorCode, message);
   }
   if(!tripPayment) {
     throw new Error('Need trip payment object to create request');
@@ -431,9 +431,9 @@ function createRequestFromQuote(quote, type, args) {
   }
 }
 
-function createResponseFromQuote(quote, type, message, errorCode) {
+function createResponseFromQuote(quote, type, errorCode, message) {
   if(errorCode) {
-    return failResponse(message, errorCode);
+    return failResponse(errorCode, message);
   }
   switch(type) {
     case 'get':
@@ -523,9 +523,9 @@ function createUserFromRequest(user, type, args) {
   }
 }
 
-function createResponseFromUser(user, type, message, errorCode) {
+function createResponseFromUser(user, type, errorCode, message) {
   if(errorCode) {
-    return failResponse(message, errorCode);
+    return failResponse(errorCode, message);
   }
   switch(type) {
     case 'get-network-info':
