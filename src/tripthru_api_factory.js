@@ -24,18 +24,19 @@ function failResponse(message, errorCode) {
 }
 
 function idName(object) {
-  return {
-    id: object.id || null,
-    name: object.name || null
-  };
+  var o = {};
+  if(object.id) o.id = object.id;
+  if(object.name) o.name = object.name;
+  return o;
 }
 
 function apiLocation(location) {
-  return {
+  var loc = {
     lat: location.lat,
-    lng: location.lng,
-    description: location.description || null
+    lng: location.lng
   };
+  if(location.description) loc.description = location.description;
+  return loc;
 }
 
 function getISOStringFromMoment(moment) {

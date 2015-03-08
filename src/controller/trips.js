@@ -61,20 +61,26 @@ TripsController.prototype.dispatchTrip =  function(request) {
       }
     })
     .then(function(bestQuote){
-      if(this.trip.autoDispatch) {
-        if(!bestQuote) {
-          throw new UnsuccessfulRequestError(resultCodes.rejected, 'No best quote found');
-        }
+      if(this.trip.autoDispatch && bestQuote) {
         this.trip.servicingNetwork = bestQuote.network;
         if(bestQuote.product) {
           this.trip.servicingProduct = bestQuote.product;
           this.trip.imageUrl = bestQuote.product.image_url;
         }
       }
-      var dispatchReq = TripThruApiFactory.createRequestFromTrip(this.trip, 'dispatch');
+    })
+    .then(function(){
       this.dispatchLog = logger.getSublog(request.id, 'tripthru', 'servicing', 'dispatch');
-      this.dispatchLog.log('Dispatching trip to ' + this.trip.servicingNetwork.name, dispatchReq);
-      return self.gateway.dispatchTrip(dispatchReq.network_id, dispatchReq);
+      if(this.trip.servicingNetwork) {
+        var dispatchReq = TripThruApiFactory.createRequestFromTrip(this.trip, 'dispatch');
+        this.dispatchLog.log('Dispatching trip to ' + this.trip.servicingNetwork.name, dispatchReq);
+        return self.gateway.dispatchTrip(dispatchReq.network_id, dispatchReq);
+      } else {
+        var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+            resultCodes.rejected, 'No servicing network found');
+        this.dispatchLog.log('Trip rejected');
+        return response;
+      }
     })
     .then(function(response){
       this.dispatchResponse = response;
@@ -138,8 +144,7 @@ TripsController.prototype.getTripStatus = function(request) {
         //log.log('Response', res);
         return res;
       } else {
-        throw(new UnsuccessfulRequestError('Unsuccessful result code ' +
-            response.result_code));
+        throw(new UnsuccessfulRequestError(response.result_code, 'Unsuccessful request'));
       }
     })
     .catch(this.gateway.ConnectionError, UnsuccessfulRequestError, function(err){
