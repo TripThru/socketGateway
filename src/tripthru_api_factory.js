@@ -406,9 +406,14 @@ function createGetQuoteRequestFromQuote(quote) {
   return quote.request;
 }
 
+function createQuoteId(request) {
+  return request.client_id + '-<' + request.pickup_location.lat + ':' + 
+          request.pickup_location.lng + '>-' + moment().format(); 
+}
+
 function createQuoteFromGetQuoteRequest(request) {
   var quote = {
-    id: request.id,
+    id: request.id ? request.id : createQuoteId(request),
     clientId: request.client_id,
     request: request,
     receivedQuotes: []
