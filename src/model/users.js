@@ -30,15 +30,17 @@ function toApiUser(storeUser) {
       acceptsOndemand: su.accepts_ondemand,
       acceptsCashPayment: su.accepts_cash_payment,
       acceptsAccountPayment: su.accepts_account_payment,
-      acceptsCreditcardPayment: su.accepts_creditcard_payment,
-      coverage: {
+      acceptsCreditcardPayment: su.accepts_creditcard_payment
+    };
+    if(su.coverage_radius && su.coverage_lat && su.coverage_lng) {
+      product.coverage = {
         radius: su.coverage_radius,
         center: {
           lat: su.coverage_lat,
           lng: su.coverage_lng
         }
-      }
-    };
+      };
+    }
     user.products.push(product);
     user.productsById[product.clientId] = product;
   }

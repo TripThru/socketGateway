@@ -127,7 +127,7 @@ Store.prototype.updateTrip = function(trip) {
   var data = [fields, trip.dbId];
   queries.push({query: query, data: data});
 
-  if(trip.driver && trip.driver.location) {
+  if(trip.driver && trip.driver.location && trip.dbId) {
     var locationUpdateQuery = "INSERT INTO trip_locations SET ? ";
     var locationData = {
       trip_id: trip.dbId,
@@ -240,7 +240,21 @@ Store.prototype.updateUser = function(user) {
                     "  accepts_cash_payment = VALUES(accepts_cash_payment), " +
                     "  accepts_account_payment = VALUES(accepts_account_payment), " +
                     "  accepts_creditcard_payment = VALUES(accepts_creditcard_payment)";
-        var data = [user.id, f.id, f.name, f.coverage.radius, f.coverage.center.lat, f.coverage.center.lng, f.imageUrl, f.capacity, f.acceptsPrescheduled, f.acceptsOndemand, f.acceptsCashPayment, f.acceptsAccountPayment, f.acceptsCreditcardPayment];
+        var data = [
+                    user.id, 
+                    f.id, 
+                    f.name, 
+                    f.coverage ? f.coverage.radius : null, 
+                    f.coverage ? f.coverage.center.lat : null, 
+                    f.coverage ? f.coverage.center.lng : null, 
+                    f.imageUrl, 
+                    f.capacity, 
+                    f.acceptsPrescheduled, 
+                    f.acceptsOndemand, 
+                    f.acceptsCashPayment, 
+                    f.acceptsAccountPayment, 
+                    f.acceptsCreditcardPayment
+                   ];
         queries.push({query: query, data: data});
       }
       return execute_sequence(queries);

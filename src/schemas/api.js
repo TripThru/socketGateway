@@ -113,7 +113,12 @@ module.exports = {
                     },
                   "additionalProperties": false
                  }
-              }
+              },
+              "required": [
+                "id",
+                "name",
+                "image_url"
+               ]
             },
             "additionalProperties": false
           }

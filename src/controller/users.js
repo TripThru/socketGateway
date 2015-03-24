@@ -184,7 +184,7 @@ UsersController.prototype.getNetworksThatServeLocation = function(location) {
       if(users.hasOwnProperty(id)) {
         var u = users[id];
         for(var i = 0; i < u.products.length; i++) {
-          if(maptools.isInside(location, u.products[i].coverage)){
+          if(u.products[i].coverage && maptools.isInside(location, u.products[i].coverage)){
             usersThatServeLocation.push(u);
           }
         }
