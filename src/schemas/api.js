@@ -372,7 +372,6 @@ module.exports = {
         "luggage",
         "pickup_time",
         "pickup_location",
-        "dropoff_time",
         "dropoff_location",
         "payment_method_code"
       ]
