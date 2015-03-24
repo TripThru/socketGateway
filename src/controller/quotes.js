@@ -41,15 +41,6 @@ QuotesController.prototype.getQuote =  function(request) {
     .then(function(user){
       var name = user ? user.fullname : 'unknown';
       log.log('Quote request from ' + name, request);
-      return quotes.getById(this.quote.id);
-    })
-    .then(function(res){
-      if(!res) {
-        return quotes.add(this.quote);
-      }
-      throw new InvalidRequestError(resultCodes.rejected, 'quote already exists');
-    })
-    .then(function(){
       return users.getNetworksThatServeLocation(this.quote.request.pickup_location);
     })
     .then(function(networksThatServeLocation){
@@ -66,13 +57,13 @@ QuotesController.prototype.getQuote =  function(request) {
       }
       this.quote.receivedQuotes = res;
       res.forEach(function(r){ 
-        activeQuotes.add(r.id, r);
+        activeQuotes.add(r);
       });
       for(var i = 0; i < this.quote.receivedQuotes.length; i++) {
         var q = this.quote.receivedQuotes[i];
-        log.log('Quote received from ' + q.partner.id, q); 
+        log.log('Quote received from ' + q.network.id, q); 
       }
-      var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'quote');
+      var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'get');
       log.log('Response', response);
       return response;
     })
