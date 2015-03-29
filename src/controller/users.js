@@ -155,7 +155,48 @@ UsersController.prototype.setNetworkInfo = function(request) {
 };
 
 UsersController.prototype.getDriversNearby = function(request) {
-  throw new Error('Not implemented');
+  var productId = request.product_id || null;
+  var coverage = {
+      center: {
+        lat: request.location.lat,
+        lng: request.location.lng
+      },
+      radius: request.radius || 0.1
+    };
+  return this
+    .getNetworksThatServeLocation(request.location)
+    .bind(this)
+    .then(function(networks){
+      var promises = [];
+      for(var i = 0; i < networks.length; i++) {
+        var network = networks[i];
+        for(var j = 0; j < network.products.length; j++) {
+          var product = network.products[j];
+          if((!productId || productId === product.clientId) && 
+              maptools.isInside(request.location, product.coverage)) {
+            request.product_id = product.clientId;
+            promises.push(this.gateway.getDriversNearby(network.clientId, request));
+          }
+        }
+      }
+      return Promise
+        .settle(promises)
+        .then(function(results){
+          var drivers = [];
+          for(var i = 0; i < results.length; i++) {
+            if(results[i].isFulfilled()) {
+              var value = results[i].value();
+              if(value.result_code === resultCodes.ok && value.count > 0) {
+                drivers = drivers.concat(value.drivers);
+              }
+            }
+          }
+          var response = TripThruApiFactory.successResponse();
+          response.drivers = drivers;
+          response.count = drivers.length;
+          return response;
+        });
+    });
 };
 
 UsersController.prototype.getByToken = function(token) {
