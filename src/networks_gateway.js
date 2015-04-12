@@ -7,6 +7,7 @@ var users = require('./controller/users');
 var codes = require('./codes');
 var resultCodes = codes.resultCodes;
 var UnsuccessfulRequestError = require('./errors').UnsuccessfulRequestError;
+var InvalidRequestError = require('./errors').InvalidRequestError;
 
 function NetworksGateway() {
   this.networksById = {};
@@ -42,54 +43,95 @@ NetworksGateway.prototype.getNetwork = function(id) {
   return this.networksById[id];
 };
 
+NetworksGateway.prototype.hasNetwork = function(id) {
+  return this.networksById.hasOwnProperty(id);
+};
+
 NetworksGateway.prototype.dispatchTrip = function(id, request) {
-  return this.getNetwork(id).dispatchTrip(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).dispatchTrip(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.getTrip = function(id, request) {
-  return this.getNetwork(id).getTrip(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).getTrip(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.getTripStatus = function(id, request) {
-  return this.getNetwork(id).getTripStatus(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).getTripStatus(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.updateTripStatus = function(id, request) {
-  return this.getNetwork(id).updateTripStatus(request); 
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).updateTripStatus(request); 
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.getQuote = function(id, request) {
-  return this.getNetwork(id).getQuote(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).getQuote(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.getNetworkInfo = function(id, request) {
-  return this.getNetwork(id).getNetworkInfo(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).getNetworkInfo(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.setNetworkInfo = function(id, request) {
-  return this.getNetwork(id).setNetworkInfo(request);  
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).setNetworkInfo(request);  
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.requestPayment = function(id, request) {
-  return this.getNetwork(id).requestPayment(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).requestPayment(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.acceptPayment = function(id, request) {
-  return this.getNetwork(id).acceptPayment(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).acceptPayment(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.getDriversNearby = function(id, request) {
-  return this.getNetwork(id).getDriversNearby(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).getDriversNearby(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.getTrip = function(id, request) {
-  return this.getNetwork(id).getTrip(request);
+  if(this.hasNetwork(id)) {
+    return this.getNetwork(id).getTrip(request);
+  }
+  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
 };
 
 NetworksGateway.prototype.broadcastQuote = function(request, networks) {
-  var getQuotePromises = networks.map(function(network){
-    return this.getQuote(network.clientId, request);
-  }.bind(this));
+  var getQuotePromises = [];
+  for(var i = 0; i < networks.length; i++) {
+    var network = networks[i];
+    if(this.networksById.hasOwnProperty(network.clientId)) {
+      getQuotePromises.push(this.getQuote(network.clientId, request));
+    }
+  }
   return Promise
     .settle(getQuotePromises)
     .then(function(results){
