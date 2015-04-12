@@ -29,8 +29,8 @@ UserRoutes.prototype.getNetworkInfo = function(token, id) {
   return callApiIfUserValid(token, request, usersController.getNetworkInfo);
 };
 
-UserRoutes.prototype.getDriversNearby = function(token) {
-  return callApiIfUserValid(token, null, usersController.getNetworkInfo);
+UserRoutes.prototype.getDriversNearby = function(token, request) {
+  return callApiIfUserValid(token, request, usersController.getNetworkInfo);
 };
 
 module.exports = new UserRoutes();
