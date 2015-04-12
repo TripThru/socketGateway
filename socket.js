@@ -26,11 +26,15 @@ io.use(function(socket, next){
       .getByToken(query.token)
       .then(function(user){
         if (user && user.role === 'network') {
-          var socketGateway = new SocketGateway(user.clientId, socket);
-          networksGateway.subscribeNetwork(socketGateway);
-          activeSocketsByClientId[user.clientId] = socket;
-          activeClientIdsBySocket[socket] = user.clientId;
-          next();
+          if(!networksGateway.hasNetwork(user.clientId)) {
+            var socketGateway = new SocketGateway(user.clientId, socket);
+            networksGateway.subscribeNetwork(socketGateway);
+            activeSocketsByClientId[user.clientId] = socket;
+            activeClientIdsBySocket[socket] = user.clientId;
+            next();
+          } else {
+            console.log(user.clientId + ' already has open connection');
+          }
         } else {
           console.log("Invalid access token");
         }
@@ -49,39 +53,49 @@ io.sockets.on('connection', function (socket){
   
   // Trips
   socket.on('dispatch-trip', function(req, cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     trips.dispatchTrip(req).then(cb);
   });
   socket.on('get-trip', function(req, cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     trips.getTrip(req).then(cb);
   });
   socket.on('get-trip-status', function(req, cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     trips.getTripStatus(req).then(cb);
   });
   socket.on('update-trip-status', function(req, cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     trips.updateTripStatus(req).then(cb);
   });
   socket.on('request-payment', function(req, cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     trips.requestPayment(req).then(cb);
   });
   socket.on('accept-payment', function(req, cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     trips.acceptPayment(req).then(cb);
   });
   
   //Quotes
   socket.on('get-quote', function(req, cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     quotes.getQuote(req).then(cb);
   });
   
   //Users
   socket.on('get-network-info', function(req ,cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     users.getNetworkInfo(req).then(cb);
   });
   socket.on('set-network-info', function(req, cb){
+    req.client_id = req.client_id || getClientId(socket, req);
     users.setNetworkInfo(req).then(cb);
   });
   socket.on('get-drivers-nearby', function(req, cb) {
+    req.client_id = req.client_id || getClientId(socket, req);
     users.getDriversNearby(req).then(cb);
-  })
+  });
   
   socket.on('disconnect', function(){
     var id = activeClientIdsBySocket[socket];
@@ -92,9 +106,8 @@ io.sockets.on('connection', function (socket){
   });
 });
 
-function appendClientId(socket, request) {
-  request.client_id = activeClientIdsBySocket[socket];
-  return request;
+function getClientId(socket) {
+  return activeClientIdsBySocket[socket];
 }
 
 module.exports.io = io;
