@@ -108,10 +108,10 @@ function toApiTrip(storeTrip) {
       }
       if(storeTrip.customer_name) {
         t.customer = {};
-        t.customer.id = storeTrip.customer.id;
-        t.customer.name = storeTrip.customer.name;
-        t.customer.localId = storeTrip.customer.local_id;
-        t.customer.phoneNumber = storeTrip.customer.phone_number;
+        t.customer.id = storeTrip.customer_id;
+        t.customer.name = storeTrip.customer_name;
+        t.customer.localId = storeTrip.customer_local_id;
+        t.customer.phoneNumber = storeTrip.customer_phone_number;
       }
       if(storeTrip.driver_name) { 
         t.driver = {}; 
