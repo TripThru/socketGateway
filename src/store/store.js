@@ -146,7 +146,7 @@ Store.prototype.getTripById = function(id) {
   return execute( "SELECT t.*, " +
   		            "       u.client_id as user_client_id, " +
   		            "       u.full_name as user_name,  " +
-  		            "       f.product_id as product_id, " +
+  		            "       f.id as product_id, " +
   		            "       f.name as product_name " +
   		            "FROM trips t, users u, products f " +
   		            "WHERE trip_id LIKE ?",
