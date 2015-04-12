@@ -57,8 +57,12 @@ ActiveTrips.prototype.getById = function(id) {
     .get(id)
     .then(function(trip){
       if(trip) {
-        trip = toApiTrip(trip);
+        return toApiTrip(trip);
+      } else {
+        return tripsModel.getById(id);
       }
+    })
+    .then(function(trip){
       return trip;
     });
 };
