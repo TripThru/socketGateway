@@ -63,7 +63,7 @@ app.get('/network/:id', function(req, res){
 });
 app.get('/drivers', function(req, res){
   userRoutes
-    .getDriversNearby(req.query.token)
+    .getDriversNearby(req.query.token, req.body)
     .then(function(response){
       res.json(response);
     });
@@ -84,7 +84,7 @@ app.post('/trip/:id', function(req, res){
 });
 app.put('/tripstatus/:id', function(req, res){
   tripRoutes
-    .updateTripStatus(req.query.token, req.params.id, req)
+    .updateTripStatus(req.query.token, req.params.id, req.body)
     .then(function(response){
       res.json(response);
     });
@@ -98,14 +98,14 @@ app.get('/tripstatus/:id', function(req, res){
 });
 app.post('/payment/:id', function(req, res){
   tripRoutes
-    .requestPayment(req.query.token, req.params.id)
+    .requestPayment(req.query.token, req.params.id, req.body)
     .then(function(response){
       res.json(response);
     });
 });
 app.put('/payment/:id', function(req, res){
   tripRoutes
-    .acceptPayment(req.query.token, req.params.id)
+    .acceptPayment(req.query.token, req.params.id, req.body)
     .then(function(response){
       res.json(response);
     });
