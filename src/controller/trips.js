@@ -389,19 +389,21 @@ TripsController.prototype.acceptPayment = function(request) {
 TripsController.prototype.getTripStats = function(trip) {
   var log = logger.getSublog(trip.id, 'tripthru', 'servicing', 'get-trip-status');
   var request = TripThruApiFactory.createRequestFromTrip(trip, 'get-trip-status');
-  log.log('Get trip sent to ' + trip.servicingNetwork.name, request);
-  this
-    .gateway
-    .getTrip(trip.servicingNetwork.id, request)
-    .then(function(response){
-      trip = TripThruApiFactory.createTripFromResponse(response, 
-          'get-trip', {trip: trip});
-      trips.update(trip);
-      log.log('Response', response);
-    })
-    .error(function(err){
-      log.log('Response', err);
-    });
+  log.log('Get trip sent to ' + trip.servicingNetwork ? trip.servicingNetwork.id : ' unkwown', request);
+  if(trip.servicingNetwork) {
+    this
+      .gateway
+      .getTrip(trip.servicingNetwork.id, request)
+      .then(function(response){
+        trip = TripThruApiFactory.createTripFromResponse(response, 
+            'get-trip', {trip: trip});
+        trips.update(trip);
+        log.log('Response', response);
+      })
+      .error(function(err){
+        log.log('Response', err);
+      });
+  }
 };
 
 function tripIsLocal(trip, request) {
