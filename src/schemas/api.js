@@ -3,6 +3,7 @@ var tripStatus =  [
                      'new', 
                      'accepted', 
                      'en_route', 
+                     'arrived',
                      'picked_up', 
                      'dropped_off', 
                      'no_show', 
