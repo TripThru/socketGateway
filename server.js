@@ -3,11 +3,11 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var config = require('./config');
 var socket = require('./socket');
-var networksGateway = require('./src/networks_gateway');
 var store = require('./src/store/store');
 var tripsController = require('./src/controller/trips');
 var quotesController = require('./src/controller/quotes');
 var usersController = require('./src/controller/users');
+var networksGateway = require('./src/networks_gateway');
 var jobQueue = require('./src/workers/job_queue');
 var tripsJobQueue = require('./src/workers/trips');
 var dashboard = require('./src/routes/dashboard');
@@ -49,7 +49,7 @@ app.all('*', function(req, res, next){
 // API routes
 app.post('/network/:id', function(req, res){
   userRoutes
-    .setNetworkInfo(req.query.token, req.params.id, req)
+    .setNetworkInfo(req.query.token, req.params.id, req.body)
     .then(function(response){
       res.json(response);
     });
@@ -70,14 +70,14 @@ app.get('/drivers', function(req, res){
 });
 app.get('/quote/:id', function(req, res){
   quoteRoutes
-    .getQuote(req.query.token, req.params.id)
+    .getQuote(req.query.token, req.params.id, req.body)
     .then(function(response){
       res.json(response);
     });
 });
 app.post('/trip/:id', function(req, res){
   tripRoutes
-    .dispatchTrip(req.query.token, req.params.id, req)
+    .dispatchTrip(req.query.token, req.params.id, req.body)
     .then(function(response){
       res.json(response);
     });

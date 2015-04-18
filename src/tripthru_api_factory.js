@@ -218,7 +218,9 @@ function createGetTripStatusResponse(trip) {
     r.driver = idName(trip.driver);
     r.driver.local_id = trip.driver.localId;
     r.driver.native_language_id = trip.driver.nativeLanguageId;
-    r.driver.location = apiLocation(trip.driver.location);
+    if(trip.driver.location) {
+      r.driver.location = apiLocation(trip.driver.location);
+    }
   }
   return r;
 }

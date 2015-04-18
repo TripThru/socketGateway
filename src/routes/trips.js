@@ -2,18 +2,22 @@ var tripsController = require('../controller/trips');
 var usersController = require('../controller/users');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
+var Promise = require('bluebird');
 
 function callApiIfUserValid(token, request, fn) {
-  var user = usersController.getByToken(token);
-  if(user && user.role === 'network') {
-    request.client_id = user.clientId;
-    return fn(request);
-  } else {
-    return Promise.resolve({ 
-      result: 'Authentication error', 
-      resultCode: resultCodes.authenticationError
+  return usersController
+    .getByToken(token)
+    .then(function(user){
+      if(user && user.role === 'network') {
+        request.client_id = user.clientId;
+        return fn.call(tripsController, request);
+      } else {
+        return Promise.resolve({ 
+          result: 'Authentication error', 
+          result_code: resultCodes.authenticationError
+        });
+      }
     });
-  }
 }
 
 function TripRoutes() {
@@ -28,6 +32,16 @@ TripRoutes.prototype.dispatchTrip = function(token, id, request) {
 TripRoutes.prototype.updateTripStatus = function(token, id, request) {
   request.id = id;
   return callApiIfUserValid(token, request, tripsController.updateTripStatus);
+};
+
+TripRoutes.prototype.requestPayment = function(token, id, request) {
+  request.id = id;
+  return callApiIfUserValid(token, request, tripsController.requestPayment);
+};
+
+TripRoutes.prototype.acceptPayment = function(token, id, request) {
+  request.id = id;
+  return callApiIfUserValid(token, request, tripsController.acceptPayment);
 };
 
 TripRoutes.prototype.getTripStatus = function(token, id) {

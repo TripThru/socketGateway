@@ -49,8 +49,6 @@ TripsController.prototype.dispatchTrip =  function(request) {
     .then(function(res){
       if(!res) {
         return trips.add(this.trip);
-      } else if(res.status === 'rejected' || res.status === 'cancelled') {
-        return trips.update(this.trip);
       }
       throw new InvalidRequestError(resultCodes.rejected, 'trip already exists');
     })

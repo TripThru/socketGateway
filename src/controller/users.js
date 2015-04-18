@@ -16,7 +16,11 @@ function UsersController() {
   this.gateway = null;
   this.usersById = {};
   this.usersByToken = {};
-  usersModel
+  this.getUsersFromStore();
+}
+
+UsersController.prototype.getUsersFromStore = function() {
+  return usersModel
     .getAll()
     .bind(this)
     .then(function(allUsers){
@@ -27,7 +31,7 @@ function UsersController() {
     .error(function(err){
       logger.getSublog().log('init', err);
     });
-}
+};
 
 UsersController.prototype.init = function(gatewayClient) {
   Interface.ensureImplements(gatewayClient, IGateway);
@@ -208,13 +212,14 @@ UsersController.prototype.getByClientId = function(id) {
 };
 
 UsersController.prototype.getAll = function() {
-  var users = this.usersById;
-  return new Promise(function(resolve, reject){
-    var result = Object.keys(users).map(function(id) {
-      return users[id];
-    });
-    resolve(result);
-  });
+  if(Object.keys(this.usersById).length === 0) {
+    return this
+      .getUsersFromStore()
+      .then(function(){
+        return this.usersById;
+      });
+  }
+  return Promise.resolve(this.usersById);
 };
 
 UsersController.prototype.getNetworksThatServeLocation = function(location) {

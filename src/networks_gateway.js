@@ -15,12 +15,14 @@ function NetworksGateway() {
   users
     .getAll()
     .then(function(allUsers){
-      allUsers.forEach(function(user){
-        if(user.role === 'network' && user.endpointType === 'restful') {
-          var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.token);
-          this.networksById[user.clientId] = gateway;
+      for(var user in allUsers) {
+        if(allUsers.hasOwnProperty(user)) {
+          if(user.role === 'network' && user.endpointType === 'restful') {
+            var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.token);
+            this.networksById[user.clientId] = gateway;
+          }
         }
-      }.bind(this));
+      }
     }.bind(this));
 }
 
@@ -34,6 +36,15 @@ NetworksGateway.prototype.subscribeNetwork = function(gateway) {
 
 NetworksGateway.prototype.unsubscribeNetwork = function(id) {
   delete this.networksById[id];
+};
+
+NetworksGateway.prototype.updateRestfulGateway = function(user) {
+  if(this.hasNetwork(user.clientId)) {
+    this.networksById[user.clientId].callbackUrl = user.callbackUrl;
+  } else {
+    var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.token);
+    this.networksById[user.clientId] = gateway;
+  }
 };
 
 NetworksGateway.prototype.getNetwork = function(id) {

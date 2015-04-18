@@ -16,12 +16,16 @@ RestfulGateway.prototype.get = function(path, id, req) {
     if(id) {
       path += '/' + id;
     }
+    var client_id = this.id;
+    var url = this.rootUrl + path + '?token=' + this.token;
     request({
-      uri: this.rootUrl + '/' + path + '?token=' + this.token,
+      url: url,
       method: 'GET',
       timeout: 10000,
       followRedirect: true,
-      maxRedirects: 10
+      maxRedirects: 10,
+      body: req,
+      json: true
     }, function(error, response, body){
       if(error) {
         reject(error);
@@ -37,12 +41,16 @@ RestfulGateway.prototype.post = function(path, id, req) {
     if(id) {
       path += '/' + id;
     }
+    var client_id = this.id;
+    var url = this.rootUrl + path + '?token=' + this.token;
     request({
-      uri: this.rootUrl + '/' + path + '?token=' + this.token,
+      url: url,
       method: 'POST',
       timeout: 10000,
       followRedirect: true,
-      maxRedirects: 10
+      maxRedirects: 10,
+      body: req,
+      json: true
     }, function(error, response, body){
       if(error) {
         reject(error);
@@ -53,15 +61,21 @@ RestfulGateway.prototype.post = function(path, id, req) {
   }.bind(this));
 };
 
-RestfulGateway.prototype.put = function(path, id, request) {
+RestfulGateway.prototype.put = function(path, id, req) {
   return new Promise(function(resolve, reject){
-    path += '/' + id;
+    if(id) {
+      path += '/' + id;
+    }
+    var client_id = this.id;
+    var url = this.rootUrl + path + '?token=' + this.token;
     request({
-      uri: this.rootUrl + '/' + path + '?token=' + this.token,
+      url: url,
       method: 'PUT',
       timeout: 10000,
       followRedirect: true,
-      maxRedirects: 10
+      maxRedirects: 10,
+      body: req,
+      json: true
     }, function(error, response, body){
       if(error) {
         reject(error);
