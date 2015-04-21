@@ -133,6 +133,7 @@ UsersController.prototype.setNetworkInfo = function(request) {
       if(u) {
         this.updatedUser = TripThruApiFactory.createUserFromRequest(request, 
             'set-network-info', {user: u});
+        self._add(this.updatedUser);
         return usersModel.update(this.updatedUser);
       } else {
         throw new InvalidRequestError(resultCodes.notFound, 'User ' + request.client_id + ' does not exist');
