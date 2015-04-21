@@ -493,10 +493,10 @@ function createUserFromSetNetworkInfoRequest(request, user) {
 function createGetNetworkInfoResponseFromUser(user) {
   var r = {
     name: user.name,
-    products: user.products
+    products: []
   };
-  for(var i = 0; i < r.products.length; i++) {
-    var product = r.products[i];
+  for(var i = 0; i < user.products.length; i++) {
+    var product = user.products[i];
     r.products.push({
       id: product.product_id,
       name: product.name,
