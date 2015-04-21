@@ -224,6 +224,15 @@ Store.prototype.updateUser = function(user) {
     .resolve(user)
     .then(function(user){
       var queries = [];
+      
+      var userQuery = "UPDATE users SET ? WHERE client_id = ?";
+      var fields = {
+        name: user.name,
+        callback_url: user.callbackUrl
+      };
+      var userData = [fields, user.clientId];
+      queries.push({query: userQuery, data: userData});
+      
       for(var i = 0; i < user.products.length; i++) {
         var f = user.products[i];
         var query = "INSERT INTO products " +
@@ -267,6 +276,7 @@ function getUserQuery() {
           "  u.id as user_db_id, " +
           "  u.client_id as user_client_id, " +
           "  u.name as user_name, " +
+          "  u.callback_url as callback_url, " +
           "  f.id as product_db_id, " + 
           "  f.client_id as product_client_id, " +
           "  f.name as product_name, " +
