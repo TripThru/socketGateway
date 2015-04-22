@@ -26,11 +26,11 @@ function toApiUser(storeUser) {
       name: su.product_name,
       imageUrl: su.image_url,
       capacity: su.capacity,
-      acceptsPrescheduled: su.accepts_prescheduled,
-      acceptsOndemand: su.accepts_ondemand,
-      acceptsCashPayment: su.accepts_cash_payment,
-      acceptsAccountPayment: su.accepts_account_payment,
-      acceptsCreditcardPayment: su.accepts_creditcard_payment
+      acceptsPrescheduled: su.accepts_prescheduled === 1,
+      acceptsOndemand: su.accepts_ondemand === 1,
+      acceptsCashPayment: su.accepts_cash_payment === 1,
+      acceptsAccountPayment: su.accepts_account_payment === 1,
+      acceptsCreditcardPayment: su.accepts_creditcard_payment === 1
     };
     if(su.coverage_radius && su.coverage_lat && su.coverage_lng) {
       product.coverage = {
