@@ -26,9 +26,9 @@ io.use(function(socket, next){
       .getByToken(query.token)
       .then(function(user){
         if (user && user.role === 'network') {
-          if(!networksGateway.hasNetwork(user.clientId)) {
+          if(!networksGateway.hasSocketNetwork(user.clientId)) {
             var socketGateway = new SocketGateway(user.clientId, socket);
-            networksGateway.subscribeNetwork(socketGateway);
+            networksGateway.subscribeSocketGateway(socketGateway);
             activeSocketsByClientId[user.clientId] = socket;
             activeClientIdsBySocket[socket] = user.clientId;
             next();
@@ -101,7 +101,7 @@ io.sockets.on('connection', function (socket){
     var id = activeClientIdsBySocket[socket];
     delete activeSocketsByClientId[id];
     delete activeClientIdsBySocket[socket];
-    networksGateway.unsubscribeNetwork(id);
+    networksGateway.unsubscribeSocketGateway(id);
     console.log('Client disconnected', id);
   });
 });

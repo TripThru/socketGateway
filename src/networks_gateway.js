@@ -10,52 +10,62 @@ var UnsuccessfulRequestError = require('./errors').UnsuccessfulRequestError;
 var InvalidRequestError = require('./errors').InvalidRequestError;
 
 function NetworksGateway() {
-  this.networksById = {};
+  this.restfulNetworksById = {};
+  this.socketNetworksById = {};
   Gateway.call(this, 'networks', 'networks');
   users
     .getAll()
     .then(function(allUsers){
-      for(var user in allUsers) {
-        if(allUsers.hasOwnProperty(user)) {
-          if(user.role === 'network' && user.endpointType === 'restful') {
-            var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.token);
-            this.networksById[user.clientId] = gateway;
+      for(var id in allUsers) {
+        if(allUsers.hasOwnProperty(id)) {
+          var user = allUsers[id];
+          if(user.role === 'network' && user.callbackUrl) {
+            this.updateRestfulGateway(user);
           }
         }
       }
     }.bind(this));
 }
 
-NetworksGateway.prototype.subscribeNetwork = function(gateway) {
+NetworksGateway.prototype.subscribeSocketGateway = function(gateway) {
   Interface.ensureImplements(gateway, IGateway);
-  if(this.networksById.hasOwnProperty(gateway.id)) {
+  if(this.hasSocketNetwork(gateway.id)) {
     throw new Error(gateway.id + ' already exists');
   }
-  this.networksById[gateway.id] = gateway;
+  this.socketNetworksById[gateway.id] = gateway;
 };
 
-NetworksGateway.prototype.unsubscribeNetwork = function(id) {
-  delete this.networksById[id];
+NetworksGateway.prototype.unsubscribeSocketGateway = function(id) {
+  delete this.socketNetworksById[id];
 };
 
 NetworksGateway.prototype.updateRestfulGateway = function(user) {
-  if(this.hasNetwork(user.clientId)) {
-    this.networksById[user.clientId].rootUrl = user.callbackUrl;
+  if(this.hasRestfulNetwork(user.clientId)) {
+    this.restfulNetworksById[user.clientId].rootUrl = user.callbackUrl;
   } else {
     var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.token);
-    this.networksById[user.clientId] = gateway;
+    this.restfulNetworksById[user.clientId] = gateway;
   }
 };
 
 NetworksGateway.prototype.getNetwork = function(id) {
-  if(!this.networksById.hasOwnProperty(id)) {
+  if(!this.hasNetwork(id)) {
     throw new Error(id + ' not found');
   }
-  return this.networksById[id];
+  return this.socketNetworksById[id] || this.restfulNetworksById[id];
 };
 
 NetworksGateway.prototype.hasNetwork = function(id) {
-  return this.networksById.hasOwnProperty(id);
+  return this.socketNetworksById.hasOwnProperty(id) || 
+         this.restfulNetworksById.hasOwnProperty(id);
+};
+
+NetworksGateway.prototype.hasSocketNetwork = function(id) {
+  return this.socketNetworksById.hasOwnProperty(id);
+};
+
+NetworksGateway.prototype.hasRestfulNetwork = function(id) {
+  return this.restfulNetworksById.hasOwnProperty(id);
 };
 
 NetworksGateway.prototype.dispatchTrip = function(id, request) {
@@ -139,7 +149,7 @@ NetworksGateway.prototype.broadcastQuote = function(request, networks) {
   var getQuotePromises = [];
   for(var i = 0; i < networks.length; i++) {
     var network = networks[i];
-    if(this.networksById.hasOwnProperty(network.clientId)) {
+    if(this.hasNetwork(network.clientId)) {
       getQuotePromises.push(this.getQuote(network.clientId, request));
     }
   }
