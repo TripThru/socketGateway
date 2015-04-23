@@ -4,12 +4,26 @@ var IGateway = require('./gateway').IGateway;
 var Interface = require('./interface').Interface;
 var request = require('request');
 
+function endsWith(str, suffix) {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
 function RestfulGateway(id, rootUrl, token) {
   this.id = id;
+  if(!endsWith(rootUrl, '/')) {
+    rootUrl += '/';
+  }
   this.rootUrl = rootUrl;
   this.token = token;
   Gateway.call(this, id, id);
 }
+
+RestfulGateway.prototype.setRootUrl = function(rootUrl) {
+  if(!endsWith(rootUrl, '/')) {
+    rootUrl += '/';
+  }
+  this.rootUrl = rootUrl;
+};
 
 RestfulGateway.prototype.get = function(path, id, req) {
   return new Promise(function(resolve, reject){

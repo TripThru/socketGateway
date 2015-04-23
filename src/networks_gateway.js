@@ -41,7 +41,7 @@ NetworksGateway.prototype.unsubscribeSocketGateway = function(id) {
 
 NetworksGateway.prototype.updateRestfulGateway = function(user) {
   if(this.hasRestfulNetwork(user.clientId)) {
-    this.restfulNetworksById[user.clientId].rootUrl = user.callbackUrl;
+    this.restfulNetworksById[user.clientId].setRootUrl(user.callbackUrl);
   } else {
     var gateway = new RestfulGateway(user.clientId, user.callbackUrl, user.token);
     this.restfulNetworksById[user.clientId] = gateway;
