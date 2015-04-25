@@ -20,7 +20,9 @@
     "redis": "*",
     "request": "*",
     "mysql": "*",
-    "blocked": "*"
+    "blocked": "*",
+    "swagger-node-express": "2.1.3",
+    "cors": "*"
   },
   "devDependencies": {
     "blanket": "*",

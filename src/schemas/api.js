@@ -39,6 +39,8 @@ var location = {
 };
 
 module.exports = {
+    paymentMethods: paymentMethods,
+    tripStatus: tripStatus,
     setNetworkInfo: {
       "$schema": "http://json-schema.org/draft-04/schema#",
       "id": "http://www.tripthru.com/set-network-info",
@@ -114,13 +116,13 @@ module.exports = {
                     },
                   "additionalProperties": false
                  }
-              },
-              "required": [
-                "id",
-                "name",
-                "image_url"
-               ]
+              }
             },
+            "required": [
+              "id",
+              "name",
+              "image_url"
+             ],
             "additionalProperties": false
           }
         }
@@ -230,6 +232,10 @@ module.exports = {
               "type": "string"
             }
           },
+          "required": [
+            "amount",
+            "currency_code"
+          ],
           "additionalProperties": false
         }
       },
@@ -298,6 +304,11 @@ module.exports = {
               "type": "string"
             }
           },
+          "required": [
+            "id",
+            "name",
+            "image_url"
+          ],
           "additionalProperties": false
         },
         "driver": {
@@ -322,6 +333,10 @@ module.exports = {
             },
             "location": location
           },
+          "required": [
+            "name",
+            "location"
+          ],
           "additionalProperties": false
         }
       },
@@ -402,7 +417,6 @@ module.exports = {
       },
       "additionalProperties": false,
       "required": [
-        "limit",
         "location"
       ]
     },
@@ -454,7 +468,22 @@ module.exports = {
         },
         "tip": {
           "id": "http://www.tripthru.com/accept-payment/tip",
-          "type": "number"
+          "type": "object",
+          "properties": {
+            "amount": {
+              "id": "http://www.tripthru.com/dispatch/tip/amount",
+              "type": "number"
+            },
+            "currency_code": {
+              "id": "http://www.tripthru.com/dispatch/tip/currency_code",
+              "type": "string"
+            }
+          },
+          "required": [
+            "amount",
+            "currency_code"
+          ],
+          "additionalProperties": false
         }
       },
       "additionalProperties": false,

@@ -33,7 +33,7 @@ io.use(function(socket, next){
             activeClientIdsBySocket[socket] = user.clientId;
             next();
           } else {
-            console.log(user.clientId + ' already has open connection');
+            console.log(user.clientId + ' already has an open connection');
           }
         } else {
           console.log("Invalid access token");
