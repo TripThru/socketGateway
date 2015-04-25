@@ -1,4 +1,4 @@
-require('blocked')(function(ms){console.log('blocked for %sms', ms)});
+//require('blocked')(function(ms){console.log('blocked for %sms', ms)});
 var express = require('express');
 var bodyParser = require('body-parser');
 var config = require('./config');
@@ -17,6 +17,7 @@ var activeQuotes = require('./src/active_quotes');
 var tripRoutes = require('./src/routes/trips');
 var quoteRoutes = require('./src/routes/quotes');
 var userRoutes = require('./src/routes/users');
+var swagger = require('./swagger/swagger');
 
 activeQuotes.clear();
 activeTripPayments.clear();
@@ -141,8 +142,8 @@ app.get('/log/:id', function(req, res) {
     });
 });
 
+swagger.init(app);
 var server = app.listen(app.get('port'), function (){
   console.log("server listening on port " + app.get('port'));
   socket.io.attach(server);
-}); 
-
+});

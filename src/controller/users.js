@@ -77,6 +77,7 @@ UsersController.prototype._add = function(user) {
 
 UsersController.prototype.getNetworkInfo = function(request) {
   var log = logger.getSublog(request.id);
+  log.log('Get network info ' + request.client_id, request);
   var self = this;
   return validate
     .getNetworkInfoRequest(request)
@@ -160,18 +161,29 @@ UsersController.prototype.setNetworkInfo = function(request) {
 };
 
 UsersController.prototype.getDriversNearby = function(request) {
-  var productId = request.product_id || null;
-  var coverage = {
-      center: {
-        lat: request.location.lat,
-        lng: request.location.lng
-      },
-      radius: request.radius || 0.1
-    };
-  return this
-    .getNetworksThatServeLocation(request.location)
-    .bind(this)
+  var log = logger.getSublog(request.client_id);
+  log.log('Get drivers nearby ' + request.client_id, request);
+  var self = this;
+  return validate
+    .getDriversNearbyRequest(request)
+    .bind({})
+    .then(function(validation){
+      if(validation.valid) {
+        return self.getNetworksThatServeLocation(request.location);
+      } else {
+        log.log('Invalid set network info received from ' + request.client_id, request);
+        throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
+      }
+    })
     .then(function(networks){
+      var productId = request.product_id || null;
+      var coverage = {
+          center: {
+            lat: request.location.lat,
+            lng: request.location.lng
+          },
+          radius: request.radius || 0.1
+      };
       var promises = [];
       for(var i = 0; i < networks.length; i++) {
         var network = networks[i];
@@ -180,7 +192,7 @@ UsersController.prototype.getDriversNearby = function(request) {
           if((!productId || productId === product.clientId) && 
               maptools.isInside(request.location, product.coverage)) {
             request.product_id = product.clientId;
-            promises.push(this.gateway.getDriversNearby(network.clientId, request));
+            promises.push(self.gateway.getDriversNearby(network.clientId, request));
           }
         }
       }
@@ -201,6 +213,18 @@ UsersController.prototype.getDriversNearby = function(request) {
           response.count = drivers.length;
           return response;
         });
+    })
+    .catch(InvalidRequestError, function(err){
+      var response = TripThruApiFactory.createResponseFromUser(null, null, 
+          err.resultCode, err.error);
+      log.log('Response', response);
+      return response;
+    })
+    .error(function(err){
+      var response = TripThruApiFactory.createResponseFromUser(null, null, 
+          resultCodes.unknownError, 'unknown error ocurred');
+      log.log('Response', response);
+      return response;
     });
 };
 
