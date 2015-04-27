@@ -3,6 +3,9 @@ var Gateway = require('./gateway').Gateway;
 var IGateway = require('./gateway').IGateway;
 var Interface = require('./interface').Interface;
 var request = require('request');
+var codes = require('./codes');
+var resultCodes = codes.resultCodes;
+var UnsuccessfulRequestError = require('./errors').UnsuccessfulRequestError;
 
 function endsWith(str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;
@@ -42,7 +45,7 @@ RestfulGateway.prototype.get = function(path, id, req) {
       json: true
     }, function(error, response, body){
       if(error) {
-        reject(error);
+        reject(new UnsuccessfulRequestError(resultCodes.unknownError, error));
       } else {
         resolve(body);
       }
@@ -67,7 +70,7 @@ RestfulGateway.prototype.post = function(path, id, req) {
       json: true
     }, function(error, response, body){
       if(error) {
-        reject(error);
+        reject(new UnsuccessfulRequestError(resultCodes.unknownError, error));
       } else {
         resolve(body);
       }
@@ -92,7 +95,7 @@ RestfulGateway.prototype.put = function(path, id, req) {
       json: true
     }, function(error, response, body){
       if(error) {
-        reject(error);
+        reject(new UnsuccessfulRequestError(resultCodes.unknownError, error));
       } else {
         resolve(body);
       }
