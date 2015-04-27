@@ -1,19 +1,35 @@
 var Gateway = require('./gateway').Gateway;
 var Promise = require('bluebird');
+var codes = require('./codes');
+var resultCodes = codes.resultCodes;
+var UnsuccessfulRequestError = require('./errors').UnsuccessfulRequestError;
 
-function SocketGateway(id, socket) {
+function SocketGateway(id, socket, io) {
   this.id = id;
   this.socket = socket;
+  this.io = io;
+  this.connected = true;
   Gateway.call(this, id, id);
 }
 
 SocketGateway.prototype.emit = function(action, data) {
-  var socket = this.socket;
   return new Promise(function(resolve, reject){
-    socket.emit(action, data, function(res){
-      resolve(res);
-    });
-  });
+    var receivedResponse = false;
+    this.socket.emit(action, data, function(res){
+      if(this.connected) { 
+        receivedResponse = true;
+        resolve(res);
+      }
+    }.bind(this));
+    setTimeout(function(){
+      if(!receivedResponse && this.connected) {
+        this.connected = false;
+        this.io.disconnectClient(this.socket);
+        console.log('TIMEOUT #### DISCONNECTED');
+        reject(new UnsuccessfulRequestError(resultCodes.unknownError, 'Timeout'));
+      }
+    }.bind(this), 10000);
+  }.bind(this));
 };
 
 SocketGateway.prototype.dispatchTrip = function(request) {

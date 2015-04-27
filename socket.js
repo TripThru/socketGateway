@@ -21,21 +21,32 @@ io.use(function(socket, next){
 
   if (!query || !query.token) {
     console.log("Invalid connection attempt");
+    next(new Error('Invalid access token'));
   } else {
     users
       .getByToken(query.token)
       .then(function(user){
         if (user && user.role === 'network') {
-          if(!networksGateway.hasSocketNetwork(user.clientId)) {
-            var socketGateway = new SocketGateway(user.clientId, socket);
+          console.log(query.replace)
+          if(!networksGateway.hasSocketNetwork(user.clientId) || query.replace === 'true') {
+            var socketGateway = new SocketGateway(user.clientId, socket, io);
+            if(query.replace === 'true' && networksGateway.hasSocketNetwork(user.clientId)) {
+              console.log(user.clientId + ' replacing connection');
+              networksGateway.unsubscribeSocketGateway(user.clientId);
+              activeSocketsByClientId[user.clientId].disconnect();
+            }
             networksGateway.subscribeSocketGateway(socketGateway);
             activeSocketsByClientId[user.clientId] = socket;
             activeClientIdsBySocket[socket] = user.clientId;
+            socket.disconnectClient = disconnectClient;
             next();
           } else {
-            console.log(user.clientId + ' already has an open connection');
+            console.log(user.clientId + ' tried to connect again without replace=true.');
+            next(new Error('You already have an opened connection. ' + 
+                'To override it add replace=true to connection query.'));
           }
         } else {
+          next(new Error('Invalid access token'));
           console.log("Invalid access token");
         }
       });
@@ -98,16 +109,23 @@ io.sockets.on('connection', function (socket){
   });
   
   socket.on('disconnect', function(){
-    var id = activeClientIdsBySocket[socket];
-    delete activeSocketsByClientId[id];
-    delete activeClientIdsBySocket[socket];
-    networksGateway.unsubscribeSocketGateway(id);
-    console.log('Client disconnected', id);
+    disconnectClient(socket);
   });
 });
+
+function disconnectClient(socket) {
+  var id = activeClientIdsBySocket[socket];
+  delete activeSocketsByClientId[id];
+  delete activeClientIdsBySocket[socket];
+  networksGateway.unsubscribeSocketGateway(id);
+  socket.disconnect();
+  console.log('Client disconnected', id);
+}
 
 function getClientId(socket) {
   return activeClientIdsBySocket[socket];
 }
+
+io.disconnectClient = disconnectClient;
 
 module.exports.io = io;
