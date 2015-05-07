@@ -25,7 +25,7 @@ SocketGateway.prototype.emit = function(action, data) {
       if(!receivedResponse && this.connected) {
         this.connected = false;
         this.io.disconnectClient(this.socket);
-        console.log('TIMEOUT #### DISCONNECTED');
+        console.log(this.id + ' TIMEOUT #### DISCONNECTED');
         reject(new UnsuccessfulRequestError(resultCodes.unknownError, 'Timeout'));
       }
     }.bind(this), 10000);
