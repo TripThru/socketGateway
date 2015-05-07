@@ -208,7 +208,7 @@ UsersController.prototype.getDriversNearby = function(request) {
               }
             }
           }
-          var response = TripThruApiFactory.successResponse();
+          var response = TripThruApiFactory.createSuccessResponse();
           response.drivers = drivers;
           response.count = drivers.length;
           return response;
