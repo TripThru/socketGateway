@@ -72,77 +72,77 @@ NetworksGateway.prototype.dispatchTrip = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).dispatchTrip(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.getTrip = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).getTrip(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.getTripStatus = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).getTripStatus(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.updateTripStatus = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).updateTripStatus(request); 
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.getQuote = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).getQuote(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.getNetworkInfo = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).getNetworkInfo(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.setNetworkInfo = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).setNetworkInfo(request);  
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.requestPayment = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).requestPayment(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.acceptPayment = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).acceptPayment(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.getDriversNearby = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).getDriversNearby(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.getTrip = function(id, request) {
   if(this.hasNetwork(id)) {
     return this.getNetwork(id).getTrip(request);
   }
-  throw new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist');
+  return Promise.reject(new InvalidRequestError(resultCodes.rejected, id + ' doesn\'t exist'));
 };
 
 NetworksGateway.prototype.broadcastQuote = function(request, networks) {
