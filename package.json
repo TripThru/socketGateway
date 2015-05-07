@@ -22,7 +22,8 @@
     "mysql": "*",
     "blocked": "*",
     "swagger-node-express": "2.1.3",
-    "cors": "*"
+    "cors": "*",
+    "monitor.io": "*"
   },
   "devDependencies": {
     "blanket": "*",

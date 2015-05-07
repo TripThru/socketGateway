@@ -15,6 +15,9 @@ var io = require('socket.io')({
 //no need for server to serve client files
 io.serveClient(false);
 
+var monitorio = require('monitor.io');
+io.use(monitorio({ port: 3304}));
+
 //authentication middleware
 io.use(function(socket, next){
   var query = socket.handshake.query;
@@ -56,6 +59,9 @@ io.use(function(socket, next){
 io.sockets.on('connection', function (socket){
   var token = socket.handshake.query.token;
   console.log('Client connected', token);
+
+  socket.monitor('clientId', activeClientIdsBySocket[socket]);
+  socket.monitor('connectedAt', new Date());
   
   socket.on('hi', function(msg, cb){
     console.log(msg);
