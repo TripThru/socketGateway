@@ -38,7 +38,7 @@ RestfulGateway.prototype.get = function(path, id, req) {
     request({
       url: url,
       method: 'GET',
-      timeout: 10000,
+      timeout: 60000,
       followRedirect: true,
       maxRedirects: 10,
       body: req,
@@ -63,7 +63,7 @@ RestfulGateway.prototype.post = function(path, id, req) {
     request({
       url: url,
       method: 'POST',
-      timeout: 10000,
+      timeout: 60000,
       followRedirect: true,
       maxRedirects: 10,
       body: req,
@@ -88,7 +88,7 @@ RestfulGateway.prototype.put = function(path, id, req) {
     request({
       url: url,
       method: 'PUT',
-      timeout: 10000,
+      timeout: 60000,
       followRedirect: true,
       maxRedirects: 10,
       body: req,

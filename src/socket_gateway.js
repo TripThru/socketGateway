@@ -28,7 +28,7 @@ SocketGateway.prototype.emit = function(action, data) {
         console.log(this.id + ' TIMEOUT #### DISCONNECTED');
         reject(new UnsuccessfulRequestError(resultCodes.unknownError, 'Timeout'));
       }
-    }.bind(this), 10000);
+    }.bind(this), 60000);
   }.bind(this));
 };
 
