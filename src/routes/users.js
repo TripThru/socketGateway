@@ -24,8 +24,7 @@ function UserRoutes() {
   
 }
 
-UserRoutes.prototype.setNetworkInfo = function(token, id, request) {
-  request.id = id;
+UserRoutes.prototype.setNetworkInfo = function(token, request) {
   return callApiIfUserValid(token, request, usersController.setNetworkInfo)
     .then(function(response){
       if(request.callback_url && response.result_code === resultCodes.ok) {

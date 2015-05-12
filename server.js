@@ -48,9 +48,9 @@ app.all('*', function(req, res, next){
 });
 
 // API routes
-app.post('/network/:id', function(req, res){
+app.post('/network', function(req, res){
   userRoutes
-    .setNetworkInfo(req.query.token, req.params.id, req.body)
+    .setNetworkInfo(req.query.token, req.body)
     .then(function(response){
       res.json(response);
     });

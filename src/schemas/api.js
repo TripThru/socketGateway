@@ -49,10 +49,6 @@ module.exports = {
           "id": "http://www.tripthru.com/common/client_id",
           "type": "string"
         },
-        "id": {
-          "id": "http://www.tripthru.com/set-network-info/id",
-          "type": "string"
-        },
         "name": {
           "id": "http://www.tripthru.com/set-network-info/name",
           "type": "string"
@@ -128,7 +124,6 @@ module.exports = {
       },
       "additionalProperties": false,
       "required": [
-        "id",
         "name",
         "products"
       ]

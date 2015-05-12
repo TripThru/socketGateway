@@ -85,10 +85,6 @@ module.exports.models = {
     "Set Network Info": {
       "id":"Set Network Info",
       "properties": {
-        "id": {
-          "description": "Networks's identifier",
-          "type": "string"
-        },
         "name": {
           "description": "Network's name",
           "type": "string"
@@ -106,7 +102,6 @@ module.exports.models = {
         }
       },
       "required": [
-        "id",
         "name",
         "products"
       ]
