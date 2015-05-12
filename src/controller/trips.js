@@ -121,16 +121,17 @@ TripsController.prototype.getTripStatus = function(request) {
       }
     })
     .then(function(user){
+      this.user = user;
       //var name = user ? user.fullname : 'unknown';
       //log.log('Get trip status received from ' + name, request);
       return trips.getById(request.id);
     })
     .then(function(t){
       this.trip = t;
-      if(!this.trip) {
+      if(!this.trip || !tripBelongsToUser(this.trip, this.user)) {
         throw new InvalidRequestError(resultCodes.rejected, 'trip ' + request.id + ' not found');
       } else if(!this.trip.servicingNetwork) {
-        return { result_code: resultCodes.notFound };
+        throw new InvalidRequestError(resultCodes.rejected, 'trip ' + request.id + ' has no servicing network');
       } else { 
         return self.gateway.getTripStatus(this.trip.servicingNetwork.id, request);
       }
@@ -183,11 +184,12 @@ TripsController.prototype.updateTripStatus = function(request) {
     })
     .then(function(user){
       var name = user ? user.fullname : 'unknown';
+      this.user = user;
       log.log('Update trip status (' + request.status + ') received from ' + name, request);
       return trips.getById(request.id);
     })
     .then(function(t){
-      if(t) {
+      if(t && tripBelongsToUser(t, this.user)) {
         log.setOrigin(
             t.originatingNetwork.id === request.client_id ? 'origin' : 'servicing');
         this.oldStatus = t.status;
@@ -243,12 +245,13 @@ TripsController.prototype.requestPayment = function(request) {
       }
     })
     .then(function(user){
+      this.user = user;
       var name = user ? user.fullname : 'unknown';
       log.log('Payment request received from ' + name, request);
       return trips.getById(request.id);
     })
     .then(function(trip){
-      if(!trip) {
+      if(!trip || !tripBelongsToUser(trip, this.user)) {
         throw new InvalidRequestError(resultCodes.notFound, 'trip not found');
       }
       this.tripPayment = TripThruApiFactory.createTripPaymentFromRequest(request, 
@@ -295,11 +298,12 @@ TripsController.prototype.requestPayment = function(request) {
     })
     .then(function(user){
       var name = user ? user.fullname : 'unknown';
+      this.user = user;
       log.log('Payment request received from ' + name, request);
       return trips.getById(request.id);
     })
     .then(function(trip){
-      if(!trip) {
+      if(!trip || !tripBelongsToUser(trip, this.user)) {
         throw new InvalidRequestError(resultCodes.notFound, 'trip not found');
       }
       this.tripPayment = TripThruApiFactory.createTripPaymentFromRequest(request, 
@@ -344,12 +348,13 @@ TripsController.prototype.acceptPayment = function(request) {
       }
     })
     .then(function(user){
+      this.user = user;
       var name = user ? user.fullname : 'unknown';
       log.log('Accept payment request received from ' + name, request);
       return trips.getById(request.id);
     })
     .then(function(trip){
-      if(!trip) {
+      if(!trip || !tripBelongsToUser(trip, this.user)) {
         throw new InvalidRequestError(resultCodes.notFound, 'trip not found');
       }
       this.sendTo = trip.servicingNetwork.id;
@@ -421,6 +426,11 @@ function shouldForwardUpdate(trip, currentStatus, newStatus) {
     shouldForward = false;
   }
   return shouldForward;
+}
+
+function tripBelongsToUser(trip, user) {
+  return (trip.originatingNetwork && trip.originatingNetwork.id === user.clientId) ||
+          (trip.servicingNetwork && trip.servicingNetwork.id === user.clientId);
 }
 
 module.exports = new TripsController();
