@@ -492,6 +492,7 @@ function createUserFromSetNetworkInfoRequest(request, user) {
 
 function createGetNetworkInfoResponseFromUser(user) {
   var r = {
+    id: user.clientId,
     name: user.name,
     products: []
   };

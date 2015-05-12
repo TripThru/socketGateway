@@ -93,12 +93,15 @@ UsersController.prototype.getNetworkInfo = function(request) {
     .then(function(u){
       var name = u ? u.fullname : 'unknown';
       log.log('Get network info received from ' + name, request);
+      return self._getByClientId(request.id);
+    })
+    .then(function(u){
       if(u) {
         var response = TripThruApiFactory.createResponseFromUser(u, 'get-network-info');
         log.log('Response', response);
         return response;
       } else {
-        throw new InvalidRequestError(resultCodes.notFound, 'User ' + request.id + ' does not exist');
+        throw new InvalidRequestError(resultCodes.notFound, 'Network ' + request.id + ' not found');
       }
     })
     .catch(InvalidRequestError, function(err){
