@@ -417,6 +417,10 @@ module.exports.models = {
         "currency_code": {
           "description": "Currency code of trip's fare",
           "type": "string"
+        },
+        "fare_summary": {
+          "description": "Fare summary including tolls, extra fees, etc.",
+          "type": "string"
         }
       },
       "required": [

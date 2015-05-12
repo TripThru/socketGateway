@@ -458,6 +458,10 @@ module.exports = {
         "currency_code": {
           "id": "http://www.tripthru.com/request-payment/currency_code",
           "type": "string"
+        },
+        "fare_summary": {
+          "id": "http://www.tripthru.com/request-payment/fare_summary",
+          "type": "string"
         }
       },
       "additionalProperties": false,
