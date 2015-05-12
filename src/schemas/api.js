@@ -1,6 +1,5 @@
 var paymentMethods = ['cash', 'credit-card', 'account'];
 var tripStatus =  [
-                     'new', 
                      'accepted', 
                      'en_route', 
                      'arrived',
@@ -287,6 +286,25 @@ module.exports = {
           "enum": tripStatus
         },
         "eta": timestamp,
+        "fare": {
+          "id": "http://www.tripthru.com/update-tripstatus/fare",
+          "type": "object",
+          "properties": {
+            "amount": {
+              "id": "http://www.tripthru.com/update-tripstatus/fare/amount",
+              "type": "number"
+            },
+            "currency_code": {
+              "id": "http://www.tripthru.com/update-tripstatus/fare/currency_code",
+              "type": "string"
+            },
+            "required": [
+              "amount",
+              "currency_code"
+            ],
+            "additionalProperties": false
+          }
+        },
         "product": {
           "id": "http://www.tripthru.com/update-tripstatus/product",
           "type": "object",

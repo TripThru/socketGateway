@@ -1,7 +1,7 @@
 var schemas = require('../src/schemas/api');
 
 var paymentMethods = schemas.paymentMethods;
-var tripStatus =  schemas.tripStatus;
+var tripStatus = schemas.tripStatus;
 
 module.exports.models = {
     "Location": {
@@ -279,6 +279,23 @@ module.exports.models = {
         "location"
       ]
     },
+    "Update Trip Status Fare": {
+      "id": "Update Trip Status Fare",
+      "properties": {
+        "amount": {
+          "description": "Fare amount",
+          "type": "number"
+        },
+        "currency_code": {
+          "description": "Fare currency code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "currency_code"
+      ]
+    },
     "Update Trip Status": {
       "id": "Update Trip Status",
       "properties": {
@@ -300,6 +317,9 @@ module.exports.models = {
         },
         "driver": {
           "$ref": "Update Trip Status Driver"
+        },
+        "fare": {
+          "$ref": "Update Trip Status Fare"
         }
       },
       "required": [
