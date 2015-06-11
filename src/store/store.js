@@ -235,7 +235,7 @@ Store.prototype.updateUser = function(user) {
       
       var userQuery = "UPDATE users SET ? WHERE client_id = ?";
       var fields = {
-        name: user.name,
+        full_name: user.name,
         callback_url: user.callbackUrl
       };
       var userData = [fields, user.clientId];
