@@ -475,7 +475,7 @@ function createUserFromSetNetworkInfoRequest(request, user) {
   for(var i = 0; i < request.products.length; i++) {
     var product = request.products[i];
     user.products.push({
-      id: product.id,
+      clientId: product.id,
       name: product.name,
       imageUrl: product.image_url,
       capacity: product.capacity,
@@ -499,7 +499,7 @@ function createGetNetworkInfoResponseFromUser(user) {
   for(var i = 0; i < user.products.length; i++) {
     var product = user.products[i];
     r.products.push({
-      id: product.product_id,
+      id: product.clientId,
       name: product.name,
       image_url: product.imageUrl,
       accepts_prescheduled: product.acceptsPrescheduled,

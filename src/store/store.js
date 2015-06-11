@@ -119,9 +119,9 @@ Store.prototype.updateTrip = function(trip) {
   };
   if(trip.driver) {
     if(trip.driver.name) fields.driver_name = trip.driver.name;
-    if(trip.driver.id) field.driver_id = trip.driver.id;
-    if(trip.driver.localId) field.driver_local_id = trip.driver.localId;
-    if(trip.driver.nativeLanguageId) field.driver_native_language_id = trip.driver.nativeLanguageId;
+    if(trip.driver.id) fields.driver_id = trip.driver.id;
+    if(trip.driver.localId) fields.driver_local_id = trip.driver.localId;
+    if(trip.driver.nativeLanguageId) fields.driver_native_language_id = trip.driver.nativeLanguageId;
   }
   var query = "UPDATE trips SET ? WHERE id = ?";
   var data = [fields, trip.dbId];
@@ -220,10 +220,18 @@ Store.prototype.getQuoteById = function(id) {
 };
   
 Store.prototype.updateUser = function(user) {
-  return Promise
-    .resolve(user)
-    .then(function(user){
+  return execute('SELECT client_id FROM products WHERE user_id = ?', [user.id])
+    .then(function(dbProducts){
       var queries = [];
+      var oldProducts = dbProducts.map(function(product){
+        return product.client_id;
+      });
+      var updatedProducts = user.products.map(function(product){
+        return product.clientId;
+      });
+      var deletedProducts = oldProducts.filter(function(product){
+        return updatedProducts.indexOf(product) < 0;
+      });
       
       var userQuery = "UPDATE users SET ? WHERE client_id = ?";
       var fields = {
@@ -232,6 +240,15 @@ Store.prototype.updateUser = function(user) {
       };
       var userData = [fields, user.clientId];
       queries.push({query: userQuery, data: userData});
+      
+      if(deletedProducts.length > 0) {
+        var query = "DELETE FROM products WHERE client_id like '" + deletedProducts[0] + "'";
+        for(var i = 1; i < deletedProducts.length; i++) {
+          var product = deletedProducts[i];
+          query += ' OR client_id like "' + product + '"';
+        }
+        queries.push({query: query, data: []});
+      }
       
       for(var i = 0; i < user.products.length; i++) {
         var f = user.products[i];
@@ -250,20 +267,20 @@ Store.prototype.updateUser = function(user) {
                     "  accepts_account_payment = VALUES(accepts_account_payment), " +
                     "  accepts_creditcard_payment = VALUES(accepts_creditcard_payment)";
         var data = [
-                    user.id, 
-                    f.id, 
-                    f.name, 
-                    f.coverage ? f.coverage.radius : null, 
-                    f.coverage ? f.coverage.center.lat : null, 
-                    f.coverage ? f.coverage.center.lng : null, 
-                    f.imageUrl, 
-                    f.capacity, 
-                    f.acceptsPrescheduled, 
-                    f.acceptsOndemand, 
-                    f.acceptsCashPayment, 
-                    f.acceptsAccountPayment, 
-                    f.acceptsCreditcardPayment
-                   ];
+                      user.id, 
+                      f.clientId, 
+                      f.name,
+                      f.coverage ? f.coverage.radius : null, 
+                      f.coverage ? f.coverage.center.lat : null, 
+                      f.coverage ? f.coverage.center.lng : null, 
+                      f.imageUrl, 
+                      f.capacity, 
+                      f.acceptsPrescheduled, 
+                      f.acceptsOndemand, 
+                      f.acceptsCashPayment, 
+                      f.acceptsAccountPayment, 
+                      f.acceptsCreditcardPayment
+                     ];
         queries.push({query: query, data: data});
       }
       return execute_sequence(queries);
