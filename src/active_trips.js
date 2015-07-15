@@ -9,7 +9,9 @@ function ActiveTrips() {
       queued: {},
       accepted: {},
       en_route: {},
+      arrived: {},
       picked_up: {},
+      dropped_off: {},
       completed: {},
       cancelled: {},
       rejected: {}
@@ -134,8 +136,14 @@ ActiveTrips.prototype.getDashboardTrips = function(networkId, status) {
   if(status === 'en_route' || status === 'all') {
     pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.en_route);
   }
+  if(status === 'arrived' || status === 'all') {
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.arrived);
+  }
   if(status === 'picked_up' || status === 'all') {
     pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.picked_up);
+  }
+  if(status === 'dropped_off' || status === 'all') {
+    pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.dropped_off);
   }
   if(status === 'completed' || status === 'all') {
     pushTrips(networkId, trips, this.dashboardTripsByIdByStatus.completed);
@@ -176,7 +184,7 @@ ActiveTrips.prototype.getAll = function(networkId) {
 // Dashboard utility functions -- end
 
 var isNonActiveStatus = function(status) {
-  return status === 'completed' || status === 'rejected' || status === 'cancelled';
+  return ['completed', 'rejected', 'cancelled'].indexOf(status) !== -1;
 };
 
 var toApiTrip = function(redisTrip) {

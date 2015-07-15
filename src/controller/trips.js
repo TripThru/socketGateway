@@ -414,18 +414,8 @@ function tripIsLocal(trip, request) {
     trip.originatingNetwork.id === trip.servicingNetwork.id;
 }
 
-function isActiveStatus(status) {
-  return status === 'accepted' || status === 'en_route' || 
-    status === 'picked_up';
-}
-
 function shouldForwardUpdate(trip, currentStatus, newStatus) {
-  var shouldForward = trip.servicingNetwork && 
-    trip.originatingNetwork.id !== trip.servicingNetwork.id;
-  if(!isActiveStatus(currentStatus) && !isActiveStatus(newStatus)) {
-    shouldForward = false;
-  }
-  return shouldForward;
+  return trip.servicingNetwork && trip.originatingNetwork.id !== trip.servicingNetwork.id;
 }
 
 function tripBelongsToUser(trip, user) {
