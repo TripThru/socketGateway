@@ -20,9 +20,11 @@
     "redis": "*",
     "request": "*",
     "mysql": "*",
+    "knex": "*",
     "blocked": "*",
     "swagger-node-express": "2.1.3",
     "cors": "*",
+    "bcrypt": "*",
     "monitor.io": "*"
   },
   "devDependencies": {
