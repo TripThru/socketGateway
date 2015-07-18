@@ -99,6 +99,7 @@ Store.prototype.getTripById = function(id) {
     .innerJoin('users', 'trips.user_id', 'users.id')
     .innerJoin('products', 'trips.product_id', 'products.id')
     .select('trips.*',
+            'trips.trip_id as id',
             this.raw("(SELECT name from currency_codes WHERE id = trips.guaranteed_tip_currency_code_id) as guaranteed_tip_currency_code"),
             this.raw("(SELECT name from payment_method_codes WHERE id = trips.payment_method_code_id) as payment_method"),
             this.raw("(SELECT client_id from users WHERE id = trips.servicing_network_id) as servicing_network_id"),
@@ -313,14 +314,16 @@ Store.prototype.getProducts = function(userId) {
     .db('products')
     .whereRaw('user_id = (SELECT id from users where client_id = ?)', [userId])
     .select('products.*',
-            'products.client_id as id');
+            'products.client_id as id',
+            this.raw('(SELECT client_id FROM users WHERE id = products.user_id) as user_id'));
 };
 
 Store.prototype.getUserProductsCoverage = function(userId) {
   return this
     .db('product_coverages')
     .whereRaw("product_id IN (SELECT id FROM products WHERE user_id = (SELECT id FROM users WHERE client_id = ?))", [userId])
-    .select('*');
+    .select('product_coverages.*',
+            this.raw('(SELECT client_id FROM products WHERE id = product_coverages.product_id) as product_id'));
 };
 
 Store.prototype.raw = function(query, bindings) {
