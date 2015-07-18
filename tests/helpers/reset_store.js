@@ -11,6 +11,9 @@ module.exports = function resetStore(store) {
       return store.db.raw('TRUNCATE trips');
     })
     .then(function(){
+      return store.db.raw('TRUNCATE product_coverages');
+    })
+    .then(function(){
       return store.db.raw('TRUNCATE products');
     })
     .then(function(){

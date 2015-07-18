@@ -4,8 +4,12 @@ var tripId = 0;
 function Trip(user, product, servicingUser, servicingProduct) {
   tripId++;
   this.id = 'test_trip_' + tripId;
-  this.userStoreId = user.storeId;
-  this.productStoreId = product.storeId;
+  this.user = {
+    id: user.id
+  };
+  this.product = {
+    id: product.id
+  };
   this.customer = {
     id: 'test customer id',
     name: 'test customer',
@@ -37,10 +41,10 @@ function Trip(user, product, servicingUser, servicingProduct) {
   this.autoDispatch = true;
   this.creation = moment().subtract(5, 'minutes').format().toString();
   this.servicingNetwork = {
-    storeId: servicingUser.storeId
+    id: servicingUser.id
   };
   this.servicingProduct = {
-    storeId: servicingProduct.storeId
+    id: servicingProduct.id
   };
   this.dropoffTime = moment().add(20, 'minutes').format().toString();
   this.fare = 10.50;
@@ -60,8 +64,7 @@ function Trip(user, product, servicingUser, servicingProduct) {
   this.locationUpdates = [];
 }
 
-Trip.prototype.update = function(storeTripId) {
-  this.storeId = storeTripId;
+Trip.prototype.update = function() {
   this.status = 'accepted';
   this.lastUpdate = moment().format().toString();
   this.pickupTime = moment(this.pickupTime).subtract(5, 'minutes').format().toString();
@@ -108,8 +111,7 @@ Trip.prototype.updateDriverLocation = function() {
 Trip.prototype.getPaymentRequest = function() {
   this.payment = {
     trip: {
-     id: this.id,
-     storeId: this.storeId
+     id: this.id
     },
     requestedAt: moment().format().toString(),
     amount: 15.50,
