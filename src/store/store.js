@@ -2,10 +2,9 @@ var Promise = require('bluebird');
 var promiseHelper = require('../promise_helper');
 var knex = require('knex');
 var logger = require('../logger');
-var config = require('../../config').db;
 
-function Store(config){
-  this.init(config);
+function Store(){
+
 }
 
 Store.prototype.init = function(config) {
@@ -252,7 +251,7 @@ Store.prototype.updateProducts = function(userId, products) {
   return createOrUpdate;
 };
 
-Store.prototype.deleteProductsCoverage = function(userId) {
+Store.prototype._deleteProductsCoverage = function(userId) {
   return this
     .db('product_coverages')
     .whereRaw('product_id IN (SELECT id FROM products where user_id = (SELECT id FROM users WHERE client_id = ?))', [userId])
@@ -275,7 +274,7 @@ Store.prototype.updateProductsCoverage = function(userId, products){
     }));
   }
   return this
-    .deleteProductsCoverage(userId)
+    ._deleteProductsCoverage(userId)
     .then(function(){
       if(inserts.length > 0) {
         return self.db('product_coverages').insert(inserts);
