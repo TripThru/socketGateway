@@ -331,4 +331,4 @@ Store.prototype.clear = function() {
 
 };
 
-module.exports = new Store(config);
+module.exports = new Store();
