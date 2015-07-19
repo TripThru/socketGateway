@@ -237,12 +237,14 @@ describe('Trips model tests', function(){
       });
   });
 
-  it('should update a trip', function(done){
+  it('should update a trip and create a location', function(done){
     tripsModel
       .update(modelFixture('update_trip_request'))
       .then(function(res){
         store.updateTrip.calledOnce.should.be.true;
         store.updateTrip.calledWithExactly(storeFixture('update_trip_request'));
+        store.createTripLocation.calledOnce.should.be.true;
+        store.createTripLocation.calledWithExactly(storeFixture('update_trip_request').id, storeFixture('create_location_request'));
         done();
       })
       .error(function(err){

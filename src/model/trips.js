@@ -53,10 +53,19 @@ function toStoreTrip(apiTrip) {
       id: apiTrip.driver.id,
       name: apiTrip.driver.name,
       localId: apiTrip.driver.localId,
-      nativeLanguageId: apiTrip.driver.nativeLanguageId,
-      location: apiTrip.driver.location
+      nativeLanguageId: apiTrip.driver.nativeLanguage.id
     };
+    if(apiTrip.driver.location){
+      t.driver.location = {
+        lat: apiTrip.driver.location.lat,
+        lng: apiTrip.driver.location.lng,
+        description: apiTrip.driver.location.description,
+        datetime: getISOStringFromMoment(apiTrip.driver.location.datetime)
+      }
+    }
   }
+  
+  return t;
 }
 
 function toApiTrip(storeTrip) {
