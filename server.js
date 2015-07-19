@@ -4,6 +4,7 @@ var bodyParser = require('body-parser');
 var config = require('./config');
 var socket = require('./socket');
 var store = require('./src/store/store');
+store.init(config.db);
 var tripsController = require('./src/controller/trips');
 var quotesController = require('./src/controller/quotes');
 var usersController = require('./src/controller/users');

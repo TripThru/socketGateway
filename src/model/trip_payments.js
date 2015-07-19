@@ -7,12 +7,13 @@ function getISOStringFromMoment(moment) {
 
 function toStoreTripPayment(apiTripPayment) {
   var tp = {
-    tripId: apiTripPayment.tripId,
-    tripDbId: apiTripPayment.tripDbId,
+    trip: {
+      id: apiTripPayment.trip.id
+    },
     requestedAt: getISOStringFromMoment(apiTripPayment.requestedAt),
     amount: apiTripPayment.amount,
     currencyCode: apiTripPayment.currencyCode,
-    confirmation: apiTripPayment.confirmation,
+    confirmed: apiTripPayment.confirmed,
     tip: apiTripPayment.tip || 0
   };
   if(apiTripPayment.confirmedAt) {
@@ -23,26 +24,26 @@ function toStoreTripPayment(apiTripPayment) {
 
 function toApiTripPayment(storeTripPayment) {
   var tp = {
-    id: storeTripPayment.id,
-    tripId: storeTripPayment.trip_client_id,
-    tripDbId: storeTripPayment.trip_id,
+    trip: {
+      id: storeTripPayment.trip_id
+    },
     requestedAt: moment(storeTripPayment.requested_at),
     amount: storeTripPayment.amount,
     currencyCode: storeTripPayment.currency_code,
-    confirmation: storeTripPayment.confirmation,
+    confirmed: storeTripPayment.confirmed === 1,
     tip: storeTripPayment.tip || 0
   };
   if(storeTripPayment.confirmed_at) {
-    tp.confirmedAt = moment(storeTripPayment.confirmed_at); 
+    tp.confirmedAt = moment(storeTripPayment.confirmed_at);
   }
   return tp;
 }
 
 function TripPaymentsModel() {
-  
+
 }
 
-TripPaymentsModel.prototype.add = function(tripPayment) {
+TripPaymentsModel.prototype.create = function(tripPayment) {
   var tp = toStoreTripPayment(tripPayment);
   return store.createTripPayment(tp)
     .then(function(result){

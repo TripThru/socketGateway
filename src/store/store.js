@@ -8,19 +8,21 @@ function Store(){
 }
 
 Store.prototype.init = function(config) {
-  this.db = knex({
-    client: 'mysql',
-    connection: {
-      host: config.host,
-      database: config.database,
-      user: config.user,
-      password: config.password,
-    },
-    pool: {
-      min: 0,
-      max: 300
-    }
-  });
+  if(!this.db) {
+    this.db = knex({
+      client: 'mysql',
+      connection: {
+        host: config.host,
+        database: config.database,
+        user: config.user,
+        password: config.password,
+      },
+      pool: {
+        min: 0,
+        max: 300
+      }
+    });
+  }
 };
 
 Store.prototype.createTrip = function(trip) {

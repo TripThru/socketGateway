@@ -11,7 +11,7 @@ function User() {
   this.role = 'partner';
   this.endpointType = 'socket';
   this.callbackUrl = 'callback url user ' + userId;
-  this.creation = moment().format().toString();
+  this.createdAt = moment().format().toString();
   this.lastUpdate = moment().add(1, 'minutes').format().toString();
   this.products = [];
 }

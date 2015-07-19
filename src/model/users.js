@@ -1,101 +1,132 @@
+var Promise = require('bluebird');
+var moment = require('moment');
 var store = require('../store/store');
 
-function toStoreUser(apiUser) {
-  return apiUser;
+function getISOStringFromMoment(moment) {
+  return moment.format().toString();
 }
 
-function toApiUser(storeUser) {
+function toStoreUser(apiUser) {
   var user =  {
-    id: storeUser[0].user_db_id,
-    clientId: storeUser[0].user_client_id,
-    name: storeUser[0].user_name,
-    fullname: storeUser[0].full_name,
-    token: storeUser[0].token,
-    email: storeUser[0].email,
-    role: storeUser[0].role,
-    endpointType: storeUser[0].endpoint_type,
-    callbackUrl: storeUser[0].callback_url,
+    id: apiUser.id,
+    name: apiUser.name,
+    passwordHash: '',
+    email: apiUser.email,
+    token: apiUser.token,
+    role: apiUser.role,
+    endpointType: apiUser.endpointType,
+    callbackUrl: apiUser.callbackUrl,
+    createdAt: getISOStringFromMoment(apiUser.creation),
+    lastUpdate: getISOStringFromMoment(apiUser.lastUpdate),
+    products: apiUser.products
+  };
+  return user;
+}
+
+function toApiUser(storeUser, storeProducts, storeProductsCoverage) {
+  var user =  {
+    id: storeUser.id,
+    name: storeUser.name,
+    token: storeUser.token,
+    email: storeUser.email,
+    role: storeUser.role,
+    endpointType: storeUser.endpoint_type,
+    callbackUrl: storeUser.callback_url,
+    mustAcceptCashPayment: storeUser.must_accept_cash_payment === 1,
+    mustAcceptPrescheduled: storeUser.must_accept_prescheduled === 1,
+    mustAcceptOndemand: storeUser.must_accept_ondemand === 1,
+    mustAcceptAccountPayment: storeUser.must_accept_account_payment === 1,
+    mustAcceptCreditcardPayment: storeUser.must_accept_creditcard_payment === 1,
+    minRating: storeUser.min_rating,
+    routingStrategy: storeUser.routing_strategy,
+    createdAt: moment(storeUser.created_at),
+    lastUpdate: moment(storeUser.updated_at),
     products: [],
     productsById: {}
   };
-  for(var i = 0; i < storeUser.length; i++) {
-    var su = storeUser[i];
-    var product = {
-      id: su.product_db_id,
-      clientId: su.product_client_id,
-      name: su.product_name,
-      imageUrl: su.image_url,
-      capacity: su.capacity,
-      acceptsPrescheduled: su.accepts_prescheduled === 1,
-      acceptsOndemand: su.accepts_ondemand === 1,
-      acceptsCashPayment: su.accepts_cash_payment === 1,
-      acceptsAccountPayment: su.accepts_account_payment === 1,
-      acceptsCreditcardPayment: su.accepts_creditcard_payment === 1
-    };
-    if(su.coverage_radius && su.coverage_lat && su.coverage_lng) {
-      product.coverage = {
-        radius: su.coverage_radius,
-        center: {
-          lat: su.coverage_lat,
-          lng: su.coverage_lng
-        }
-      };
+  var coverageByProductId = {};
+  for(var i = 0; i < storeProductsCoverage.length; i++) {
+    var c = storeProductsCoverage[i];
+    if(!coverageByProductId.hasOwnProperty(c.product_id)) {
+      coverageByProductId[c.product_id] = [];
     }
+    coverageByProductId[c.product_id].push({
+      radius: c.coverage_radius,
+      center: {
+        lat: c.coverage_lat,
+        lng: c.coverage_lng
+      }
+    });
+  }
+  for(var i = 0; i < storeProducts.length; i++) {
+    var sp = storeProducts[i];
+    var product = {
+      id: sp.id,
+      name: sp.name,
+      imageUrl: sp.image_url,
+      capacity: sp.capacity,
+      acceptsPrescheduled: sp.accepts_prescheduled === 1,
+      acceptsOndemand: sp.accepts_ondemand === 1,
+      acceptsCashPayment: sp.accepts_cash_payment === 1,
+      acceptsAccountPayment: sp.accepts_account_payment === 1,
+      acceptsCreditcardPayment: sp.accepts_creditcard_payment === 1,
+      coverage: coverageByProductId.hasOwnProperty(sp.id) ? coverageByProductId[sp.id] : []
+    };
     user.products.push(product);
-    user.productsById[product.clientId] = product;
+    user.productsById[product.id] = product;
   }
   return user;
 }
 
 function UsersModel() {
-  
+
 }
 
+UsersModel.prototype.create = function(user) {
+  return store.createUser(toStoreUser(user));
+};
+
 UsersModel.prototype.update = function(user) {
-  return store.updateUser(toStoreUser(user));
+  var storeUser = toStoreUser(user);
+  return Promise
+    .all([
+      store.updateUser(storeUser),
+      store.updateProducts(storeUser.id, storeUser.products),
+      store.updateProductsCoverage(storeUser.id, storeUser.products)
+    ]);
 };
 
 UsersModel.prototype.getAll = function() {
   return store
     .getAllUsers()
+    .bind(this)
     .then(function(allUsers){
       if(!allUsers || allUsers.length === 0) {
         return [];
       }
-      var storeUsersById = {};
-      for(var i = 0; i < allUsers.length; i++) {
-        var u = allUsers[i];
-        if(u) {
-          if(!storeUsersById.hasOwnProperty(u.user_client_id)) {
-            storeUsersById[u.user_client_id] = [u];
-          } else {
-            storeUsersById[u.user_client_id].push(u);
-          }
-        }
+      var getAllInfo = [];
+      for (var i = 0; i < allUsers.length; i++) {
+        var user = allUsers[i];
+        getAllInfo.push(this.getById(user.id));
       }
-      var users = [];
-      for(var id in storeUsersById) {
-        if(storeUsersById.hasOwnProperty(id)) {
-          users.push(toApiUser(storeUsersById[id]));
-        }
-      }
-      return users;
+      return Promise.all(getAllInfo);
     });
 };
 
-UsersModel.prototype.getByClientId = function(id) {
-  return store
-    .getUserByClientId(id)
+UsersModel.prototype.getById = function(id) {
+  return Promise
+    .all([store.getUserById(id), store.getProducts(id), store.getUserProductsCoverage(id)])
     .then(function(res){
-      return res.length > 0 ? toApiUser(res) : null;
+      return res[0].length > 0 ? toApiUser(res[0][0], res[1], res[2]) : null;
     });
 };
 
 UsersModel.prototype.getByToken = function(token) {
   return store
     .getUserByToken(token)
+    .bind(this)
     .then(function(res){
-      return res.length > 0 ? toApiUser(res) : null;
+      return res.length > 0 ? this.getById(res[0].id) : null;
     });
 };
 

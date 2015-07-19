@@ -1,7 +1,7 @@
 module.exports = function(grunt){
-  
+
   grunt.loadNpmTasks('grunt-mocha-test');
-  
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     mochaTest: {
@@ -22,9 +22,9 @@ module.exports = function(grunt){
         },
         src: ['tests/**/*.js']
       }
-      
+
     }
   });
-  
+
   grunt.registerTask('default', ['mochaTest']);
 };

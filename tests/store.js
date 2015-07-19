@@ -1,11 +1,9 @@
 var should = require('should');
 var Promise = require('bluebird');
 var moment = require('moment');
-var testConfig = require('./config/store');
-var config = require('../config');
-// Override main config
-config.db = testConfig.db;
+var testConfig = require('./config/store').db;
 var store = require('../src/store/store');
+store.init(testConfig);
 var resetStore = require('./helpers/reset_store');
 var User = require('./helpers/store/users');
 var Trip = require('./helpers/store/trips');
@@ -26,7 +24,7 @@ function usersShouldBeEqual(fixUser, storeUser) {
   fixUser.role.should.be.equal(storeUser[0].role);
   fixUser.endpointType.should.be.equal(storeUser[0].endpoint_type);
   fixUser.callbackUrl.should.be.equal(storeUser[0].callback_url);
-  isSameDate(fixUser.creation, storeUser[0].created_at);
+  isSameDate(fixUser.createdAt, storeUser[0].created_at);
   isSameDate(fixUser.lastUpdate, storeUser[0].updated_at);
 };
 
