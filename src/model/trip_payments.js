@@ -56,14 +56,6 @@ TripPaymentsModel.prototype.update = function(tripPayment) {
   return store.updateTripPayment(toStoreTripPayment(tripPayment));
 };
 
-TripPaymentsModel.prototype.getById = function(id) {
-  return store
-    .getTripPaymentById(id)
-    .then(function(res){
-      return res.length > 0 ? toApiTripPayment(res[0]) : null;
-    });
-};
-
 TripPaymentsModel.prototype.getByTripId = function(id) {
   return store
     .getTripPaymentByTripId(id)
