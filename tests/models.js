@@ -167,7 +167,7 @@ describe('Users model tests', function(){
         done(new Error(err));
       });
   });
-
+  
   after(function(){
     restoreStore();
   })

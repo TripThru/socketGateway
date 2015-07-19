@@ -165,18 +165,6 @@ Store.prototype.getTripPaymentByTripId = function(id) {
     );
 };
 
-Store.prototype.createQuote = function(quote) {
-  throw new Error('Not implemented');
-};
-
-Store.prototype.updateQuote = function(quote) {
-  throw new Error('Not implemented');
-};
-
-Store.prototype.getQuoteById = function(id) {
-  throw new Error('Not implemented');
-};
-
 Store.prototype.createUser = function(user) {
   return this
     .db('users')

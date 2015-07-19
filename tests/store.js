@@ -110,6 +110,23 @@ describe('Store user tests', function(){
       });
   });
 
+  it('should get all users', function(done){
+    var user = new User();
+    store
+      .createUser(user)
+      .then(function(){
+        return store.getAllUsers();
+      })
+      .then(function(res){
+        res.length.should.be.equal(1);
+        usersShouldBeEqual(user, res);
+        done();
+      })
+      .error(function(err){
+        done(new Error(err));
+      });
+  });
+
   it('should update a user', function(done){
     var user = new User();
     store
