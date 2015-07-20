@@ -44,12 +44,7 @@ function TripPaymentsModel() {
 }
 
 TripPaymentsModel.prototype.create = function(tripPayment) {
-  var tp = toStoreTripPayment(tripPayment);
-  return store.createTripPayment(tp)
-    .then(function(result){
-      tp.id = result.insertId;
-      return tp;
-    });
+  return store.createTripPayment(toStoreTripPayment(tripPayment));
 };
 
 TripPaymentsModel.prototype.update = function(tripPayment) {

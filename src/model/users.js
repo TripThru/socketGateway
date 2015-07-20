@@ -16,7 +16,7 @@ function toStoreUser(apiUser) {
     role: apiUser.role,
     endpointType: apiUser.endpointType,
     callbackUrl: apiUser.callbackUrl,
-    createdAt: getISOStringFromMoment(apiUser.creation),
+    creation: getISOStringFromMoment(apiUser.creation),
     lastUpdate: getISOStringFromMoment(apiUser.lastUpdate),
     products: apiUser.products
   };
@@ -39,7 +39,7 @@ function toApiUser(storeUser, storeProducts, storeProductsCoverage) {
     mustAcceptCreditcardPayment: storeUser.must_accept_creditcard_payment === 1,
     minRating: storeUser.min_rating,
     routingStrategy: storeUser.routing_strategy,
-    createdAt: moment(storeUser.created_at),
+    creation: moment(storeUser.created_at),
     lastUpdate: moment(storeUser.updated_at),
     products: [],
     productsById: {}

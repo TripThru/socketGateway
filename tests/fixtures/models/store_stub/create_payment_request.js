@@ -4,6 +4,5 @@ module.exports = {
   amount: 15.5,
   currencyCode: 'USD',
   confirmed: false,
-  confirmedAt: null,
   tip: 0
 };

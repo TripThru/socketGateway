@@ -8,7 +8,7 @@ module.exports = {
   role: 'partner',
   endpointType: 'socket',
   callbackUrl: 'Updated callback url user 3',
-  createdAt: moment('2015-07-18T06:43:33-07:00'),
+  creation: moment('2015-07-18T06:43:33-07:00'),
   lastUpdate: moment('2015-07-18T06:45:33-07:00'),
   mustAcceptCashPayment: true,
   mustAcceptPrescheduled: true,

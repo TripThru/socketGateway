@@ -20,11 +20,13 @@ module.exports = {
     description: 'dropoff location description '
   },
   driver: {
-    id: null,
-    name: null,
-    localId: null,
-    phoneNumber: null,
-    nativeLanguage: { id: null } 
+   id: 'test driver id',
+   name: 'test driver',
+   localId: 'en_uk',
+   phoneNumber: '12355231',
+   nativeLanguage: {
+     id: 'en_uk'
+   }
   },
   status: 'new',
   lastUpdate: '2015-07-18T06:42:34-07:00',

@@ -61,7 +61,7 @@ function usersShouldBeEqual(user1, user2) {
   user1.mustAcceptCreditcardPayment.should.be.equal(user2.mustAcceptCreditcardPayment);
   user1.minRating.should.be.equal(user2.minRating);
   user1.routingStrategy.should.be.equal(user2.routingStrategy);
-  isSameDate(user1.createdAt, user2.createdAt).should.be.true;
+  isSameDate(user1.creation, user2.creation).should.be.true;
   isSameDate(user1.lastUpdate, user2.lastUpdate).should.be.true;
   user1.products.length.should.be.equal(user2.products.length);
   for (var i = 0; i < user1.products.length; i++) {
@@ -111,11 +111,11 @@ describe('Users model tests', function(){
       .update(modelFixture('update_user_request'))
       .then(function(res){
         store.updateUser.calledOnce.should.be.true;
-        store.updateUser.calledWithExactly(storeFixture('update_user_request'));
+        store.updateUser.calledWithExactly(storeFixture('update_user_request')).should.be.true;
         store.updateProducts.calledOnce.should.be.true;
-        store.updateProducts.calledWithExactly(modelFixture('update_user_request').id, storeFixture('update_products_request'));
+        store.updateProducts.calledWithExactly(modelFixture('update_user_request').id, storeFixture('update_products_request')).should.be.true;
         store.updateProductsCoverage.calledOnce.should.be.true;
-        store.updateProductsCoverage.calledWithExactly(modelFixture('update_user_request').id, storeFixture('update_coverage_request'));
+        store.updateProductsCoverage.calledWithExactly(modelFixture('update_user_request').id, storeFixture('update_coverage_request')).should.be.true;
         done();
       })
       .error(function(err){
@@ -130,9 +130,9 @@ describe('Users model tests', function(){
         store.getUserById.calledOnce.should.be.true;
         store.getUserById.calledWithExactly(storeFixture('get_user_by_id_request')).should.be.true;
         store.getProducts.calledOnce.should.be.true;
-        store.getProducts.calledWithExactly(storeFixture('get_products_request'));
+        store.getProducts.calledWithExactly(storeFixture('get_products_request')).should.be.true;
         store.getUserProductsCoverage.calledOnce.should.be.true;
-        store.getUserProductsCoverage.calledWithExactly(storeFixture('get_coverage_request'));
+        store.getUserProductsCoverage.calledWithExactly(storeFixture('get_coverage_request')).should.be.true;
         usersShouldBeEqual(modelFixture('get_user_result'), res);
         done();
       })
@@ -167,7 +167,7 @@ describe('Users model tests', function(){
         done(new Error(err));
       });
   });
-  
+
   after(function(){
     restoreStore();
   })
@@ -229,7 +229,7 @@ describe('Trips model tests', function(){
       .create(modelFixture('create_trip_request'))
       .then(function(res){
         store.createTrip.calledOnce.should.be.true;
-        store.createTrip.calledWithExactly(storeFixture('create_trip_request'));
+        store.createTrip.calledWithExactly(storeFixture('create_trip_request')).should.be.true;
         done();
       })
       .error(function(err){
@@ -242,9 +242,9 @@ describe('Trips model tests', function(){
       .update(modelFixture('update_trip_request'))
       .then(function(res){
         store.updateTrip.calledOnce.should.be.true;
-        store.updateTrip.calledWithExactly(storeFixture('update_trip_request'));
+        store.updateTrip.calledWithExactly(storeFixture('update_trip_request')).should.be.true;
         store.createTripLocation.calledOnce.should.be.true;
-        store.createTripLocation.calledWithExactly(storeFixture('update_trip_request').id, storeFixture('create_location_request'));
+        store.createTripLocation.calledWithExactly(storeFixture('update_trip_request').id, storeFixture('create_location_request')).should.be.true;
         done();
       })
       .error(function(err){
@@ -257,7 +257,7 @@ describe('Trips model tests', function(){
       .getById(modelFixture('get_trip_request'))
       .then(function(res){
         store.getTripById.calledOnce.should.be.equal.true;
-        store.getTripById.calledWithExactly(storeFixture('get_trip_request'));
+        store.getTripById.calledWithExactly(storeFixture('get_trip_request')).should.be.true;
         tripsShouldBeEqual(modelFixture('get_trip_result'), res);
         done();
       })
@@ -293,7 +293,7 @@ describe('Trip payments model tests', function(){
       .create(modelFixture('create_payment_request'))
       .then(function(){
         store.createTripPayment.calledOnce.should.be.true;
-        store.createTripPayment.calledWithExactly(storeFixture('create_payment_request'));
+        store.createTripPayment.calledWithExactly(storeFixture('create_payment_request')).should.be.true;
         done();
       })
       .error(function(err){
@@ -306,7 +306,7 @@ describe('Trip payments model tests', function(){
       .update(modelFixture('update_payment_request'))
       .then(function(){
         store.updateTripPayment.calledOnce.should.be.true;
-        store.updateTripPayment.calledWithExactly(storeFixture('update_payment_request'));
+        store.updateTripPayment.calledWithExactly(storeFixture('update_payment_request')).should.be.true;
         done();
       })
       .error(function(err){
@@ -319,7 +319,7 @@ describe('Trip payments model tests', function(){
       .getByTripId(modelFixture('get_payment_request'))
       .then(function(res){
         store.getTripPaymentByTripId.calledOnce.should.be.true;
-        store.getTripPaymentByTripId.calledWithExactly(storeFixture('get_payment_request'));
+        store.getTripPaymentByTripId.calledWithExactly(storeFixture('get_payment_request')).should.be.true;
         tripPaymentsShouldBeEqual(modelFixture('get_payment_result'), res);
         done();
       })

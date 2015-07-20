@@ -8,27 +8,28 @@ function getISOStringFromMoment(moment) {
 
 function toStoreTrip(apiTrip) {
   var t = {
-      id: apiTrip.id,
-      user: {
-        id: apiTrip.user.id
-      },
-      product: {
-        id: apiTrip.product.id
-      },
-      servicingNetwork: {
-        id: apiTrip.servicingNetwork ? apiTrip.servicingNetwork.id : null
-      },
-      servicingProduct: {
-        id: apiTrip.servicingProduct ? apiTrip.servicingProduct.id : null
-      },
-      pickupLocation: apiTrip.pickupLocation,
-      pickupTime: getISOStringFromMoment(apiTrip.pickupTime),
-      dropoffLocation: apiTrip.dropoffLocation,
-      status: apiTrip.status,
-      creation: getISOStringFromMoment(apiTrip.creation),
-      lastUpdate: getISOStringFromMoment(apiTrip.lastUpdate),
-      autoDispatch: apiTrip.autoDispatch,
-      paymentMethod: apiTrip.paymentMethod
+    id: apiTrip.id,
+    user: {
+      id: apiTrip.user.id
+    },
+    product: {
+      id: apiTrip.product.id
+    },
+    servicingNetwork: {
+      id: apiTrip.servicingNetwork ? apiTrip.servicingNetwork.id : null
+    },
+    servicingProduct: {
+      id: apiTrip.servicingProduct ? apiTrip.servicingProduct.id : null
+    },
+    pickupLocation: apiTrip.pickupLocation,
+    pickupTime: getISOStringFromMoment(apiTrip.pickupTime),
+    dropoffLocation: apiTrip.dropoffLocation,
+    status: apiTrip.status,
+    creation: getISOStringFromMoment(apiTrip.creation),
+    lastUpdate: getISOStringFromMoment(apiTrip.lastUpdate),
+    autoDispatch: apiTrip.autoDispatch,
+    paymentMethod: apiTrip.paymentMethod,
+    guaranteedTip: apiTrip.guaranteedTip
   };
   if(apiTrip.fare) t.fare = apiTrip.fare;
   if(apiTrip.dropoffTime) t.dropoffTime = getISOStringFromMoment(apiTrip.dropoffTime);
@@ -39,7 +40,7 @@ function toStoreTrip(apiTrip) {
   if(apiTrip.duration >= 0) t.duration = apiTrip.duration;
   if(apiTrip.distance >= 0) t.distance = apiTrip.distance;
   if(apiTrip.passengers >= 0) t.passengers = apiTrip.passengers;
-  if(apiTrip.luggage >= 0) t.passengers = apiTrip.luggage;
+  if(apiTrip.luggage >= 0) t.luggage = apiTrip.luggage;
   if(apiTrip.customer) {
     t.customer = {
       id: apiTrip.customer.id,
@@ -53,7 +54,10 @@ function toStoreTrip(apiTrip) {
       id: apiTrip.driver.id,
       name: apiTrip.driver.name,
       localId: apiTrip.driver.localId,
-      nativeLanguageId: apiTrip.driver.nativeLanguage.id
+      phoneNumber: apiTrip.driver.phoneNumber,
+      nativeLanguage: {
+        id: apiTrip.driver.nativeLanguage.id
+      }
     };
     if(apiTrip.driver.location){
       t.driver.location = {
@@ -64,7 +68,7 @@ function toStoreTrip(apiTrip) {
       }
     }
   }
-  
+
   return t;
 }
 

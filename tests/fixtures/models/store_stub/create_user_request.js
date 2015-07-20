@@ -7,7 +7,7 @@ module.exports = {
   role: 'partner',
   endpointType: 'socket',
   callbackUrl: 'callback url user 1',
-  createdAt: '2015-07-18T06:43:33-07:00',
+  creation: '2015-07-18T06:43:33-07:00',
   lastUpdate: '2015-07-18T06:44:33-07:00',
   products: []
 };
