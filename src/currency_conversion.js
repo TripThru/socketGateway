@@ -133,6 +133,7 @@ CurrencyCloud.prototype.convert = function(amount, from, to) {
       .getConversion(from, to)
       .bind(this)
       .then(function(conversion){
+        conversion.rate = conversion.rate || 1; //fallback in case currency cloud service fails, demo only
         this.conversionMatrix[from][to].rate = conversion.rate;
         return store.createCurrencyRate(from, to, conversion.rate, moment().utc().format().toString());
       });
@@ -142,6 +143,9 @@ CurrencyCloud.prototype.convert = function(amount, from, to) {
     .bind(this)
     .then(function(){
       return amount * this.conversionMatrix[from][to].rate;
+    })
+    .error(function(){
+      return amount; //fallback in case currency cloud service fails, demo only
     });
 };
 
