@@ -4,8 +4,7 @@ var IGateway = require('../gateway').IGateway;
 var Interface = require('../interface').Interface;
 var moment = require('moment');
 var trips = require('../active_trips');
-var tripsModel = require('../model/trips');
-var tripPayments = require('../active_trip_payments');
+var tripPayments = require('./trip_payments');
 var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 var validate = require('./validate');
@@ -35,22 +34,22 @@ TripsController.prototype.dispatchTrip =  function(request) {
     .then(function(validation){
       if(validation.valid) {
         this.trip = TripThruApiFactory.createTripFromRequest(request, 'dispatch');
-        return users.getByClientId(request.client_id);
+        return users.getById(request.client_id);
       } else {
         log.log('Invalid dispatch received from ' + request.client_id, request);
         throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
       }
     })
     .then(function(user){
-      var name = user ? user.fullname : 'unknown';
+      var name = user ? user.name : 'unknown';
       log.log('Dispatch received from ' + name, request);
       return trips.getById(this.trip.id);
     })
     .then(function(res){
       if(!res) {
-        return trips.add(this.trip);
+        return trips.create(this.trip);
       }
-      throw new InvalidRequestError(resultCodes.rejected, 'trip already exists');
+      throw new InvalidRequestError(resultCodes.rejected, 'Trip already exists');
     })
     .then(function(res){
       if(!tripIsLocal(this.trip) && this.trip.autoDispatch) {
@@ -61,10 +60,19 @@ TripsController.prototype.dispatchTrip =  function(request) {
     .then(function(bestQuote){
       if(this.trip.autoDispatch && bestQuote) {
         this.trip.servicingNetwork = bestQuote.network;
+        this.bestQuote = bestQuote;
         if(bestQuote.product) {
           this.trip.servicingProduct = bestQuote.product;
           this.trip.imageUrl = bestQuote.product.image_url;
         }
+        return users
+          .hasEnoughBalance(request.client_id, bestQuote.fare.high_estimate, bestQuote.fare.currency_code)
+          .bind(this)
+          .then(function(enoughBalance){
+            if(!enoughBalance) {
+              throw new UnsuccessfulRequestError(resultCodes.rejected, 'Insufficient funds');
+            }
+          });
       }
     })
     .then(function(){
@@ -74,7 +82,7 @@ TripsController.prototype.dispatchTrip =  function(request) {
         this.dispatchLog.log('Dispatching trip to ' + this.trip.servicingNetwork.name, dispatchReq);
         return self.gateway.dispatchTrip(dispatchReq.network_id, dispatchReq);
       } else {
-        var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+        var response = TripThruApiFactory.createResponseFromTrip(null, null,
             resultCodes.rejected, 'No servicing network found');
         this.dispatchLog.log('Trip rejected');
         return response;
@@ -85,6 +93,11 @@ TripsController.prototype.dispatchTrip =  function(request) {
       if(response.result_code === resultCodes.rejected) {
         this.trip.status = 'rejected';
       }
+      //if(response.result_code === resultCodes.ok &&  this.bestQuote) {
+      //  return tripPayments.expectPayment(request.client_id, this.trip.id, this.bestQuote.fare.high_estimate, this.bestQuote.fare.currency_code, this.dispatchLog);
+      //}
+    })
+    .then(function(){
       return trips.update(this.trip);
     })
     .then(function(){
@@ -93,13 +106,13 @@ TripsController.prototype.dispatchTrip =  function(request) {
       return this.dispatchResponse;
     })
     .catch(InvalidRequestError, UnsuccessfulRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+      var response = TripThruApiFactory.createResponseFromTrip(null, null,
           err.resultCode, err.error);
       log.log('Response', response);
       return response;
     })
     .error(function(err){
-      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+      var response = TripThruApiFactory.createResponseFromTrip(null, null,
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
       return response;
@@ -107,68 +120,60 @@ TripsController.prototype.dispatchTrip =  function(request) {
 };
 
 TripsController.prototype.getTripStatus = function(request) {
-  //var log = logger.getSublog(request.id);
   var self = this;
   return validate
     .getTripStatusRequest(request)
     .bind({})
     .then(function(validation){
       if(validation.valid) {
-        return users.getByClientId(request.client_id);
+        return users.getById(request.client_id);
       } else {
-        //log.log('Invalid get trip status received from ' + request.client_id, request);
         throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
       }
     })
     .then(function(user){
       this.user = user;
-      //var name = user ? user.fullname : 'unknown';
-      //log.log('Get trip status received from ' + name, request);
       return trips.getById(request.id);
     })
     .then(function(t){
       this.trip = t;
-      if(!this.trip || !tripBelongsToUser(this.trip, this.user)) {
-        throw new InvalidRequestError(resultCodes.rejected, 'trip ' + request.id + ' not found');
-      } else if(!this.trip.servicingNetwork) {
-        throw new InvalidRequestError(resultCodes.rejected, 'trip ' + request.id + ' has no servicing network');
-      } else { 
+      if(this.user.role !== 'admin' && (!this.trip || !tripBelongsToUser(this.trip, this.user))) {
+        throw new InvalidRequestError(resultCodes.notFound, 'Trip not found');
+      } else if(this.trip && !this.trip.servicingNetwork) {
+        throw new UnsuccessfulRequestError(resultCodes.rejected, 'Trip has no servicing network');
+      } else {
+        delete request['client_id'];
         return self.gateway.getTripStatus(this.trip.servicingNetwork.id, request);
       }
     })
     .then(function(response){
       if(response.result_code === resultCodes.ok) {
-        var res = 
+        var res =
           TripThruApiFactory.createGetTripStatusResponseFromNetworkGetTripStatusResponse(response, this.trip);
-        //log.log('Response', res);
         return res;
       } else {
         throw(new UnsuccessfulRequestError(response.result_code, 'Unsuccessful request'));
       }
     })
     .catch(this.gateway.ConnectionError, UnsuccessfulRequestError, function(err){
-      // If request to client fails, fall back to last known status
-      var response = 
+      var response =
         TripThruApiFactory.createResponseFromTrip(this.trip, 'get-trip-status');
-      //log.log('Response', response);
       return response;
     })
     .catch(InvalidRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+      var response = TripThruApiFactory.createResponseFromTrip(null, null,
           err.resultCode, err.error);
-      //log.log('Response', response);
       return response;
     })
     .error(function(err){
-      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+      var response = TripThruApiFactory.createResponseFromTrip(null, null,
           resultCodes.unknownError, 'unknown error ocurred');
-      //log.log('Response', response);
       return response;
     });
 };
 
 TripsController.prototype.updateTripStatus = function(request) {
-  var log = logger.getSublog(request.id, null, 'tripthru', 'update-trip-status', 
+  var log = logger.getSublog(request.id, null, 'tripthru', 'update-trip-status',
       request.status);
   var self = this;
   return validate
@@ -176,34 +181,33 @@ TripsController.prototype.updateTripStatus = function(request) {
     .bind({})
     .then(function(validation){
       if(validation.valid) {
-        return users.getByClientId(request.client_id);
+        return users.getById(request.client_id);
       } else {
         log.log('Invalid update trip status received from ' + request.client_id, request);
         throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
       }
     })
     .then(function(user){
-      var name = user ? user.fullname : 'unknown';
+      var name = user ? user.name : 'unknown';
       this.user = user;
       log.log('Update trip status (' + request.status + ') received from ' + name, request);
       return trips.getById(request.id);
     })
     .then(function(t){
       if(t && tripBelongsToUser(t, this.user)) {
-        log.setOrigin(
-            t.originatingNetwork.id === request.client_id ? 'origin' : 'servicing');
+        log.setOrigin(t.user.id === request.client_id ? 'origin' : 'servicing');
         this.oldStatus = t.status;
-        this.trip = TripThruApiFactory.createTripFromRequest(request, 
+        this.trip = TripThruApiFactory.createTripFromRequest(request,
             'update-trip-status', {trip: t});
         this.newStatus = this.trip.status;
         return trips.update(this.trip);
       }
-      throw new InvalidRequestError(resultCodes.rejected, 'trip not found');
+      throw new InvalidRequestError(resultCodes.notFound, 'Trip not found');
     })
     .then(function(){
       if(shouldForwardUpdate(this.trip, this.oldStatus, this.newStatus)) {
-        var sendTo = request.client_id === this.trip.originatingNetwork.id ?
-            this.trip.servicingNetwork.id : this.trip.originatingNetwork.id;
+        var sendTo = request.client_id === this.trip.user.id ?
+            this.trip.servicingNetwork.id : this.trip.user.id;
         log.log('Trip has foreign dependency so forwarding update request to ' + sendTo);
         return self.gateway.updateTripStatus(sendTo, request);
       }
@@ -216,173 +220,13 @@ TripsController.prototype.updateTripStatus = function(request) {
       return response;
     })
     .catch(InvalidRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
+      var response = TripThruApiFactory.createResponseFromTrip(null, null,
           err.resultCode, err.error);
       log.log('Response', response);
       return response;
     })
     .error(function(err){
-      var response = TripThruApiFactory.createResponseFromTrip(null, null, 
-          resultCodes.unknownError, 'unknown error ocurred');
-      log.log('Response', response);
-      return response;
-    });
-};
-
-TripsController.prototype.requestPayment = function(request) {
-  var log = logger.getSublog(request.id, null, 'tripthru', 'request-payment', 
-      request.status);
-  var self = this;
-  return validate
-    .requestPaymentRequest(request)
-    .bind({})
-    .then(function(validation){
-      if(validation.valid) {
-        return users.getByClientId(request.client_id);
-      } else {
-        //log.log('Invalid request payment received from ' + request.client_id, request);
-        throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
-      }
-    })
-    .then(function(user){
-      this.user = user;
-      var name = user ? user.fullname : 'unknown';
-      log.log('Payment request received from ' + name, request);
-      return trips.getById(request.id);
-    })
-    .then(function(trip){
-      if(!trip || !tripBelongsToUser(trip, this.user)) {
-        throw new InvalidRequestError(resultCodes.notFound, 'trip not found');
-      }
-      this.tripPayment = TripThruApiFactory.createTripPaymentFromRequest(request, 
-          'request-payment', {trip: trip});
-      this.sendTo = trip.originatingNetwork.id;
-      return tripPayments.add(this.tripPayment);
-    })
-    .then(function(){
-      log.log('Forwarding payment request');
-      return self.gateway.requestPayment(this.sendTo, request);
-    })
-    .then(function(response){
-      log.log('Response', response);
-      return response;
-    })
-    .catch(InvalidRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
-          err.resultCode, err.error);
-      log.log('Response', response);
-      return response;
-    })
-    .error(function(err){
-      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
-          resultCodes.unknownError, 'unknown error ocurred');
-      log.log('Response', response);
-      return response;
-    });
-};
-
-TripsController.prototype.requestPayment = function(request) {
-  var log = logger.getSublog(request.id, null, 'tripthru', 'request-payment', 
-      request.status);
-  var self = this;
-  return validate
-    .requestPaymentRequest(request)
-    .bind({})
-    .then(function(validation){
-      if(validation.valid) {
-        return users.getByClientId(request.client_id);
-      } else {
-        //log.log('Invalid request payment received from ' + request.client_id, request);
-        throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
-      }
-    })
-    .then(function(user){
-      var name = user ? user.fullname : 'unknown';
-      this.user = user;
-      log.log('Payment request received from ' + name, request);
-      return trips.getById(request.id);
-    })
-    .then(function(trip){
-      if(!trip || !tripBelongsToUser(trip, this.user)) {
-        throw new InvalidRequestError(resultCodes.notFound, 'trip not found');
-      }
-      this.tripPayment = TripThruApiFactory.createTripPaymentFromRequest(request, 
-          'request-payment', {trip: trip});
-      this.sendTo = trip.originatingNetwork.id;
-      return tripPayments.add(this.tripPayment);
-    })
-    .then(function(){
-      workers.newRequestPaymentJob(this.tripPayment.tripId, this.sendTo);
-      log.log('Created new request payment job');
-      var response = TripThruApiFactory.createResponseFromTripPayment(this.tripPayment, 'request-payment');
-      log.log('Response', response);
-      return response;
-    })
-    .catch(InvalidRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
-          err.resultCode, err.error);
-      log.log('Response', response);
-      return response;
-    })
-    .error(function(err){
-      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
-          resultCodes.unknownError, 'unknown error ocurred');
-      log.log('Response', response);
-      return response;
-    });
-};
-
-TripsController.prototype.acceptPayment = function(request) {
-  var log = logger.getSublog(request.id, null, 'tripthru', 'accept-payment', 
-      request.status);
-  var self = this;
-  return validate
-    .acceptPaymentRequest(request)
-    .bind({})
-    .then(function(validation){
-      if(validation.valid) {
-        return users.getByClientId(request.client_id);
-      } else {
-        //log.log('Invalid accept payment received from ' + request.client_id, request);
-        throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
-      }
-    })
-    .then(function(user){
-      this.user = user;
-      var name = user ? user.fullname : 'unknown';
-      log.log('Accept payment request received from ' + name, request);
-      return trips.getById(request.id);
-    })
-    .then(function(trip){
-      if(!trip || !tripBelongsToUser(trip, this.user)) {
-        throw new InvalidRequestError(resultCodes.notFound, 'trip not found');
-      }
-      this.sendTo = trip.servicingNetwork.id;
-      return tripPayments.getByTripId(request.id);
-    })
-    .then(function(tripPayment){
-      if(!tripPayment) {
-        throw new InvalidRequestError(resultCodes.notFound, 'trip payment request not found');
-      }
-      this.tripPayment = TripThruApiFactory.createTripPaymentFromRequest(request, 
-          'accept-payment', {tripPayment: tripPayment});
-      return tripPayments.update(this.tripPayment);
-    })
-    .then(function(){
-      workers.newAcceptPaymentJob(this.tripPayment.tripId, this.sendTo);
-      log.log('Created new accept payment job');
-      var response = TripThruApiFactory.createResponseFromTripPayment(this.tripPayment, 'accept-payment');
-      log.log('Response', response);
-      return response;
-    })
-    .catch(InvalidRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
-          err.resultCode, err.error);
-      log.log('Response', response);
-      return response;
-    })
-    .error(function(err){
-      var response = TripThruApiFactory.createResponseFromTripPayment(null, null, 
+      var response = TripThruApiFactory.createResponseFromTrip(null, null,
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
       return response;
@@ -390,37 +234,34 @@ TripsController.prototype.acceptPayment = function(request) {
 };
 
 TripsController.prototype.getTripStats = function(trip) {
-  var log = logger.getSublog(trip.id, 'tripthru', 'servicing', 'get-trip-status');
   var request = TripThruApiFactory.createRequestFromTrip(trip, 'get-trip-status');
-  log.log('Get trip sent to ' + trip.servicingNetwork ? trip.servicingNetwork.id : ' unkwown', request);
   if(trip.servicingNetwork) {
     this
       .gateway
       .getTrip(trip.servicingNetwork.id, request)
       .then(function(response){
-        trip = TripThruApiFactory.createTripFromResponse(response, 
+        trip = TripThruApiFactory.createTripFromResponse(response,
             'get-trip', {trip: trip});
         trips.update(trip);
-        log.log('Response', response);
       })
       .error(function(err){
-        log.log('Response', err);
+
       });
   }
 };
 
 function tripIsLocal(trip, request) {
-  return trip.servicingNetwork && 
-    trip.originatingNetwork.id === trip.servicingNetwork.id;
+  return trip.servicingNetwork &&
+    trip.user.id === trip.servicingNetwork.id;
 }
 
 function shouldForwardUpdate(trip, currentStatus, newStatus) {
-  return trip.servicingNetwork && trip.originatingNetwork.id !== trip.servicingNetwork.id;
+  return trip.servicingNetwork && trip.user.id !== trip.servicingNetwork.id;
 }
 
 function tripBelongsToUser(trip, user) {
-  return (trip.originatingNetwork && trip.originatingNetwork.id === user.clientId) ||
-          (trip.servicingNetwork && trip.servicingNetwork.id === user.clientId);
+  return (trip.user && trip.user.id === user.id) ||
+          (trip.servicingNetwork && trip.servicingNetwork.id === user.id);
 }
 
 module.exports = new TripsController();

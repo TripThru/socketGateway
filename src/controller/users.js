@@ -1,4 +1,5 @@
 var Promise = require('bluebird');
+var moment = require('moment');
 var TripThruApiFactory = require('../tripthru_api_factory');
 var Gateway = require('../gateway').Gateway;
 var IGateway = require('../gateway').IGateway;
@@ -11,12 +12,12 @@ var validate = require('./validate');
 var logger = require('../logger');
 var InvalidRequestError = require('../errors').InvalidRequestError;
 var UnsuccessfulRequestError = require('../errors').UnsuccessfulRequestError;
+var currencyConversion = require('../currency_conversion');
 
 function UsersController() {
   this.gateway = null;
   this.usersById = {};
   this.usersByToken = {};
-  this.getUsersFromStore();
 }
 
 UsersController.prototype.getUsersFromStore = function() {
@@ -36,14 +37,15 @@ UsersController.prototype.getUsersFromStore = function() {
 UsersController.prototype.init = function(gatewayClient) {
   Interface.ensureImplements(gatewayClient, IGateway);
   this.gateway = gatewayClient;
+  this.getUsersFromStore();
 };
 
-UsersController.prototype._getByClientId = function(id) {
+UsersController.prototype._getById = function(id) {
   if(this.usersById.hasOwnProperty(id)) {
     return Promise.resolve(this.usersById[id]);
   } else {
     return usersModel
-      .getByClientId(id)
+      .getById(id)
       .bind(this)
       .then(function(user){
         if(user) {
@@ -71,7 +73,7 @@ UsersController.prototype._getByToken = function(token) {
 };
 
 UsersController.prototype._add = function(user) {
-  this.usersById[user.clientId] = user;
+  this.usersById[user.id] = user;
   this.usersByToken[user.token] = user;
 };
 
@@ -84,16 +86,16 @@ UsersController.prototype.getNetworkInfo = function(request) {
     .bind(this)
     .then(function(validation){
       if(validation.valid) {
-        return self._getByClientId(request.client_id);
+        return self._getById(request.client_id);
       } else {
         log.log('Invalid get network info received from ' + request.client_id, request);
         throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
       }
     })
     .then(function(u){
-      var name = u ? u.fullname : 'unknown';
+      var name = u ? u.name : 'unknown';
       log.log('Get network info received from ' + name, request);
-      return self._getByClientId(request.id);
+      return self._getById(request.id);
     })
     .then(function(u){
       if(u) {
@@ -105,13 +107,13 @@ UsersController.prototype.getNetworkInfo = function(request) {
       }
     })
     .catch(InvalidRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromUser(null, null, 
+      var response = TripThruApiFactory.createResponseFromUser(null, null,
           err.resultCode, err.error);
       log.log('Response', response);
       return response;
     })
     .error(function(err){
-      var response = TripThruApiFactory.createResponseFromUser(null, null, 
+      var response = TripThruApiFactory.createResponseFromUser(null, null,
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
       return response;
@@ -127,7 +129,7 @@ UsersController.prototype.setNetworkInfo = function(request) {
     .bind({})
     .then(function(validation){
       if(validation.valid) {
-        return self._getByClientId(request.client_id);
+        return self._getById(request.client_id);
       } else {
         log.log('Invalid set network info received from ' + request.client_id, request);
         throw new InvalidRequestError(resultCodes.invalidParameters, validation.error.message);
@@ -135,7 +137,7 @@ UsersController.prototype.setNetworkInfo = function(request) {
     })
     .then(function(u){
       if(u) {
-        this.updatedUser = TripThruApiFactory.createUserFromRequest(request, 
+        this.updatedUser = TripThruApiFactory.createUserFromRequest(request,
             'set-network-info', {user: u});
         self._add(this.updatedUser);
         return usersModel.update(this.updatedUser);
@@ -144,20 +146,21 @@ UsersController.prototype.setNetworkInfo = function(request) {
       }
     })
     .then(function(){
-      var response = 
+      var response =
         TripThruApiFactory.createResponseFromUser(this.updatedUser, 'set-network-info');
       log.log('Response', response);
       return response;
     })
     .catch(InvalidRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromUser(null, null, 
+      var response = TripThruApiFactory.createResponseFromUser(null, null,
           err.resultCode, err.error);
       log.log('Response', response);
       return response;
     })
     .error(function(err){
-      var response = TripThruApiFactory.createResponseFromUser(null, null, 
+      var response = TripThruApiFactory.createResponseFromUser(null, null,
           resultCodes.unknownError, 'unknown error ocurred');
+      console.log(err);
       log.log('Response', response);
       return response;
     });
@@ -192,10 +195,12 @@ UsersController.prototype.getDriversNearby = function(request) {
         var network = networks[i];
         for(var j = 0; j < network.products.length; j++) {
           var product = network.products[j];
-          if((!productId || productId === product.clientId) && 
-              maptools.isInside(request.location, product.coverage)) {
-            request.product_id = product.clientId;
-            promises.push(self.gateway.getDriversNearby(network.clientId, request));
+          for (var c = 0; c < product.coverage.length; c++) {
+            if((!productId || productId === product.id) &&
+              maptools.isInside(request.location, product.coverage[c])) {
+              request.product_id = product.id;
+              promises.push(self.gateway.getDriversNearby(network.id, request));
+            }
           }
         }
       }
@@ -218,13 +223,13 @@ UsersController.prototype.getDriversNearby = function(request) {
         });
     })
     .catch(InvalidRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromUser(null, null, 
+      var response = TripThruApiFactory.createResponseFromUser(null, null,
           err.resultCode, err.error);
       log.log('Response', response);
       return response;
     })
     .error(function(err){
-      var response = TripThruApiFactory.createResponseFromUser(null, null, 
+      var response = TripThruApiFactory.createResponseFromUser(null, null,
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
       return response;
@@ -235,8 +240,8 @@ UsersController.prototype.getByToken = function(token) {
   return this._getByToken(token);
 };
 
-UsersController.prototype.getByClientId = function(id) {
-  return this._getByClientId(id);
+UsersController.prototype.getById = function(id) {
+  return this._getById(id);
 };
 
 UsersController.prototype.getAll = function() {
@@ -258,14 +263,68 @@ UsersController.prototype.getNetworksThatServeLocation = function(location) {
       if(users.hasOwnProperty(id)) {
         var u = users[id];
         for(var i = 0; i < u.products.length; i++) {
-          if(u.products[i].coverage && maptools.isInside(location, u.products[i].coverage)){
-            usersThatServeLocation.push(u);
+          for (var c = 0; c < u.products[i].coverage.length; c++) {
+            if(u.products[i].coverage[c] && maptools.isInside(location, u.products[i].coverage[c])){
+              usersThatServeLocation.push(u);
+            }
           }
         }
       }
     }
     resolve(usersThatServeLocation);
   });
+};
+
+UsersController.prototype.getBalance = function(userId) {
+  return usersModel.getBalance(userId);
+}
+
+UsersController.prototype._fakeDeposit = function(user, currentBalance, amount) {
+  return currencyConversion
+    .convert(amount, 'USD', user.currencyCode)
+    .bind(this)
+    .then(function(depositAmount){
+      var newBalance = currentBalance+depositAmount;
+      return this
+        .incrementBalance(user.id, depositAmount, user.currencyCode, 'deposit', moment().utc(), newBalance)
+        .then(function(){
+          return true;
+        });
+    });
+};
+
+UsersController.prototype.hasEnoughBalance = function(id, amount, currencyCode) {
+  var self = this;
+  return this
+    ._getById(id)
+    .bind({})
+    .then(function(user){
+      this.user = user;
+      if(user.currencyCode !== currencyCode) {
+        return currencyConversion.convert(amount, currencyCode, user.currencyCode)
+          .then(function(convertedAmount){
+            amount = convertedAmount;
+          });
+      }
+    })
+    .then(function(){
+      return usersModel.getBalance(id);
+    })
+    .then(function(balance){
+      if((balance - amount) <= 1000) {
+        self._fakeDeposit(this.user, balance, 10000);
+      }
+      return true;
+      //return balance && (balance - amount) >= 0;
+    });
+};
+
+UsersController.prototype.incrementBalance = function(id, amount, currencyCode, transactionType, datetime, balance) {
+  return usersModel.incrementBalance(id, amount, currencyCode, transactionType, datetime, balance);
+};
+
+UsersController.prototype.decrementBalance = function(id, amount, currencyCode, transactionType, datetime, balance) {
+  return usersModel.decrementBalance(id, amount, currencyCode, transactionType, datetime, balance);
 };
 
 module.exports = new UsersController();

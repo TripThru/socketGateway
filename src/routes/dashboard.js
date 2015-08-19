@@ -7,7 +7,7 @@ var codes = require('../codes');
 var resultCodes = codes.resultCodes;
 
 function Dashboard() {
-  
+
 }
 
 Dashboard.prototype.getStats = function(token) {
@@ -15,7 +15,7 @@ Dashboard.prototype.getStats = function(token) {
     .getByToken(token)
     .then(function(user){
       if(user){
-        var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.clientId;
+        var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.id;
         return activeTrips
           .getAll(networkId)
           .then(function(trips){
@@ -35,7 +35,7 @@ Dashboard.prototype.getTripsList = function(token, status) {
     .then(function(user){
       var response;
       if(user){
-        var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.clientId;
+        var networkId = user.role === 'admin' || user.role === 'demo' ? 'all' : user.id;
         status = status || 'all';
         var trips = activeTrips.getDashboardTrips(networkId, status);
         response = {
@@ -105,7 +105,7 @@ function getStatsFromTripList(trips) {
     serviceLevels: [0, 0, 0, 0, 0]
   };
   stats['new'] = 0;
-  
+
   var durations = [];
   var distances = [];
   for(var i = 0; i < trips.length; i++) {
@@ -145,14 +145,14 @@ var getFrequencyDistribution = function(values, classes, dataTypeName) {
   var min = values[0];
   var interval = (max - min) / classes;
   interval = interval > 1 ? Math.ceil(interval) : interval;
-  
+
   if(max === min) {
     return {
-      name: '< '+ (Math.round(max * 100) / 100) + ' ' + dataTypeName, 
+      name: '< '+ (Math.round(max * 100) / 100) + ' ' + dataTypeName,
       value: values.length
     };
   }
-  
+
   var boundary = min + interval;
   var valuesByClass = [];
   var valueIndex = 0;
@@ -169,7 +169,7 @@ var getFrequencyDistribution = function(values, classes, dataTypeName) {
       }
     }
     valuesByClass.push({
-      name: '< '+ (Math.round(boundary * 100) / 100) + ' ' + dataTypeName, 
+      name: '< '+ (Math.round(boundary * 100) / 100) + ' ' + dataTypeName,
       value: valuesInClass
     });
     boundary += interval;

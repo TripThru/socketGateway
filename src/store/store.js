@@ -29,7 +29,7 @@ Store.prototype.createTrip = function(trip) {
   var fields = {
     trip_id: trip.id,
     user_id: this.raw('(SELECT id FROM users WHERE client_id = ?)', [trip.user.id]),
-    product_id: this.raw('(SELECT id FROM products WHERE client_id = ?)', [trip.product.id]),
+    product_id: trip.product ? this.raw('(SELECT id FROM products WHERE client_id = ?)', [trip.product.id]) : null,
     customer_name: trip.customer.name,
     pickup_location_lat: trip.pickupLocation.lat,
     pickup_location_lng: trip.pickupLocation.lng,
@@ -63,8 +63,22 @@ Store.prototype.createTrip = function(trip) {
     fields.guaranteed_tip_amount = trip.guaranteedTip.amount;
     fields.guaranteed_tip_currency_code_id = this.raw("(SELECT id FROM currency_codes WHERE name = ?)", [trip.guaranteedTip.currencyCode])
   }
-  return this.db('trips').insert(fields);
+  return this
+    .db('trips')
+    .insert(fields)
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.createTrip(trip);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 };
+
+
 
 Store.prototype.updateTrip = function(trip) {
   var fields = {
@@ -91,7 +105,17 @@ Store.prototype.updateTrip = function(trip) {
   return this
     .db('trips')
     .where('trip_id', trip.id)
-    .update(fields);
+    .update(fields)
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.updateTrip(trip);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 };
 
 Store.prototype.getTripById = function(id) {
@@ -121,7 +145,17 @@ Store.prototype.createTripLocation = function(tripId, location) {
       lng: location.lng,
       description: location.description,
       datetime: location.datetime
-    });
+    })
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.createTripLocation(tripId, location);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 };
 
 Store.prototype.getTripLocations = function(id) {
@@ -140,7 +174,17 @@ Store.prototype.createTripPayment = function(tripPayment) {
       currency_code_id: this.raw("(SELECT id FROM currency_codes WHERE name = ?)", [tripPayment.currencyCode]),
       amount: tripPayment.amount,
       requested_at: tripPayment.requestedAt
-    });
+    })
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.createTripPayment(tripPayment);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 };
 
 Store.prototype.updateTripPayment = function(tripPayment) {
@@ -149,9 +193,20 @@ Store.prototype.updateTripPayment = function(tripPayment) {
     .whereRaw('trip_id = (SELECT id FROM trips WHERE trip_id = ?)', [tripPayment.trip.id])
     .update({
       confirmed: tripPayment.confirmed,
-      tip: tripPayment.tip,
+      tip: tripPayment.tip.amount,
+      tip_currency_code_id: this.raw('(SELECT id FROM currency_codes WHERE name = ?)', [tripPayment.tip.currencyCode]),
       confirmed_at: tripPayment.confirmedAt
-    });
+    })
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.updateTripPayment(tripPayment);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 };
 
 Store.prototype.getTripPaymentByTripId = function(id) {
@@ -161,7 +216,7 @@ Store.prototype.getTripPaymentByTripId = function(id) {
     .select('trip_payment.*',
             this.raw("(SELECT name from currency_codes WHERE id = trip_payment.currency_code_id) as currency_code"),
             this.raw("(SELECT client_id from users WHERE id = trip_payment.user_id) as user_id"),
-            this.raw(" ? as trip_id", [id])
+            this.raw("(SELECT trip_id from trips WHERE id = trip_payment.trip_id) as trip_id")
     );
 };
 
@@ -179,8 +234,20 @@ Store.prototype.createUser = function(user) {
       endpoint_type: user.endpointType,
       callback_url: user.callbackUrl,
       created_at: user.createdAt,
-      updated_at: user.updatedAt
-    });
+      updated_at: user.updatedAt,
+      balance: user.balance || 0,
+      currency_code_id: user.currency_code
+    })
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.createUser(user);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 }
 
 Store.prototype.updateUser = function(user) {
@@ -190,7 +257,17 @@ Store.prototype.updateUser = function(user) {
     .update({
       full_name: user.name,
       callback_url: user.callbackUrl
-    });
+    })
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.updateUser(user);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 };
 
 Store.prototype._deleteOldProducts = function(userId, newProductsIds) {
@@ -239,7 +316,17 @@ Store.prototype.updateProducts = function(userId, products) {
                           });
     })(products[i]);
   }
-  return createOrUpdate;
+  return createOrUpdate
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.updateProducts(userId, products);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 };
 
 Store.prototype._deleteProductsCoverage = function(userId) {
@@ -271,6 +358,16 @@ Store.prototype.updateProductsCoverage = function(userId, products){
         return self.db('product_coverages').insert(inserts);
       }
     })
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.updateProductsCoverage(userId, products);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
 };
 
 Store.prototype.getUserById = function(id) {
@@ -279,7 +376,8 @@ Store.prototype.getUserById = function(id) {
     .where('users.client_id', id)
     .select('users.*',
             'client_id as id',
-            'full_name as name');
+            'full_name as name',
+            this.raw('(SELECT name FROM currency_codes WHERE id = users.currency_code_id) as currency_code'));
 };
 
 Store.prototype.getUserByToken = function(token) {
@@ -288,7 +386,8 @@ Store.prototype.getUserByToken = function(token) {
     .where('token', token)
     .select('users.*',
             'client_id as id',
-            'full_name as name');
+            'full_name as name',
+            this.raw('(SELECT name FROM currency_codes WHERE id = users.currency_code_id) as currency_code'));
 };
 
 Store.prototype.getAllUsers = function() {
@@ -296,7 +395,8 @@ Store.prototype.getAllUsers = function() {
     .db('users')
     .select('users.*',
             'client_id as id',
-            'full_name as name');
+            'full_name as name',
+            this.raw('(SELECT name FROM currency_codes WHERE id = users.currency_code_id) as currency_code'));
 };
 
 Store.prototype.getProducts = function(userId) {
@@ -314,6 +414,100 @@ Store.prototype.getUserProductsCoverage = function(userId) {
     .whereRaw("product_id IN (SELECT id FROM products WHERE user_id = (SELECT id FROM users WHERE client_id = ?))", [userId])
     .select('product_coverages.*',
             this.raw('(SELECT client_id FROM products WHERE id = product_coverages.product_id) as product_id'));
+};
+
+Store.prototype.incrementUserBalance = function(userId, amount) {
+  return this
+    .db('users')
+    .where('client_id', userId)
+    .increment('balance', amount)
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.incrementUserBalance(userId, amount);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
+};
+
+Store.prototype.decrementUserBalance = function(userId, amount) {
+  return this
+    .db('users')
+    .where('client_id', userId)
+    .decrement('balance', amount)
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.decrementUserBalance(userId, amount);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
+};
+
+Store.prototype.createUserTransaction = function(userId, amount, currencyCode, transactionType, datetime, balance) {
+  return this
+    .db('user_transactions')
+    .insert({
+      user_id: this.raw('(SELECT id FROM users WHERE client_id = ?)', [userId]),
+      amount: amount,
+      currency_code_id : this.raw('(SELECT id FROM currency_codes WHERE name = ?)', [currencyCode]),
+      user_transaction_type_id: this.raw('(SELECT id FROM user_transaction_types WHERE name = ?)', [transactionType]),
+      datetime: datetime,
+      available_balance: balance
+    })
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.createUserTransaction(userId, amount, transactionType, currencyCode, datetime, balance);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
+};
+
+Store.prototype.getUserBalance = function(userId) {
+  return this
+    .db('users')
+    .where('client_id', userId)
+    .select('balance');
+};
+
+Store.prototype.createCurrencyRate = function(sellCurrencyCode, buyCurrencyCode, rate, datetime) {
+  return this
+    .db('currency_rates')
+    .insert({
+      buy_currency_code_id: this.raw('(SELECT id FROM currency_codes WHERE name = ?)', [buyCurrencyCode]),
+      sell_currency_code_id: this.raw('(SELECT id FROM currency_codes WHERE name = ?)', [sellCurrencyCode]),
+      rate: rate,
+      datetime: datetime
+    })
+    .then(function(){
+
+    })
+    .error(function(err){
+      if(err.code === 'ER_LOCK_DEADLOCK' || err.code === 'ER_LOCK_WAIT_TIMEOUT') {
+        return this.createCurrencyRate(buyCurrencyCode, sellCurrencyCode, datetime);
+      } else {
+        return Promise.reject(err);
+      }
+    }.bind(this));
+};
+
+Store.prototype.getCurrencyRates = function(fromDate, toDate) {
+  return this
+    .db('currency_rates')
+    .whereRaw('datetime BETWEEN ? AND ?', [fromDate, toDate])
+    .select('currency_rates.*',
+            this.raw('(SELECT name FROM currency_codes WHERE id = currency_rates.buy_currency_code_id) as buy_currency_code'),
+            this.raw('(SELECT name FROM currency_codes WHERE id = currency_rates.sell_currency_code_id) as sell_currency_code'));
 };
 
 Store.prototype.raw = function(query, bindings) {

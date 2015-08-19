@@ -9,11 +9,11 @@ function callApiIfUserValid(token, request, fn) {
     .getByToken(token)
     .then(function(user){
       if(user && user.role === 'network') {
-        request.client_id = user.clientId;
+        request.client_id = user.id;
         return fn.call(quotesController, request);
       } else {
-        return Promise.resolve({ 
-          result: 'Authentication error', 
+        return Promise.resolve({
+          result: 'Authentication error',
           result_code: resultCodes.authenticationError
         });
       }
@@ -21,7 +21,7 @@ function callApiIfUserValid(token, request, fn) {
 }
 
 function QuoteRoutes() {
-  
+
 }
 
 QuoteRoutes.prototype.getQuote = function(token, id, request) {

@@ -9,11 +9,11 @@ function callApiIfUserValid(token, request, fn) {
     .getByToken(token)
     .then(function(user){
       if(user && user.role === 'network') {
-        request.client_id = user.clientId;
+        request.client_id = user.id;
         return fn.call(tripsController, request);
       } else {
-        return Promise.resolve({ 
-          result: 'Authentication error', 
+        return Promise.resolve({
+          result: 'Authentication error',
           result_code: resultCodes.authenticationError
         });
       }
@@ -21,7 +21,7 @@ function callApiIfUserValid(token, request, fn) {
 }
 
 function TripRoutes() {
-  
+
 }
 
 TripRoutes.prototype.dispatchTrip = function(token, id, request) {
@@ -34,29 +34,19 @@ TripRoutes.prototype.updateTripStatus = function(token, id, request) {
   return callApiIfUserValid(token, request, tripsController.updateTripStatus);
 };
 
-TripRoutes.prototype.requestPayment = function(token, id, request) {
-  request.id = id;
-  return callApiIfUserValid(token, request, tripsController.requestPayment);
-};
-
-TripRoutes.prototype.acceptPayment = function(token, id, request) {
-  request.id = id;
-  return callApiIfUserValid(token, request, tripsController.acceptPayment);
-};
-
 TripRoutes.prototype.getTripStatus = function(token, id) {
   return usersController
     .getByToken(token)
     .then(function(user){
       if(user) {
         var request = {
-          client_id: user.clientId,
+          client_id: user.id,
           id: id
         };
         return tripsController.getTripStatus(request);
       } else {
-        return { 
-          result: 'Authentication error', 
+        return {
+          result: 'Authentication error',
           result_code: resultCodes.authenticationError
         };
       }

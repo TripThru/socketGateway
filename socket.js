@@ -1,5 +1,6 @@
 var Promise = require('bluebird');
 var trips = require('./src/controller/trips');
+var tripPayments = require('./src/controller/trip_payments');
 var quotes = require('./src/controller/quotes');
 var users = require('./src/controller/users');
 var Gateway = require('./src/gateway').Gateway;
@@ -31,21 +32,21 @@ io.use(function(socket, next){
       .then(function(user){
         if (user && user.role === 'network') {
           console.log(query.replace)
-          if(!networksGateway.hasSocketNetwork(user.clientId) || query.replace === 'true') {
-            var socketGateway = new SocketGateway(user.clientId, socket, io);
-            if(query.replace === 'true' && networksGateway.hasSocketNetwork(user.clientId)) {
-              console.log(user.clientId + ' replacing connection');
-              networksGateway.unsubscribeSocketGateway(user.clientId);
-              activeSocketsByClientId[user.clientId].disconnect();
+          if(!networksGateway.hasSocketNetwork(user.id) || query.replace === 'true') {
+            var socketGateway = new SocketGateway(user.id, socket, io);
+            if(query.replace === 'true' && networksGateway.hasSocketNetwork(user.id)) {
+              console.log(user.id + ' replacing connection');
+              networksGateway.unsubscribeSocketGateway(user.id);
+              activeSocketsByClientId[user.id].disconnect();
             }
             networksGateway.subscribeSocketGateway(socketGateway);
-            activeSocketsByClientId[user.clientId] = socket;
-            activeClientIdsBySocket[socket] = user.clientId;
+            activeSocketsByClientId[user.id] = socket;
+            activeClientIdsBySocket[socket] = user.id;
             socket.disconnectClient = disconnectClient;
             next();
           } else {
-            console.log(user.clientId + ' tried to connect again without replace=true.');
-            next(new Error('You already have an opened connection. ' + 
+            console.log(user.id + ' tried to connect again without replace=true.');
+            next(new Error('You already have an opened connection. ' +
                 'To override it add replace=true to connection query.'));
           }
         } else {
@@ -62,12 +63,12 @@ io.sockets.on('connection', function (socket){
 
   socket.monitor('clientId', activeClientIdsBySocket[socket]);
   socket.monitor('connectedAt', new Date());
-  
+
   socket.on('hi', function(msg, cb){
     console.log(msg);
     cb('hi');
   });
-  
+
   // Trips
   socket.on('dispatch-trip', function(req, cb){
     req.client_id = req.client_id || getClientId(socket, req);
@@ -87,19 +88,19 @@ io.sockets.on('connection', function (socket){
   });
   socket.on('request-payment', function(req, cb){
     req.client_id = req.client_id || getClientId(socket, req);
-    trips.requestPayment(req).then(cb);
+    tripPayments.requestPayment(req).then(cb);
   });
   socket.on('accept-payment', function(req, cb){
     req.client_id = req.client_id || getClientId(socket, req);
-    trips.acceptPayment(req).then(cb);
+    tripPayments.acceptPayment(req).then(cb);
   });
-  
+
   //Quotes
   socket.on('get-quote', function(req, cb){
     req.client_id = req.client_id || getClientId(socket, req);
     quotes.getQuote(req).then(cb);
   });
-  
+
   //Users
   socket.on('get-network-info', function(req ,cb){
     req.client_id = req.client_id || getClientId(socket, req);
@@ -113,7 +114,7 @@ io.sockets.on('connection', function (socket){
     req.client_id = req.client_id || getClientId(socket, req);
     users.getDriversNearby(req).then(cb);
   });
-  
+
   socket.on('disconnect', function(){
     disconnectClient(socket);
   });

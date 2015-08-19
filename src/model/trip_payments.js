@@ -14,7 +14,7 @@ function toStoreTripPayment(apiTripPayment) {
     amount: apiTripPayment.amount,
     currencyCode: apiTripPayment.currencyCode,
     confirmed: apiTripPayment.confirmed,
-    tip: apiTripPayment.tip || 0
+    tip: apiTripPayment.tip
   };
   if(apiTripPayment.confirmedAt) {
     tp.confirmedAt = getISOStringFromMoment(apiTripPayment.confirmedAt);
@@ -30,9 +30,14 @@ function toApiTripPayment(storeTripPayment) {
     requestedAt: moment(storeTripPayment.requested_at),
     amount: storeTripPayment.amount,
     currencyCode: storeTripPayment.currency_code,
-    confirmed: storeTripPayment.confirmed === 1,
-    tip: storeTripPayment.tip || 0
+    confirmed: storeTripPayment.confirmed === 1
   };
+  if(storeTripPayment.tip) {
+    tp.tip = {
+      amount: storeTripPayment.tip,
+      currencyCode: storeTripPayment.tip_currency_code
+    };
+  }
   if(storeTripPayment.confirmed_at) {
     tp.confirmedAt = moment(storeTripPayment.confirmed_at);
   }

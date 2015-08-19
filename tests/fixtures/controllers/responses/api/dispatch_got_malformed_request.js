@@ -1,0 +1,6 @@
+var resultCodes = require('../../../../../src/codes').resultCodes;
+
+module.exports = {
+  result_code: resultCodes.invalidParameters,
+  result: 'Missing required property: customer: '
+};

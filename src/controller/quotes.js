@@ -39,7 +39,7 @@ QuotesController.prototype.getQuote =  function(request) {
       }
     })
     .then(function(user){
-      var name = user ? user.fullname : 'unknown';
+      var name = user ? user.name : 'unknown';
       log.log('Quote request from ' + name, request);
       return users.getNetworksThatServeLocation(this.quote.request.pickup_location);
     })
@@ -56,25 +56,25 @@ QuotesController.prototype.getQuote =  function(request) {
         throw new UnsuccessfulRequestError(resultCodes.rejected, 'No quotes found');
       }
       this.quote.receivedQuotes = res;
-      res.forEach(function(r){ 
+      res.forEach(function(r){
         activeQuotes.add(r);
       });
       for(var i = 0; i < this.quote.receivedQuotes.length; i++) {
         var q = this.quote.receivedQuotes[i];
-        log.log('Quote received from ' + q.network.id, q); 
+        log.log('Quote received from ' + q.network.id, q);
       }
       var response = TripThruApiFactory.createResponseFromQuote(this.quote, 'get');
       log.log('Response', response);
       return response;
     })
     .catch(InvalidRequestError, UnsuccessfulRequestError, function(err){
-      var response = TripThruApiFactory.createResponseFromQuote(null, null, 
+      var response = TripThruApiFactory.createResponseFromQuote(null, null,
           err.resultCode, err.error);
       log.log('Response', response);
       return response;
     })
     .error(function(err){
-      var response = TripThruApiFactory.createResponseFromQuote(null, null, 
+      var response = TripThruApiFactory.createResponseFromQuote(null, null,
           resultCodes.unknownError, 'unknown error ocurred');
       log.log('Response', response);
       return response;
@@ -100,12 +100,12 @@ QuotesController.prototype.getBestQuote = function(trip) {
       var product = bestQuote !== null ? bestQuote.product : null;
       var eta = bestQuote !== null ? moment(bestQuote.eta).utc().toDate().toISOString() : null;
       var details = bestQuote !== null ? (network.name + ', ETA: ' + eta) : 'None';
-      
+
       log.log('Finding best quote: ' + details, quote.request);
       log.log('Broadcasting quote');
       for(var i = 0; i < quotes.length; i++) {
         var q = quotes[i];
-        log.log('Quote received from ' + q.network.name, q); 
+        log.log('Quote received from ' + q.network.name, q);
       }
       if(bestQuote) {
         log.log('Best quote found from ' + network.name, bestQuote);
@@ -120,7 +120,7 @@ QuotesController.prototype.getBestQuote = function(trip) {
 function getBestQuoteFromQuoteBroadcastResult(pickupTime, quotes) {
   var bestQuote = null;
   var bestEta = moment(pickupTime).add(missedBookingPeriod);
-  
+
   for(var i = 0; i < quotes.length; i++) {
     var quote = quotes[i];
     var eta = moment(quote.eta) || moment(bestEta).subtract(moment.duration(1, 'minutes'));

@@ -1,11 +1,11 @@
 var paymentMethods = ['cash', 'credit-card', 'account'];
 var tripStatus =  [
-                     'accepted', 
-                     'en_route', 
+                     'accepted',
+                     'en_route',
                      'arrived',
-                     'picked_up', 
-                     'dropped_off', 
-                     'no_show', 
+                     'picked_up',
+                     'dropped_off',
+                     'no_show',
                      'completed',
                      'rejected',
                      'cancelled'
@@ -44,88 +44,8 @@ module.exports = {
       "$schema": "http://json-schema.org/draft-04/schema#",
       "id": "http://www.tripthru.com/set-network-info",
       "type": "object",
-      "properties": {
-        "client_id": {
-          "id": "http://www.tripthru.com/common/client_id",
-          "type": "string"
-        },
-        "name": {
-          "id": "http://www.tripthru.com/set-network-info/name",
-          "type": "string"
-        },
-        "callback_url": {
-          "id": "http://www.tripthru.com/set-network-info/callback_url",
-          "type": "string"
-        },
-        "products": {
-          "id": "http://www.tripthru.com/set-network-info/products",
-          "type": "array",
-          "items": {
-            "id": "http://www.tripthru.com/set-network-info/products/0",
-            "type": "object",
-            "properties": {
-              "id": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/id",
-                "type": "string"
-              },
-              "name": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/name",
-                "type": "string"
-              },
-              "image_url": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/image_url",
-                "type": "string"
-              },
-              "capacity": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/capacity",
-                "type": "integer"
-              },
-              "accepts_prescheduled": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/accepts_prescheduled",
-                "type": "boolean"
-              },
-              "accepts_ondemand": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/accepts_ondemand",
-                "type": "boolean"
-              },
-              "accepts_cash_payment": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/accepts_cash_payment",
-                "type": "boolean"
-              },
-              "accepts_account_payment": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/accepts_account_payment",
-                "type": "boolean"
-              },
-              "accepts_creditcard_payment": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/accepts_creditcard_payment",
-                "type": "boolean"
-              },
-              "coverage": {
-                "id": "http://www.tripthru.com/set-network-info/products/0/coverage",
-                "type": "object",
-                "properties": {
-                    "center": location,
-                    "radius": {
-                      "id": "http://www.tripthru.com/set-network-info/products/0/coverage/0/radius",
-                      "type": "integer"
-                    },
-                  "additionalProperties": false
-                 }
-              }
-            },
-            "required": [
-              "id",
-              "name",
-              "image_url"
-             ],
-            "additionalProperties": false
-          }
-        }
-      },
-      "additionalProperties": false,
       "required": [
-        "name",
-        "products"
+        "name"
       ]
     },
     getNetworkInfo: {

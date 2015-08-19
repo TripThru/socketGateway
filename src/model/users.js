@@ -18,6 +18,8 @@ function toStoreUser(apiUser) {
     callbackUrl: apiUser.callbackUrl,
     creation: getISOStringFromMoment(apiUser.creation),
     lastUpdate: getISOStringFromMoment(apiUser.lastUpdate),
+    balance: apiUser.balance || 0,
+    currency_code: apiUser.currencyCode,
     products: apiUser.products
   };
   return user;
@@ -41,6 +43,7 @@ function toApiUser(storeUser, storeProducts, storeProductsCoverage) {
     routingStrategy: storeUser.routing_strategy,
     creation: moment(storeUser.created_at),
     lastUpdate: moment(storeUser.updated_at),
+    currencyCode: storeUser.currency_code,
     products: [],
     productsById: {}
   };
@@ -88,12 +91,14 @@ UsersModel.prototype.create = function(user) {
 
 UsersModel.prototype.update = function(user) {
   var storeUser = toStoreUser(user);
-  return Promise
-    .all([
-      store.updateUser(storeUser),
-      store.updateProducts(storeUser.id, storeUser.products),
-      store.updateProductsCoverage(storeUser.id, storeUser.products)
-    ]);
+  return store
+    .updateUser(storeUser)
+    .then(function(){
+      return store.updateProducts(storeUser.id, storeUser.products);
+    })
+    .then(function(){
+      return store.updateProductsCoverage(storeUser.id, storeUser.products);
+    });
 };
 
 UsersModel.prototype.getAll = function() {
@@ -127,6 +132,34 @@ UsersModel.prototype.getByToken = function(token) {
     .bind(this)
     .then(function(res){
       return res.length > 0 ? this.getById(res[0].id) : null;
+    });
+};
+
+UsersModel.prototype.getBalance = function(id) {
+  return store
+    .getUserBalance(id)
+    .then(function(res){
+      return res.length > 0 ? res[0].balance : null;
+    });
+};
+
+UsersModel.prototype.incrementBalance = function(id, amount, currencyCode, transactionType, datetime, balance) {
+  return store
+    .incrementUserBalance(id, amount)
+    .then(function(){
+      if(transactionType) {
+        return store.createUserTransaction(id, amount, currencyCode, transactionType, getISOStringFromMoment(datetime), balance);
+      }
+    });
+};
+
+UsersModel.prototype.decrementBalance = function(id, amount, currencyCode, transactionType, datetime, balance) {
+  return store
+    .decrementUserBalance(id, amount)
+    .then(function(){
+      if(transactionType) {
+        return store.createUserTransaction(id, amount, currencyCode, transactionType, getISOStringFromMoment(datetime), balance);
+      }
     });
 };
 

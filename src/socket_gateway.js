@@ -16,7 +16,7 @@ SocketGateway.prototype.emit = function(action, data) {
   return new Promise(function(resolve, reject){
     var receivedResponse = false;
     this.socket.emit(action, data, function(res){
-      if(this.connected) { 
+      if(this.connected) {
         receivedResponse = true;
         resolve(res);
       }

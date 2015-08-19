@@ -1,4 +1,4 @@
-var resultCodes = {
+module.exports.resultCodes = {
   ok: 200,
   invalidParameters: 422,
   authenticationError: 401,
@@ -6,5 +6,3 @@ var resultCodes = {
   rejected: 430,
   unknownError: 500
 };
-
-module.exports.resultCodes = resultCodes;

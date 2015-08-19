@@ -1,0 +1,1 @@
+module.exports = 'trip_test';

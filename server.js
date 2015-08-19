@@ -6,6 +6,7 @@ var socket = require('./socket');
 var store = require('./src/store/store');
 store.init(config.db);
 var tripsController = require('./src/controller/trips');
+var tripPaymentsController = require('./src/controller/trip_payments');
 var quotesController = require('./src/controller/quotes');
 var usersController = require('./src/controller/users');
 var networksGateway = require('./src/networks_gateway');
@@ -16,21 +17,24 @@ var activeTrips = require('./src/active_trips');
 var activeTripPayments = require('./src/active_trip_payments');
 var activeQuotes = require('./src/active_quotes');
 var tripRoutes = require('./src/routes/trips');
+var tripPaymentRoutes = require('./src/routes/trip_payments');
 var quoteRoutes = require('./src/routes/quotes');
 var userRoutes = require('./src/routes/users');
 var swagger = require('./swagger/swagger');
+var currencyConversion = require('./src/currency_conversion');
 
 activeQuotes.clear();
 activeTripPayments.clear();
 activeTrips.clear();
 jobQueue.clear();
-store.clear();
 
 //Init and inject dependencies to avoid circular dependencies
 tripsController.init(networksGateway);
+tripPaymentsController.init(networksGateway);
 quotesController.init(networksGateway);
 usersController.init(networksGateway);
 tripsJobQueue.init(networksGateway);
+currencyConversion.init();
 
 var app = express();
 
@@ -99,14 +103,14 @@ app.get('/tripstatus/:id', function(req, res){
     });
 });
 app.post('/payment/:id', function(req, res){
-  tripRoutes
+  tripPaymentRoutes
     .requestPayment(req.query.token, req.params.id, req.body)
     .then(function(response){
       res.json(response);
     });
 });
 app.put('/payment/:id', function(req, res){
-  tripRoutes
+  tripPaymentRoutes
     .acceptPayment(req.query.token, req.params.id, req.body)
     .then(function(response){
       res.json(response);
@@ -143,8 +147,23 @@ app.get('/log/:id', function(req, res) {
     });
 });
 
-swagger.init(app);
-var server = app.listen(app.get('port'), function (){
-  console.log("server listening on port " + app.get('port'));
-  socket.io.attach(server);
+usersController
+.getAll()
+.then(function(users){
+  for(var id in users) {
+    if(users.hasOwnProperty(id)) {
+      var user = users[id];
+      if(user.role === 'network' && user.callbackUrl) {
+        networksGateway.updateRestfulGateway(user);
+      }
+    }
+  }
+  //return currencyConversion.init();
+})
+.then(function(){
+  swagger.init(app);
+  var server = app.listen(app.get('port'), function (){
+    console.log("server listening on port " + app.get('port'));
+    socket.io.attach(server);
+  });
 });

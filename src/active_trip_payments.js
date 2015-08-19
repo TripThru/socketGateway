@@ -7,20 +7,17 @@ function ActiveTripPayments() {
   this.redisClient = new RedisClient('tripPayments');
 }
 
-ActiveTripPayments.prototype.add = function(tripPayment) {
-  return tripPaymentsModel
-    .add(tripPayment)
-    .bind(this)
-    .then(function(result){
-      tripPayment.id = result.id;
-      return this.redisClient.add(tripPayment.tripId, tripPayment);
-    });
+ActiveTripPayments.prototype.create = function(tripPayment) {
+  return Promise.all([
+      tripPaymentsModel.create(tripPayment),
+      this.redisClient.add(tripPayment.trip.id, tripPayment)
+    ]);
 };
 
-ActiveTripPayments.prototype.update = function(tripPayment) { 
+ActiveTripPayments.prototype.update = function(tripPayment) {
   return this
     .redisClient
-    .update(tripPayment.tripId, tripPayment)
+    .update(tripPayment.trip.id, tripPayment)
     .bind(this)
     .then(function(reply){
       tripPaymentsModel.update(tripPayment);
@@ -31,7 +28,7 @@ ActiveTripPayments.prototype.update = function(tripPayment) {
 };
 
 ActiveTripPayments.prototype.deactivate = function(tripPayment) {
-  this.redisClient.del(tripPayment.id);
+  this.redisClient.del(tripPayment.trip.id);
 };
 
 ActiveTripPayments.prototype.getByTripId = function(id) {

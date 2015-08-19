@@ -33,9 +33,9 @@ function requestPayment(job, done) {
 function forwardPaymentRequestToPartner(tripPayment, sendTo, log) {
   var request = TripThruApiFactory.createRequestFromTripPayment(tripPayment, 'request-payment');
   return users
-    .getByClientId(sendTo)
+    .getById(sendTo)
     .then(function(user){
-      var name = user ? user.fullname : 'unknown'; 
+      var name = user ? user.name : 'unknown';
       log.log('Request payment to ' + name, request);
       return gateway.requestPayment(sendTo, request);
     })
@@ -73,9 +73,9 @@ function acceptPayment(job, done) {
 function forwardAcceptPaymentToPartner(tripPayment, sendTo, log) {
   var request = TripThruApiFactory.createRequestFromTripPayment(tripPayment, 'accept-payment');
   return users
-    .getByClientId(sendTo)
+    .getById(sendTo)
     .then(function(user){
-      var name = user ? user.fullname : 'unknown'; 
+      var name = user ? user.fullname : 'unknown';
       log.log('Accept payment to ' + name, request);
       return gateway.acceptPayment(sendTo, request);
     })
@@ -89,7 +89,7 @@ function forwardAcceptPaymentToPartner(tripPayment, sendTo, log) {
 }
 
 function TripsJobQueue() {
-  
+
 }
 
 module.exports = {
@@ -99,14 +99,14 @@ module.exports = {
     queue.processJob('accept-payment', acceptPayment);
   },
   newRequestPaymentJob: function(tripId, sendTo) {
-    var data = { 
+    var data = {
         tripId: tripId,
         sendTo: sendTo
     };
     queue.newJob('request-payment', data);
   },
   newAcceptPaymentJob: function(tripId, sendTo) {
-    var data = { 
+    var data = {
         tripId: tripId,
         sendTo: sendTo
     };

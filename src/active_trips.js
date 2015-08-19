@@ -22,18 +22,17 @@ function ActiveTrips() {
   this.redisClient = new RedisClient('trips');
 }
 
-ActiveTrips.prototype.add = function(trip) {
+ActiveTrips.prototype.create = function(trip) {
   return tripsModel
-    .add(trip)
+    .create(trip)
     .bind(this)
     .then(function(result){
       this.addDashboardTrip(trip);
-      trip.dbId = result.dbId;
       return this.redisClient.add(trip.id, trip);
     });
 };
 
-ActiveTrips.prototype.update = function(trip) { 
+ActiveTrips.prototype.update = function(trip) {
   return this
     .redisClient
     .update(trip.id, trip)
@@ -82,9 +81,10 @@ ActiveTrips.prototype.getDashboardTripListByStatus = function(status) {
 
 ActiveTrips.prototype.addDashboardTrip = function(trip) {
   var triplist = this.getDashboardTripListByStatus(trip.status);
-  if(triplist && Object.keys(triplist).length < this.maxDashboardTrips && 
+  if(triplist && Object.keys(triplist).length < this.maxDashboardTrips &&
         !triplist.hasOwnProperty(trip.id)) {
     triplist[trip.id] = trip;
+    triplist[trip.id].originatingNetwork = trip.user;
   }
 };
 
@@ -110,11 +110,11 @@ function pushTrips(networkId, triplist, tripsToPush) {
   for(var id in tripsToPush) {
     var trip = tripsToPush[id];
     if( trip &&
-        !networkId || 
-        networkId === 'all' || 
-        trip.originatingNetwork.id === networkId || 
+        !networkId ||
+        networkId === 'all' ||
+        trip.user.id === networkId ||
         (trip.servicingNetwork && trip.servicingNetwork.id === networkId)) {
-      
+
       triplist.push(trip);
     }
   }
@@ -170,8 +170,8 @@ ActiveTrips.prototype.getAll = function(networkId) {
         var trips = [];
         for(var i = 0; i < allTrips.length; i++) {
           var trip = allTrips[i];
-          if( trip && 
-              trip.originatingNetwork.id === networkId || 
+          if( trip &&
+              trip.user.id === networkId ||
               (trip.servicingNetwork && trip.servicingNetwork.id === networkId)) {
             trips.push(trip);
           }

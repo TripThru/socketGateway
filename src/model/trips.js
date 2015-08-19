@@ -12,9 +12,6 @@ function toStoreTrip(apiTrip) {
     user: {
       id: apiTrip.user.id
     },
-    product: {
-      id: apiTrip.product.id
-    },
     servicingNetwork: {
       id: apiTrip.servicingNetwork ? apiTrip.servicingNetwork.id : null
     },
@@ -31,6 +28,11 @@ function toStoreTrip(apiTrip) {
     paymentMethod: apiTrip.paymentMethod,
     guaranteedTip: apiTrip.guaranteedTip
   };
+  if(apiTrip.product) {
+    t.product = {
+      id: apiTrip.product.id
+    };
+  }
   if(apiTrip.fare) t.fare = apiTrip.fare;
   if(apiTrip.dropoffTime) t.dropoffTime = getISOStringFromMoment(apiTrip.dropoffTime);
   if(apiTrip.eta) t.eta = getISOStringFromMoment(apiTrip.eta);
@@ -54,17 +56,21 @@ function toStoreTrip(apiTrip) {
       id: apiTrip.driver.id,
       name: apiTrip.driver.name,
       localId: apiTrip.driver.localId,
-      phoneNumber: apiTrip.driver.phoneNumber,
-      nativeLanguage: {
-        id: apiTrip.driver.nativeLanguage.id
-      }
+      phoneNumber: apiTrip.driver.phoneNumber
     };
+    if(apiTrip.driver.nativeLanguage) {
+      t.nativeLanguage = {
+        id: apiTrip.driver.nativeLanguage.id
+      };
+    }
     if(apiTrip.driver.location){
       t.driver.location = {
         lat: apiTrip.driver.location.lat,
         lng: apiTrip.driver.location.lng,
-        description: apiTrip.driver.location.description,
-        datetime: getISOStringFromMoment(apiTrip.driver.location.datetime)
+        description: apiTrip.driver.location.description
+      }
+      if(apiTrip.driver.location.datetime) {
+        t.driver.datetime = getISOStringFromMoment(apiTrip.driver.location.datetime);
       }
     }
   }
@@ -159,11 +165,13 @@ TripsModel.prototype.create = function(trip) {
 
 TripsModel.prototype.update = function(trip) {
   var storeTrip = toStoreTrip(trip);
-  var update = [store.updateTrip(storeTrip)];
-  if(trip.driver && trip.driver.location) {
-    update.push(store.createTripLocation(storeTrip.id, storeTrip.driver.location));
-  }
-  return Promise.all(update);
+  return store
+    .updateTrip(storeTrip)
+    .then(function(){
+      if(trip.driver && trip.driver.location) {
+        return store.createTripLocation(storeTrip.id, storeTrip.driver.location);
+      }
+    });
 };
 
 TripsModel.prototype.getById = function(id) {
